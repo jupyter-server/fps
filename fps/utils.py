@@ -20,7 +20,7 @@ def get_pluggin_name(module: str):
             if ep.group == "fps" and ep.value == module:
                 return ep.name
 
-    raise ValueError(f"Module '{module}' not found in entrypoints")
+    return "default"
 
 
 def get_caller_pluggin_name(stack_level: int = 1):

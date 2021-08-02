@@ -2,6 +2,7 @@ import logging
 
 import pluggy
 from fastapi import FastAPI
+from starlette.routing import Mount
 
 from fps import hooks
 from fps.logging import configure_logger
@@ -35,7 +36,18 @@ def create_app(*, name: str, version: str, description=str):
         logger.info(f"Loading {len(routers[lvl])} router(s) at level {lvl}")
         for r in routers[lvl]:
             logger.info(f"Loading router from plugin '{r._plugin}' with tags {r.tags}")
-            app.include_router(r)
+
+            mounts = [route for route in r.routes if isinstance(route, Mount)]
+            routes = [route for route in r.routes if route not in mounts]
+
+            if routes:
+                logger.debug(f"  - {len(routes)} route(s)")
+                app.include_router(r)
+
+            if mounts:
+                logger.debug(f"  - {len(mounts)} mount(s)")
+                for m in mounts:
+                    app.router.routes.append(m)
 
     return app
 
