@@ -308,7 +308,9 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-#!! ERROR: vscode is undefined. Use list command to see defined gitignore types !!#
+# vscode
+
+.vscode/
 
 ### Windows ###
 # Windows thumbnail cache files
