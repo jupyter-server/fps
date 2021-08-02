@@ -1,19 +1,19 @@
 import typer
 import uvicorn
+from uvicorn.config import LOGGING_CONFIG
 
+from fps.logging import get_logger_config
 
 app = typer.Typer()
 
-@app.command()
-def create(
-    path: str = typer.Argument(...,
-        help=(
-            "Some text"
-        ),
-    ),
-):
-    print(path)
 
 @app.command()
 def run(w: int = 1):
-    uvicorn.run("fps.main:app", workers=w)
+
+    logging_config = get_logger_config(loggers=("uvicorn", "uvicorn.access"))
+    logging_config["loggers"]["uvicorn.error"] = LOGGING_CONFIG["loggers"][
+        "uvicorn.error"
+    ]
+    logging_config["loggers"]["uvicorn.access"]["propagate"] = False
+
+    uvicorn.run("fps.main:app", workers=w, log_config=logging_config)

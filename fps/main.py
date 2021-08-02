@@ -1,8 +1,10 @@
-from fastapi import FastAPI
-import pluggy
+import logging
 
-import fps
+import pluggy
+from fastapi import FastAPI
+
 from fps import hooks
+from fps.logging import configure_logger
 
 
 def get_pluggin_manager():
@@ -20,9 +22,20 @@ def create_app(*, name: str, version: str, description=str):
     )
     pm = get_pluggin_manager()
 
-    for r in pm.hook.add_router():
-        print(r)
-        app.include_router(r)
+    logger = logging.getLogger("fps")
+    configure_logger(("fps",))
+
+    logger.info("Starting API routers loading sequence")
+    routers = {lvl: [] for lvl in range(0, 10)}
+
+    for r, lvl in pm.hook.router():
+        routers[lvl].append(r)
+
+    for lvl in routers:
+        logger.info(f"Loading {len(routers[lvl])} router(s) at level {lvl}")
+        for r in routers[lvl]:
+            logger.info(f"Loading router from plugin '{r._plugin}' with tags {r.tags}")
+            app.include_router(r)
 
     return app
 
