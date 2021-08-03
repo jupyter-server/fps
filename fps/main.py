@@ -24,7 +24,7 @@ def create_app(*, name: str, version: str, description=str):
     pm = get_pluggin_manager()
 
     logger = logging.getLogger("fps")
-    configure_logger(("fps",))
+    configure_logger(logging.root.manager.loggerDict.keys())
 
     logger.info("Starting API routers loading sequence")
     routers = {lvl: [] for lvl in range(0, 10)}
