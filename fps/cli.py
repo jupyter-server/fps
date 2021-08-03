@@ -15,7 +15,7 @@ app = typer.Typer()
 def run(
     host: str = "127.0.0.1",
     port: int = 8000,
-    open_browser: Optional[bool] = True,
+    open_browser: Optional[bool] = False,
     w: int = 1,
 ):
 
