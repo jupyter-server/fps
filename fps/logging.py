@@ -1,4 +1,5 @@
 import logging
+import logging.config
 import os
 import re
 import sys
@@ -143,7 +144,10 @@ def get_logger_config(loggers=()):
         },
     }
 
-    LOGGERS = {k: {"level": log_level, "handlers": handlers} for k in loggers}
+    LOGGERS = {
+        k: {"level": log_level, "handlers": handlers, "propagate": False}
+        for k in loggers
+    }
 
     merge_configs(
         LOG_CONFIG,
