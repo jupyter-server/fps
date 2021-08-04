@@ -4,8 +4,8 @@ from .utils import get_caller_pluggin_name
 
 
 class APIRouter(fastapi.APIRouter):
-    def __init__(self, tags=None, *args, **kwargs):
+    def __init__(self, tags=None, stack_level=2, *args, **kwargs):
         tags = tags or []
-        tags.append(get_caller_pluggin_name(2))
+        tags.append(get_caller_pluggin_name(stack_level))
 
         super().__init__(*args, **kwargs, tags=tags)
