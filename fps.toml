@@ -1,0 +1,6 @@
+[fps]
+title = "Test FPS"
+version = "0.0.0"
+description = "some test server"
+
+port = 8080
