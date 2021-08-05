@@ -78,7 +78,7 @@ def load_configurations():
 def load_routers(app: APIRouter):
 
     pm = get_pluggin_manager(HookType.ROUTER)
-    plugins = {p for p in Config.plugins_names}
+    plugins = {Config.plugin_name(p) for p in pm.get_plugins()}
 
     if plugins:
         logger.info(f"Loading API routers for plugins {plugins}")
