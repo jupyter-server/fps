@@ -1,22 +1,53 @@
-import fastapi
+from enum import Enum
+
 import pluggy
+from fastapi import APIRouter
 
-from .utils import get_caller_pluggin_name
-
-hookspec = pluggy.HookspecMarker("fps")
+from .config import PluginModel
 
 
-@hookspec
-def router():
+class HookType(Enum):
+    ROUTER = "fps_router"
+    CONFIG = "fps_config"
+
+
+@pluggy.HookspecMarker(HookType.ROUTER.value)
+def router() -> APIRouter:
     pass
 
 
-def register_router(r: fastapi.APIRouter, level: int = 0):
+def register_router(r: APIRouter):
+    def router_callback() -> APIRouter:
+        return r
 
-    if not hasattr(r, "_plugin"):
-        r._plugin = get_caller_pluggin_name(2)
+    return pluggy.HookimplMarker(HookType.ROUTER.value)(
+        function=router_callback, specname="router"
+    )
 
-    def router():
-        return r, level
 
-    return pluggy.HookimplMarker("fps")(function=router, specname="router")
+@pluggy.HookspecMarker(HookType.CONFIG.value)
+def config() -> PluginModel:
+    pass
+
+
+def register_config(config_model: PluginModel):
+    def config_callback() -> PluginModel:
+        return config_model
+
+    return pluggy.HookimplMarker(HookType.CONFIG.value)(
+        function=config_callback, specname="config"
+    )
+
+
+@pluggy.HookspecMarker(HookType.CONFIG.value)
+def plugin_name() -> str:
+    pass
+
+
+def register_plugin_name(plugin_name: str):
+    def plugin_name_callback() -> str:
+        return plugin_name
+
+    return pluggy.HookimplMarker(HookType.CONFIG.value)(
+        function=plugin_name_callback, specname="plugin_name"
+    )
