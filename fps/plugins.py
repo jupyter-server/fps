@@ -7,7 +7,7 @@ from starlette.routing import Mount
 from fps import hooks
 from fps.config import Config, FPSConfig
 from fps.hooks import HookType
-from fps.utils import get_plugin_name
+from fps.utils import get_pkg_name, get_plugin_name
 
 logger = logging.getLogger("fps")
 
@@ -24,53 +24,53 @@ def load_configurations():
 
     logger.info("Loading server configuration")
     Config.register("fps", FPSConfig)
+    Config.clear_names()
 
     pm = get_pluggin_manager(HookType.CONFIG)
 
     # register a mapping plugin/name, used for display but also
     # to get configuration in the matching section of a config files
-    for p in pm.get_plugins():
-        get_hookimpls = [
-            impl for impl in pm.hook.plugin_name.get_hookimpls() if impl.plugin is p
-        ]
+    if pm.get_plugins():
+        pkg_names = {get_pkg_name(p, strip_fps=False) for p in pm.get_plugins()}
+        logger.info(f"Loading configuration for plugins package(s) {pkg_names}")
 
-        if not get_hookimpls:
-            Config.register_plugin_name(p, get_plugin_name(p))
-        elif len(get_hookimpls) > 1:
-            logger.error(
-                f"Plugin '{get_plugin_name(p, strip_fps=False)}' should not register "
-                "more than 1 hook using 'register_plugin_name' "
-                f"(got {len(get_hookimpls)})"
-            )
-            exit(1)
-        else:
-            name = get_hookimpls[0].function()
-            if not isinstance(name, str):
+        for p in pm.get_plugins():
+            get_hookimpls = [
+                impl for impl in pm.hook.plugin_name.get_hookimpls() if impl.plugin is p
+            ]
+
+            if not get_hookimpls:
+                name = Config.register_plugin_name(p)
+            elif len(get_hookimpls) > 1:
                 logger.error(
-                    f"Plugin '{get_plugin_name(p, strip_fps=False)}' registered "
-                    "name should be a string, not a "
-                    f"{type(name).__name__}"
+                    f"Plugin '{get_plugin_name(p)}' should not register more than 1 hook using "
+                    f"'register_plugin_name' (got {len(get_hookimpls)})"
                 )
                 exit(1)
-            Config.register_plugin_name(p, name)
+            else:
+                name = get_hookimpls[0].function()
+                if not isinstance(name, str):
+                    logger.error(
+                        f"Plugin '{get_plugin_name(p)}' registered name should be a string, not a "
+                        f"{type(name).__name__}"
+                    )
+                    exit(1)
+                Config.register_plugin_name(p, name)
 
-    # load the configurations
-    plugins = {p for p in Config.plugins_names}
-    if plugins:
-        logger.info(f"Loading configurations for plugins {plugins}")
-        for p in pm.get_plugins():
             p_name = Config.plugin_name(p)
+
+            # load the configuration model if existing
             get_hookimpls = [
                 impl for impl in pm.hook.config.get_hookimpls() if impl.plugin is p
             ]
 
             if not get_hookimpls:
-                logger.info(f"No configuration registered for plugin '{p_name}'")
+                logger.debug(f"No configuration model registered for plugin '{p_name}'")
                 continue
 
             for plugin_model in pm._hookexec(pm.hook.config, get_hookimpls, {}):
-                Config.register(p, plugin_model)
-                logger.info(f"Configuration of '{p_name}' is registered")
+                logger.info(f"Registering configuration model for '{p_name}'")
+                Config.register(p_name, plugin_model)
     else:
         logger.info("No plugin configuration to load")
 

@@ -14,6 +14,18 @@ An application can then be composed by multiple plugins providing specific/speci
 
 The most important parts will be to have a nice configuration system and also a logger working through multiprocesses, with homogeneous formatters to give devs/ops/users a smooth experience.
 
+## Concepts
+
+Few concepts are extensively used in `FPS`:
+- a `hook`, or `hook` implementation, is a method tagged as implementing a `hook` specification
+  - `hook`s are automatically collected by `FPS` using Python's `entry_point`s
+  - multiple `entry_point`s groups are defined (e.g. `fps_router`, `fps_config`, etc.): a `hook`s MUST be declared in its corresponding group to be collected
+  - `fps.hooks.register_<name>` helpers are returning such `hooks`
+- a `plugin` is a Python module declared in a `FPS`'s `entry_point`
+  - a `plugin` may contain zero or more `hook`s
+- a `plugins package` is a Python package declaring one or more plugins
+
+
 ## Configuration
 
 `FPS` now support configuration using `toml` format.
@@ -37,4 +49,3 @@ Note: cli arguments are limited to `fps` configuration, mostly `uvicorn` options
 At this time the merging strategy between multiple config sources is pretty simple:
 - dict values for higher precedence source win
 - no appending/prepending on sequences
-
