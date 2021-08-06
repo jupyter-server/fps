@@ -79,7 +79,10 @@ def start(
         ),
     ),
     reload_dirs: str = ".",
-    open_browser: bool = False,
+    open_browser: bool = typer.Option(
+        None,
+        help=("Enable/disable automatic automatic opening of the browser"),
+    ),
     config: str = None,
     workers: int = None,
 ):
@@ -98,8 +101,8 @@ def start(
 
     host = host or config.host
     port = port or config.port
-    reload = reload or config.reload
-    open_browser = open_browser or config.open_browser
+    reload = reload if reload is not None else config.reload
+    open_browser = open_browser if open_browser is not None else config.open_browser
     workers = workers or config.workers
 
     logging_config = get_logger_config(loggers=("uvicorn", "uvicorn.access"))
