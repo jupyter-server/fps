@@ -18,11 +18,47 @@ The most important parts will be to have a nice configuration system and also a 
 
 Few concepts are extensively used in `FPS`:
 - a `hook`, or `hook` implementation, is a method tagged as implementing a `hook` specification
-  - `hook`s are automatically collected by `FPS` using Python's `entry_point`s
-  - multiple `entry_point`s groups are defined (e.g. `fps_router`, `fps_config`, etc.): a `hook`s MUST be declared in its corresponding group to be collected
-  - `fps.hooks.register_<name>` helpers are returning such `hooks`
+  - a hook specification is the declaration of the hook
+    ```
+    @pluggy.HookspecMarker(HookType.ROUTER.value)
+    def router() -> APIRouter:
+        pass
+    ```
+  - hooks are automatically collected by `FPS` using Python's `entry_point`s, and ran at the right time
+    ```
+    [options.entry_points]
+    fps_router =
+        fps_helloworld_router = fps_helloworld.routes
+    fps_config =
+        fps_helloworld_config = fps_helloworld.config
+    ```
+  - multiple `entry_point`s groups are defined (e.g. `fps_router`, `fps_config`, etc.)
+    - a hook MUST be declared in its corresponding group to be collected
+    - in the previous example, `HookType.ROUTER.value` equals `fps_router`, so the `router` hook is declared in that group
+  - `fps.hooks.register_<hook-name>` helpers are returning such hooks
+    ```
+    def register_router(r: APIRouter):
+    def router_callback() -> APIRouter:
+        return r
+
+    return pluggy.HookimplMarker(HookType.ROUTER.value)(
+        function=router_callback, specname="router"
+    )
+    ```
 - a `plugin` is a Python module declared in a `FPS`'s `entry_point`
-  - a `plugin` may contain zero or more `hook`s
+  - a plugin may contain zero or more hooks
+  - in the following `helloworld` example, the hook `config` is declared but not the `plugin_name` one. Both are hooks of the `fps_config` group.
+    ```
+    from fps.config import PluginModel
+    from fps.hooks import register_config
+
+
+    class HelloConfig(PluginModel):
+        random: bool = True
+
+
+    c = register_config(HelloConfig)
+    ```
 - a `plugins package` is a Python package declaring one or more plugins
 
 
