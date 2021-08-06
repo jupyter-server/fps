@@ -7,10 +7,9 @@ from typing import Any, Dict, List
 import toml
 import typer
 import uvicorn
-from uvicorn.config import LOGGING_CONFIG
 
 from fps.config import Config
-from fps.logging import get_logger_config
+from fps.logging import configure_logger
 from fps.plugins import load_configurations
 
 from .config import FPSConfig
@@ -105,12 +104,6 @@ def start(
     open_browser = open_browser if open_browser is not None else config.open_browser
     workers = workers or config.workers
 
-    logging_config = get_logger_config(loggers=("uvicorn", "uvicorn.access"))
-    logging_config["loggers"]["uvicorn.error"] = LOGGING_CONFIG["loggers"][
-        "uvicorn.error"
-    ]
-    logging_config["loggers"]["uvicorn.access"]["propagate"] = False
-
     if open_browser:
         threading.Thread(target=launch_browser, args=(host, port), daemon=True).start()
 
@@ -119,7 +112,7 @@ def start(
         host=host,
         port=port,
         workers=workers,
-        log_config=logging_config,
+        log_config=configure_logger(("uvicorn", "uvicorn.access", "uvicorn.error")),
         reload=reload,
         reload_dirs=reload_dirs,
     )
