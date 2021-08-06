@@ -2,7 +2,9 @@ import logging
 import os
 import threading
 import webbrowser
+from typing import Any, Dict, List
 
+import toml
 import typer
 import uvicorn
 from uvicorn.config import LOGGING_CONFIG
@@ -16,8 +18,58 @@ from .config import FPSConfig
 app = typer.Typer()
 
 
-@app.command()
+def parse_extra_options(options: List[str]) -> Dict[str, Any]:
+    def unnested_option(key: str, val: str) -> Dict[str, Any]:
+        if "." in key:
+            k1, k2 = key.split(".", maxsplit=1)
+            return {k1: unnested_option(k2, val)}
+        else:
+            return {key: val}
+
+    formatted_options: Dict[str, Any] = {}
+    i = 0
+
+    while i < len(options):
+        opt = options[i]
+
+        # hillformed extra config
+        if not opt.startswith("--"):
+            typer.echo(f"Optional config should start with '--', got '{opt}'")
+            raise typer.Abort()
+
+        if "=" in opt:
+            # option is --key=value
+            k, v = opt[2:].split("=", maxsplit=1)
+            formatted_options.update(unnested_option(k, v))
+        else:
+            # option is --key value
+            if i + 1 < len(options):
+                formatted_options.update(unnested_option(opt[2:], options[i + 1]))
+            else:
+                typer.echo(f"Value must be provided for key '{opt[2:]}'")
+                raise typer.Abort()
+            i += 1
+
+        i += 1
+
+    return formatted_options
+
+
+def store_extra_options(options: Dict[str, Any]):
+
+    if options:
+        opts = parse_extra_options(options)
+        f_name = "fps_cli_args.toml"
+        with open(f_name, "w") as f:
+            toml.dump(opts, f)
+        os.environ["FPS_CLI_CONFIG_FILE"] = f_name
+
+
+@app.command(
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
+)
 def start(
+    ctx: typer.Context,
     host: str = None,
     port: int = None,
     reload: bool = typer.Option(
@@ -34,10 +86,12 @@ def start(
     logger = logging.getLogger("fps")
     if config:
         if os.path.isfile(config):
-            os.environ["FPS_CONFIG_FILE"] = config
+            os.environ["FPS_EXTRA_CONFIG_FILE"] = config
         else:
             logger.error(f"Invalid configuration file '{config}'")
             exit(1)
+
+    store_extra_options(ctx.args)
 
     load_configurations()
     config = Config(FPSConfig)
