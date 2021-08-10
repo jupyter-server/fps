@@ -38,12 +38,12 @@ Few concepts are extensively used in `FPS`:
   - `fps.hooks.register_<hook-name>` helpers are returning such hooks
     ```python
     def register_router(r: APIRouter):
-    def router_callback() -> APIRouter:
-        return r
+        def router_callback() -> APIRouter:
+            return r
 
-    return pluggy.HookimplMarker(HookType.ROUTER.value)(
-        function=router_callback, specname="router"
-    )
+        return pluggy.HookimplMarker(HookType.ROUTER.value)(
+            function=router_callback, specname="router"
+        )
     ```
 - a `plugin` is a Python module declared in a `FPS`'s `entry_point`
   - a plugin may contain zero or more hooks
