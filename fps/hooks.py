@@ -16,9 +16,9 @@ def router() -> APIRouter:
     pass
 
 
-def register_router(r: APIRouter):
+def register_router(r: APIRouter, **kwargs):
     def router_callback() -> APIRouter:
-        return r
+        return r, kwargs
 
     return pluggy.HookimplMarker(HookType.ROUTER.value)(
         function=router_callback, specname="router"

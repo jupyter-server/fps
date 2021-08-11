@@ -94,7 +94,7 @@ def load_routers(app: APIRouter):
                 logger.info(f"No API router registered for plugin '{p_name}'")
                 continue
 
-            for plugin_router in pm._hookexec(pm.hook.router, get_hookimpls, {}):
+            for plugin_router, plugin_kwargs in pm._hookexec(pm.hook.router, get_hookimpls, {}):
                 mounts = [
                     route for route in plugin_router.routes if isinstance(route, Mount)
                 ]
@@ -106,7 +106,7 @@ def load_routers(app: APIRouter):
                     f"plugin '{p_name}'"
                 )
 
-                router_paths = [route.path for route in plugin_router.routes]
+                router_paths = [plugin_kwargs.get("prefix", "") + route.path for route in plugin_router.routes]
                 overwritten_paths = [
                     route.path
                     for route in plugin_router.routes
@@ -120,11 +120,12 @@ def load_routers(app: APIRouter):
                 registered_paths += router_paths
 
                 if routes:
+                    tags = plugin_kwargs.pop("tags", [])
+                    tags.insert(0, p_name)
                     app.include_router(
                         plugin_router,
-                        tags=[
-                            p_name,
-                        ],
+                        **plugin_kwargs,
+                        tags=tags,
                     )
 
                 if mounts:
