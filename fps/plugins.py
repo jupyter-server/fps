@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter
+from fastapi import FastAPI
 from pluggy import PluginManager
 from starlette.routing import Mount
 
@@ -75,7 +75,7 @@ def load_configurations():
         logger.info("No plugin configuration to load")
 
 
-def load_routers(app: APIRouter):
+def load_routers(app: FastAPI):
 
     pm = get_pluggin_manager(HookType.ROUTER)
     plugins = {Config.plugin_name(p) for p in pm.get_plugins()}
@@ -94,7 +94,7 @@ def load_routers(app: APIRouter):
                 logger.info(f"No API router registered for plugin '{p_name}'")
                 continue
 
-            for plugin_router in pm._hookexec(pm.hook.router, get_hookimpls, {}):
+            for plugin_router, plugin_kwargs in pm._hookexec(pm.hook.router, get_hookimpls, {}):
                 mounts = [
                     route for route in plugin_router.routes if isinstance(route, Mount)
                 ]
@@ -106,11 +106,11 @@ def load_routers(app: APIRouter):
                     f"plugin '{p_name}'"
                 )
 
-                router_paths = [route.path for route in plugin_router.routes]
+                router_paths = [plugin_kwargs.get("prefix", "") + route.path for route in plugin_router.routes]
                 overwritten_paths = [
-                    route.path
-                    for route in plugin_router.routes
-                    if route.path in registered_paths
+                    path
+                    for path in router_paths
+                    if path in registered_paths
                 ]
                 if overwritten_paths:
                     logger.error(
@@ -120,11 +120,12 @@ def load_routers(app: APIRouter):
                 registered_paths += router_paths
 
                 if routes:
+                    tags = plugin_kwargs.pop("tags", [])
+                    tags.insert(0, p_name)
                     app.include_router(
                         plugin_router,
-                        tags=[
-                            p_name,
-                        ],
+                        **plugin_kwargs,
+                        tags=tags,
                     )
 
                 if mounts:
