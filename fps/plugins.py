@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter
+from fastapi import FastAPI
 from pluggy import PluginManager
 from starlette.routing import Mount
 
@@ -75,7 +75,7 @@ def load_configurations():
         logger.info("No plugin configuration to load")
 
 
-def load_routers(app: APIRouter):
+def load_routers(app: FastAPI):
 
     pm = get_pluggin_manager(HookType.ROUTER)
     plugins = {Config.plugin_name(p) for p in pm.get_plugins()}
@@ -108,9 +108,9 @@ def load_routers(app: APIRouter):
 
                 router_paths = [plugin_kwargs.get("prefix", "") + route.path for route in plugin_router.routes]
                 overwritten_paths = [
-                    route.path
-                    for route in plugin_router.routes
-                    if route.path in registered_paths
+                    path
+                    for path in router_paths
+                    if path in registered_paths
                 ]
                 if overwritten_paths:
                     logger.error(

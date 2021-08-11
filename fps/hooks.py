@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Tuple, Dict, Any
 
 import pluggy
 from fastapi import APIRouter
@@ -12,12 +13,12 @@ class HookType(Enum):
 
 
 @pluggy.HookspecMarker(HookType.ROUTER.value)
-def router() -> APIRouter:
+def router() -> Tuple[APIRouter, Dict[str, Any]]:
     pass
 
 
-def register_router(r: APIRouter, **kwargs):
-    def router_callback() -> APIRouter:
+def register_router(r: APIRouter, **kwargs: Dict[str, Any]):
+    def router_callback() -> Tuple[APIRouter, Dict[str, Any]]:
         return r, kwargs
 
     return pluggy.HookimplMarker(HookType.ROUTER.value)(
