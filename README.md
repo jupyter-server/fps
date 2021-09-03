@@ -78,8 +78,6 @@ directory or system-wide application directory will be soon implemented.
 
 Note: the environment variable `FPS_CONFIG_FILE` is used to store cli-passed filename and make it available to subprocesses.
 
-Note: cli arguments are limited to `fps` configuration, mostly `uvicorn` options.
-
 ### Merging strategy
 
 At this time the merging strategy between multiple config sources is pretty simple:
