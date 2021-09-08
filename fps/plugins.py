@@ -68,7 +68,7 @@ def load_configurations():
                 logger.debug(f"No configuration model registered for plugin '{p_name}'")
                 continue
 
-            for plugin_model in pm._hookexec(pm.hook.config, get_hookimpls, {}):
+            for plugin_model in pm._hookexec(pm.hook.config, get_hookimpls, {}, False):
                 logger.info(f"Registering configuration model for '{p_name}'")
                 Config.register(p_name, plugin_model)
     else:
@@ -94,7 +94,7 @@ def load_routers(app: FastAPI):
                 logger.info(f"No API router registered for plugin '{p_name}'")
                 continue
 
-            for plugin_router, plugin_kwargs in pm._hookexec(pm.hook.router, get_hookimpls, {}):
+            for plugin_router, plugin_kwargs in pm._hookexec(pm.hook.router, get_hookimpls, {}, False):
                 mounts = [
                     route for route in plugin_router.routes if isinstance(route, Mount)
                 ]
