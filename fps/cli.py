@@ -8,24 +8,37 @@ import toml
 import typer
 import uvicorn
 
-from fps.config import Config
+from fps.config import Config, FPSConfig
 from fps.logging import configure_logger
-from fps.plugins import load_configurations
-
-from .config import FPSConfig
+from fps.utils import merge_dicts
 
 app = typer.Typer()
 
 
 def parse_extra_options(options: List[str]) -> Dict[str, Any]:
-    def unnested_option(key: str, val: str) -> Dict[str, Any]:
+    def unnested_option(key: str, val: str, root: bool = True) -> Dict[str, Any]:
         if "." in key:
             k1, k2 = key.split(".", maxsplit=1)
-            return {k1: unnested_option(k2, val)}
+            if not k1 or not k2:
+                raise ValueError(f"Hill-formed option key '{key}'")
+
+            try:
+                return {k1: unnested_option(k2, val, False)}
+            except ValueError as e:
+                if root:
+                    raise ValueError(f"Hill-formed option key '{key}'")
+                else:
+                    raise e
         else:
+            if root:
+                raise AttributeError(
+                    f"Plugin option must be of the form '<plugin-name>.<option>', got '{key}'"
+                )
+
             return {key: val}
 
     formatted_options: Dict[str, Any] = {}
+
     i = 0
 
     while i < len(options):
@@ -39,15 +52,21 @@ def parse_extra_options(options: List[str]) -> Dict[str, Any]:
         if "=" in opt:
             # option is --key=value
             k, v = opt[2:].split("=", maxsplit=1)
-            formatted_options.update(unnested_option(k, v))
+            merge_dicts(formatted_options, unnested_option(k, v))
         else:
-            # option is --key value
             if i + 1 < len(options):
-                formatted_options.update(unnested_option(opt[2:], options[i + 1]))
+                # option if a flag --key
+                if options[i + 1].startswith("--"):
+                    merge_dicts(formatted_options, unnested_option(opt[2:], "true"))
+                # option is --key value
+                else:
+                    merge_dicts(
+                        formatted_options, unnested_option(opt[2:], options[i + 1])
+                    )
+                    i += 1
+            # option if a flag --key
             else:
-                typer.echo(f"Value must be provided for key '{opt[2:]}'")
-                raise typer.Abort()
-            i += 1
+                merge_dicts(formatted_options, unnested_option(opt[2:], "true"))
 
         i += 1
 
@@ -95,7 +114,7 @@ def start(
 
     store_extra_options(ctx.args)
 
-    load_configurations()
+    Config.register("fps", FPSConfig)
     config = Config(FPSConfig)
 
     host = host or config.host

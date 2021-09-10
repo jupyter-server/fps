@@ -15,6 +15,9 @@ from fps.utils import get_pkg_name, get_plugin_name
 class PluginModel(BaseModel):
     enabled: bool = True
 
+    class Config:
+        extra = "forbid"
+
 
 class FPSConfig(BaseModel):
     # fastapi
@@ -60,7 +63,7 @@ class Config:
         config_objs: List[dict] = []
         files = cls.find_files(config_name)
 
-        # parse files is not yet done
+        # parse files if not yet done
         for f in files:
             if f not in cls._files:
                 cls._files[f] = cls.read_file(f)
@@ -68,11 +71,11 @@ class Config:
         # all possible objects containing config for plugin
         config_objs = [cls._files[f] for f in files]
 
-        # check the relevant file for plugin and compute the merged values
+        # check the relevant files for plugin and compute the merged values
         if config_objs:
             relevant_files = [
                 f
-                for i, f in enumerate(files)
+                for f in files
                 if config_name in cls._files[f] and cls._files[f][config_name]
             ]
             config_obj = {
@@ -96,6 +99,18 @@ class Config:
 
             cls._models[config_model] = (config_name, config)
             cls._based_on[config_model] = relevant_files
+
+    @classmethod
+    def check_not_used_sections(cls):
+        all_config_sections = {k for f in cls._files.values() for k in f}
+        all_plugins_names = {n for n in cls._plugin2name.values()}
+        all_plugins_names.add("fps")
+
+        not_used = {n for n in all_config_sections if n not in all_plugins_names}
+        if not_used:
+            logger.warning(
+                f"Configuration section(s) are not used by any plugin {not_used}"
+            )
 
     @classmethod
     def update(cls, force: bool = False):
