@@ -8,13 +8,17 @@ from fps.hooks import register_router
 from .config import HelloConfig
 
 r = APIRouter()
+config = Config(HelloConfig)
 
 
 @r.get("/hello")
 async def root(name: str = "world"):
-    if Config(HelloConfig).random:
-        name += str(random.randint(0, 10))
-    return {"message": name}
+    if config.random:
+        name = " ".join((name, str(random.randint(0, 250))))
+    else:
+        name = " ".join((name, str(config.count)))
+
+    return {"message": " ".join((config.greeting, name))}
 
 
 router = register_router(r)

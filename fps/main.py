@@ -18,6 +18,7 @@ def create_app():
     app = FastAPI(**fps_config.__dict__)
 
     load_routers(app)
+    Config.check_not_used_sections()
 
     return app
 

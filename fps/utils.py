@@ -42,3 +42,23 @@ def get_all_plugins_pkgs_names() -> Set[str]:
 
 def get_caller_plugin_name(stack_level: int = 1) -> str:
     return get_pkg_name(get_caller_module_name(stack_level + 1))
+
+
+def merge_dicts(a, b, path=None):
+    if path is None:
+        path = []
+    for key in b:
+        if key in a:
+            if isinstance(a[key], dict) and isinstance(b[key], dict):
+                merge_dicts(a[key], b[key], path + [str(key)])
+                continue
+
+            if isinstance(a[key], list) and isinstance(b[key], list):
+                a[key] = list(set(a[key] + b[key]))
+            elif a[key] == b[key]:
+                pass  # same leaf value
+            else:
+                a[key] = b[key]
+        else:
+            a[key] = b[key]
+    return a
