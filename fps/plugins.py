@@ -1,5 +1,8 @@
 import logging
+from types import ModuleType
+from typing import Callable, Dict, List
 
+import pluggy
 from fastapi import FastAPI
 from pluggy import PluginManager
 from starlette.routing import Mount
@@ -12,12 +15,27 @@ from fps.utils import get_pkg_name, get_plugin_name
 logger = logging.getLogger("fps")
 
 
-def get_pluggin_manager(hook_type: HookType):
+def get_pluggin_manager(hook_type: HookType) -> PluginManager:
     pm = PluginManager(hook_type.value)
     pm.add_hookspecs(hooks)
     pm.load_setuptools_entrypoints(hook_type.value)
 
     return pm
+
+
+def grouped_hookimpls_results(
+    hook: pluggy._hooks._HookCaller,
+) -> Dict[ModuleType, List[Callable]]:
+
+    plugins = [impl.plugin for impl in hook.get_hookimpls()]
+    result = hook()
+    assert len(plugins) == len(result)
+
+    grouped_results = {
+        p: [result[i] for i, _p in enumerate(plugins) if p is _p] for p in set(plugins)
+    }
+
+    return grouped_results
 
 
 def load_configurations():
@@ -28,27 +46,28 @@ def load_configurations():
 
     pm = get_pluggin_manager(HookType.CONFIG)
 
-    # register a mapping plugin/name, used for display but also
+    # Register names
+    # The plugin/name mapping is used for display but also
     # to get configuration in the matching section of a config files
-    if pm.get_plugins():
-        pkg_names = {get_pkg_name(p, strip_fps=False) for p in pm.get_plugins()}
-        logger.info(f"Loading configuration for plugins package(s) {pkg_names}")
+    plugin_name_impls = pm.hook.plugin_name.get_hookimpls()
+    if plugin_name_impls:
 
-        for p in pm.get_plugins():
-            get_hookimpls = [
-                impl for impl in pm.hook.plugin_name.get_hookimpls() if impl.plugin is p
-            ]
+        grouped_plugin_names = grouped_hookimpls_results(pm.hook.plugin_name)
+        pkg_names = {get_pkg_name(p, strip_fps=False) for p in grouped_plugin_names}
+        logger.info(f"Loading names for plugin package(s) {pkg_names}")
 
-            if not get_hookimpls:
+        for p, plugin_names in grouped_plugin_names.items():
+
+            if not plugin_names:
                 name = Config.register_plugin_name(p)
-            elif len(get_hookimpls) > 1:
+            elif len(plugin_names) > 1:
                 logger.error(
                     f"Plugin '{get_plugin_name(p)}' should not register more than 1 hook using "
-                    f"'register_plugin_name' (got {len(get_hookimpls)})"
+                    f"'register_plugin_name' (got {len(plugin_names)})"
                 )
                 exit(1)
             else:
-                name = get_hookimpls[0].function()
+                name = plugin_names[0]
                 if not isinstance(name, str):
                     logger.error(
                         f"Plugin '{get_plugin_name(p)}' registered name should be a string, not a "
@@ -59,18 +78,36 @@ def load_configurations():
 
             p_name = Config.plugin_name(p)
 
-            # load the configuration model if existing
-            get_hookimpls = [
-                impl for impl in pm.hook.config.get_hookimpls() if impl.plugin is p
-            ]
+    else:
+        logger.info("No plugin name to load")
 
-            if not get_hookimpls:
+    # Register configurations
+    # Configurations are pydantic models used to store static
+    # config values, and load them from files
+    config_impls = pm.hook.config.get_hookimpls()
+    if config_impls:
+
+        grouped_configs = grouped_hookimpls_results(pm.hook.config)
+        pkg_names = {get_pkg_name(p, strip_fps=False) for p in grouped_plugin_names}
+        logger.info(f"Loading configurations for plugin package(s) {pkg_names}")
+
+        p_name = Config.plugin_name(p)
+
+        for p, configs in grouped_configs.items():
+            p_name = Config.plugin_name(p)
+
+            if not configs:
                 logger.debug(f"No configuration model registered for plugin '{p_name}'")
                 continue
-
-            for plugin_model in pm._hookexec(pm.hook.config, get_hookimpls, {}):
+            elif len(plugin_names) > 1:
+                logger.error(
+                    f"Plugin '{p_name}' should not register more than 1 hook using "
+                    f"'register_config' (got {len(configs)})"
+                )
+                exit(1)
+            else:
                 logger.info(f"Registering configuration model for '{p_name}'")
-                Config.register(p_name, plugin_model)
+                Config.register(p_name, configs[0])
     else:
         logger.info("No plugin configuration to load")
 
@@ -78,23 +115,27 @@ def load_configurations():
 def load_routers(app: FastAPI):
 
     pm = get_pluggin_manager(HookType.ROUTER)
-    plugins = {Config.plugin_name(p) for p in pm.get_plugins()}
 
-    if plugins:
-        logger.info(f"Loading API routers for plugins {plugins}")
+    # This ensure any plugins package as a name registered
+    for p in pm.get_plugins():
+        Config.plugin_name(p)
+
+    router_impls = pm.hook.router.get_hookimpls()
+    if router_impls:
+        grouped_routers = grouped_hookimpls_results(pm.hook.router)
+        pkg_names = {get_pkg_name(p, strip_fps=False) for p in grouped_routers}
+        logger.info(f"Loading API routers for plugin package(s) {pkg_names}")
+
         registered_paths = []
 
-        for p in pm.get_plugins():
+        for p, routers in grouped_routers.items():
             p_name = Config.plugin_name(p)
-            get_hookimpls = [
-                impl for impl in pm.hook.router.get_hookimpls() if impl.plugin is p
-            ]
 
-            if not get_hookimpls:
+            if not routers:
                 logger.info(f"No API router registered for plugin '{p_name}'")
                 continue
 
-            for plugin_router, plugin_kwargs in pm._hookexec(pm.hook.router, get_hookimpls, {}):
+            for plugin_router, plugin_kwargs in routers:
                 mounts = [
                     route for route in plugin_router.routes if isinstance(route, Mount)
                 ]
@@ -106,11 +147,12 @@ def load_routers(app: FastAPI):
                     f"plugin '{p_name}'"
                 )
 
-                router_paths = [plugin_kwargs.get("prefix", "") + route.path for route in plugin_router.routes]
+                router_paths = [
+                    plugin_kwargs.get("prefix", "") + route.path
+                    for route in plugin_router.routes
+                ]
                 overwritten_paths = [
-                    path
-                    for path in router_paths
-                    if path in registered_paths
+                    path for path in router_paths if path in registered_paths
                 ]
                 if overwritten_paths:
                     logger.error(
@@ -132,4 +174,4 @@ def load_routers(app: FastAPI):
                     for m in mounts:
                         app.router.routes.append(m)
     else:
-        logger.info("No API router to load")
+        logger.info("No plugin API router to load")
