@@ -51,6 +51,12 @@ class ColouredPercentStyle(PercentStyle):
 
         return fmt % record.__dict__
 
+    def format(self, record):
+        try:
+            return self._format(record)
+        except KeyError as e:
+            raise ValueError("Formatting field not found in record: %s" % e)
+
 
 _STYLES["coloured%"] = (ColouredPercentStyle, BASIC_FORMAT)
 
@@ -71,7 +77,7 @@ class ColourizedFormatter(logging.Formatter):
         else:
             self.use_colors = sys.stdout.isatty()
 
-        super().__init__(fmt=fmt, datefmt=datefmt, style="coloured%", validate=True)
+        super().__init__(fmt=fmt, datefmt=datefmt, style="coloured%")
 
     def should_use_colors(self) -> bool:
         return True  # pragma: no cover
