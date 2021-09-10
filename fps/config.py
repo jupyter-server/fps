@@ -46,7 +46,7 @@ class Config:
     _plugin2name: Dict[ModuleType, str] = {}
     _pkg2name: Dict[str, str] = {}
 
-    def __new__(cls, plugin_model: Type[PluginModel], file: str = None) -> PluginModel:
+    def __new__(cls, plugin_model: Type[PluginModel]) -> PluginModel:
         try:
             return cls._models[plugin_model][1]
         except KeyError:
@@ -56,7 +56,7 @@ class Config:
     @classmethod
     def register(
         cls,
-        config_name: ModuleType,
+        config_name: str,
         config_model: Type[PluginModel],
         force_update: bool = False,
     ):
@@ -183,3 +183,7 @@ class Config:
     def clear_names(cls):
         cls._plugin2name.clear()
         cls._pkg2name.clear()
+
+
+def get_config(model: Type[PluginModel]) -> PluginModel:
+    return Config(model)
