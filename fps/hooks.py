@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Tuple, Dict, Any
+from typing import Any, Dict, Tuple
 
 import pluggy
 from fastapi import APIRouter

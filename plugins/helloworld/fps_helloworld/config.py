@@ -1,5 +1,5 @@
 from fps.config import PluginModel
-from fps.hooks import register_config
+from fps.hooks import register_config, register_plugin_name
 
 
 class HelloConfig(PluginModel):
@@ -7,3 +7,4 @@ class HelloConfig(PluginModel):
 
 
 c = register_config(HelloConfig)
+n = register_plugin_name("helloworld")

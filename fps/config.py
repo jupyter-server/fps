@@ -150,7 +150,7 @@ class Config:
         if pkg not in cls._pkg2name:
             logger.info(f"Registering name '{name}' for plugins package '{pkg}'")
 
-        logger.debug(f"Registering name '{name}' for plugins '{plugin_name}'")
+        logger.debug(f"Registering name '{name}' for plugin '{plugin_name}'")
 
         cls._plugin2name[plugin] = name
         cls._pkg2name[pkg] = name
