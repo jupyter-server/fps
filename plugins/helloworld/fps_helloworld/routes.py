@@ -1,18 +1,16 @@
 import random
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from fps_helloworld.config import get_config
 
-from fps.config import Config
 from fps.hooks import register_router
 
-from .config import HelloConfig
-
 r = APIRouter()
-config = Config(HelloConfig)
 
 
 @r.get("/hello")
-async def root(name: str = "world"):
+async def root(name: str = "world", config=Depends(get_config)):
+
     if config.random:
         name = " ".join((name, str(random.randint(0, 250))))
     else:
