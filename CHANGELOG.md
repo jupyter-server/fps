@@ -1,3 +1,19 @@
+0.0.7 (September 13, 2021)
+========================
+
+New features:
+- Add testing module and `pytest` generic fixtures (#19 @adriendelsalle)
+
+Improvements:
+- Support `pluggy 1.0.0` and future releases (#15 @adriendelsalle)
+- Improve CLI parsing of plugins options (#17 @adriendelsalle)
+
+Bug fixes:
+- Fix `python 3.7` compatibility (#18 @adriendelsalle)
+
+Documentation:
+- Document testing module (#20 #21 @adriendelsalle)
+
 0.0.6 (September 8, 2021)
 ========================
 
