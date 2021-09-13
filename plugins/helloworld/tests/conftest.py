@@ -20,7 +20,7 @@ def config(greeting, count):
 
 
 @pytest.fixture
-def dep_override(app, config):
+def config_override(app, config):
     async def override_get_config():
         return config
 
