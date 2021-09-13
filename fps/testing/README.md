@@ -7,7 +7,7 @@ To serve that purpose, frameworks propose testing modules to ease developers wor
 
 ## How to test a `FPS` server?
 
-FPS testing relies on `pytest` and uses extensively its [fixtures](https://docs.pytest.org/en/6.2.x/fixture.html).
+FPS testing relies on `pytest` and uses extensively its [fixtures](https://docs.pytest.org/en/6.2.x/fixture.html). It also uses `fastAPI` testing utilities.
 
 
 ### Testing an app
@@ -38,7 +38,7 @@ That way, any test can be written as simple as:
 def test_hello(client):
     response = client.get("/hello")
     assert response.status_code == 200
-    assert response.json() == {"message": "hello world 0"}
+    assert response.json() == {"message": "hello world"}
 ```
 
 Note: the `client` fixture is a bit more elaborated, we'll see that in the next section
