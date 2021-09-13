@@ -14,7 +14,7 @@ FPS testing relies on `pytest` and uses extensively its [fixtures](https://docs.
 
 The main fixture proposed by FPS leverages `fastAPI.TestClient`:
 
-```
+```python
 import pytest
 from fastapi.testclient import TestClient
 
@@ -34,7 +34,7 @@ def client(app):
 
 That way, any test can be written as simple as:
 
-```
+```python
 def test_hello(client):
     response = client.get("/hello")
     assert response.status_code == 200
@@ -48,9 +48,8 @@ Note: the `client` fixture is a bit more elaborated, we'll see that in the next 
 
 It is warmly encouraged to use `fastAPI` [dependency injections](https://fastapi.tiangolo.com/tutorial/dependencies/) to get and use configuration values in your plugin.
 
-```
+```python
 # config.py
-
 from fps.config import PluginModel
 from fps.config import get_config as fps_get_config
 from fps.hooks import register_config, register_plugin_name
@@ -69,7 +68,6 @@ n = register_plugin_name("helloworld")
 
 
 # routes.py
-
 from fastapi import APIRouter, Depends
 from fps_helloworld.config import get_config
 
@@ -91,7 +89,7 @@ That way, it becomes *really* easy to override this configuration in your tests.
 
 For that, `FPS.testing` exposes 4 fixtures:
 
-```
+```python
 @pytest.fixture
 def app():
     yield create_app()
@@ -123,9 +121,8 @@ It will:
 - override `config_override` fixture to use `fastAPI.dependency_overrides`
 - optionally override `config` fixture as helper
 
-```
+```python
 # conftest.py
-
 import pytest
 from fps_helloworld.config import HelloConfig, get_config
 
@@ -152,7 +149,7 @@ def config_override(app, config):
 
 You're ready to write very simple tests, such as:
 
-```
+```python
 import pytest
 
 @pytest.mark.parametrize("greeting", ("hello", "hi", "bonjour"))
