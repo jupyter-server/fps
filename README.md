@@ -83,3 +83,8 @@ Note: the environment variable `FPS_CONFIG_FILE` is used to store cli-passed fil
 At this time the merging strategy between multiple config sources is pretty simple:
 - dict values for higher precedence source win
 - no appending/prepending on sequences
+
+
+## Testing
+
+`FPS` has a [testing module](fps/testing/README.md) leveraging `pytest` fixtures and `fastAPI` dependencies override.
