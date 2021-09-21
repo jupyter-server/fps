@@ -32,7 +32,7 @@ def grouped_hookimpls_results(
     assert len(plugins) == len(result)
 
     grouped_results = {
-        p: [result[i] for i, _p in enumerate(plugins) if p is _p] for p in set(plugins)
+        p: [result[i] for i, _p in enumerate(plugins[::-1]) if p is _p] for p in set(plugins)
     }
 
     return grouped_results
