@@ -7,8 +7,9 @@ from typing import Any, Dict, List
 import toml
 import typer
 import uvicorn
+from fps_uvicorn.config import UvicornConfig
 
-from fps.config import Config, FPSConfig
+from fps.config import Config
 from fps.logging import configure_loggers, get_loggers_config
 from fps.utils import merge_dicts
 
@@ -116,8 +117,8 @@ def start(
 
     store_extra_options(ctx.args)
 
-    Config.register("fps", FPSConfig)
-    config = Config(FPSConfig)
+    Config.register("uvicorn", UvicornConfig)
+    config = Config(UvicornConfig)
 
     host = host or config.host
     port = port or config.port
