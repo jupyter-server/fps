@@ -29,15 +29,6 @@ class FPSConfig(BaseModel):
     version: str = fps.__version__
     description: str = "A fast plugins server"
 
-    # uvicorn server
-    host: str = "127.0.0.1"
-    port: int = 8000
-    reload: bool = False
-    workers: int = 0
-
-    # custom options
-    open_browser: bool = False
-
     # plugins
     disabled_plugins: List[str] = []
 
