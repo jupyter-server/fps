@@ -1,3 +1,21 @@
+0.0.8 (September 22, 2021)
+========================
+
+New features:
+- Add capability to disable plugins (#30 @adriendelsalle)
+- Add a new hook to register exception handlers (#31 @adriendelsalle)
+- Add a builtin RedirectException (#33 @adriendelsalle)
+
+Improvements:
+- Group router logs (#28 @adriendelsalle)
+- Minor improvements on pip recipes (#34 @adriendelsalle)
+
+Bug fixes:
+- Fix interactive API docs (#28 @davidborchart)
+
+Breaking change:
+- Make uvicorn server a plugin (#32 @adriendelsalle)
+
 0.0.7 (September 13, 2021)
 ========================
 
