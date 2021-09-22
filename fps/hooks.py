@@ -1,3 +1,4 @@
+import typing
 from enum import Enum
 from typing import Any, Dict, Tuple
 
@@ -10,6 +11,7 @@ from .config import PluginModel
 class HookType(Enum):
     ROUTER = "fps_router"
     CONFIG = "fps_config"
+    EXCEPTION = "fps_exception"
 
 
 @pluggy.HookspecMarker(HookType.ROUTER.value)
@@ -23,6 +25,27 @@ def register_router(r: APIRouter, **kwargs: Dict[str, Any]):
 
     return pluggy.HookimplMarker(HookType.ROUTER.value)(
         function=router_callback, specname="router"
+    )
+
+
+@pluggy.HookspecMarker(HookType.EXCEPTION.value)
+def exception_handler() -> Tuple[
+    typing.Union[int, typing.Type[Exception]], typing.Callable
+]:
+    pass
+
+
+def register_exception_handler(
+    exc_class_or_status_code: typing.Union[int, typing.Type[Exception]],
+    handler: typing.Callable,
+):
+    def exception_handler_callback() -> Tuple[
+        typing.Union[int, typing.Type[Exception]], typing.Callable
+    ]:
+        return exc_class_or_status_code, handler
+
+    return pluggy.HookimplMarker(HookType.EXCEPTION.value)(
+        function=exception_handler_callback, specname="exception_handler"
     )
 
 
