@@ -9,6 +9,7 @@ from starlette.routing import Mount
 
 from fps import hooks
 from fps.config import Config, FPSConfig, create_default_plugin_model
+from fps.exceptions import RedirectException, _redirect_exception_handler
 from fps.hooks import HookType
 from fps.logging import configure_loggers
 from fps.utils import get_pkg_name, get_plugin_name
@@ -45,6 +46,8 @@ def _load_exceptions_handlers(app: FastAPI) -> None:
     pm = _get_pluggin_manager(HookType.EXCEPTION)
 
     grouped_exceptions_handlers = _grouped_hookimpls_results(pm.hook.exception_handler)
+
+    app.add_exception_handler(RedirectException, _redirect_exception_handler)
 
     if grouped_exceptions_handlers:
 
