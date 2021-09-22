@@ -14,7 +14,7 @@ Bug fixes:
 - Fix interactive API docs (#28 @davidborchart)
 
 Breaking change:
-- Make uvicorn server a plugin (#32 @adriendelsalle)
+- Make uvicorn server a plugin (#32 #35 @adriendelsalle)
 
 0.0.7 (September 13, 2021)
 ========================
