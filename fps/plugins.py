@@ -8,7 +8,7 @@ from pluggy import PluginManager
 from starlette.routing import Mount
 
 from fps import hooks
-from fps.config import Config, FPSConfig
+from fps.config import Config, FPSConfig, create_default_plugin_model
 from fps.hooks import HookType
 from fps.utils import get_pkg_name, get_plugin_name
 
@@ -117,9 +117,13 @@ def load_routers(app: FastAPI):
 
     pm = get_pluggin_manager(HookType.ROUTER)
 
-    # This ensure any plugins package as a name registered
+    # Ensure any plugins package as a name registered
+    # and default config is created is not set
     for p in pm.get_plugins():
-        Config.plugin_name(p)
+        p_name = Config.plugin_name(p)
+        if not Config.from_name(p_name):
+            default_model = create_default_plugin_model(p_name)
+            Config.register(p_name, default_model)
 
     router_impls = pm.hook.router.get_hookimpls()
     if router_impls:
@@ -131,9 +135,18 @@ def load_routers(app: FastAPI):
 
         for p, routers in grouped_routers.items():
             p_name = Config.plugin_name(p)
+            plugin_config = Config.from_name(p_name)
 
-            if not routers:
-                logger.info(f"No API router registered for plugin '{p_name}'")
+            disabled = (
+                plugin_config
+                and not plugin_config.enabled
+                or p_name in Config(FPSConfig).disabled_plugins
+            )
+            if not routers or disabled:
+                disabled_msg = " (disabled)" if disabled else ""
+                logger.info(
+                    f"No API router registered for plugin '{p_name}'{disabled_msg}"
+                )
                 continue
 
             routes_count = 0

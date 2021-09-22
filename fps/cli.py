@@ -20,13 +20,13 @@ def parse_extra_options(options: List[str]) -> Dict[str, Any]:
         if "." in key:
             k1, k2 = key.split(".", maxsplit=1)
             if not k1 or not k2:
-                raise ValueError(f"Hill-formed option key '{key}'")
+                raise ValueError(f"Ill-formed option key '{key}'")
 
             try:
                 return {k1: unnested_option(k2, val, False)}
             except ValueError as e:
                 if root:
-                    raise ValueError(f"Hill-formed option key '{key}'")
+                    raise ValueError(f"Ill-formed option key '{key}'")
                 else:
                     raise e
         else:
@@ -34,8 +34,10 @@ def parse_extra_options(options: List[str]) -> Dict[str, Any]:
                 raise AttributeError(
                     f"Plugin option must be of the form '<plugin-name>.<option>', got '{key}'"
                 )
-
-            return {key: val}
+            if "," in val:
+                return {key: [v for v in val.split(",")]}
+            else:
+                return {key: val}
 
     formatted_options: Dict[str, Any] = {}
 
@@ -44,7 +46,7 @@ def parse_extra_options(options: List[str]) -> Dict[str, Any]:
     while i < len(options):
         opt = options[i]
 
-        # hillformed extra config
+        # ill-formed extra config
         if not opt.startswith("--"):
             typer.echo(f"Optional config should start with '--', got '{opt}'")
             raise typer.Abort()
