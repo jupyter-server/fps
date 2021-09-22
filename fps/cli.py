@@ -9,7 +9,7 @@ import typer
 import uvicorn
 
 from fps.config import Config, FPSConfig
-from fps.logging import configure_logger
+from fps.logging import configure_loggers, get_loggers_config
 from fps.utils import merge_dicts
 
 app = typer.Typer()
@@ -128,12 +128,13 @@ def start(
     if open_browser:
         threading.Thread(target=launch_browser, args=(host, port), daemon=True).start()
 
+    configure_loggers(("uvicorn", "uvicorn.access", "uvicorn.error"))
     uvicorn.run(
         "fps.main:app",
         host=host,
         port=port,
         workers=workers,
-        log_config=configure_logger(("uvicorn", "uvicorn.access", "uvicorn.error")),
+        log_config=get_loggers_config(),
         reload=reload,
         reload_dirs=reload_dirs,
     )

@@ -6,7 +6,7 @@ import re
 import sys
 from copy import copy
 from logging import _STYLES, BASIC_FORMAT, PercentStyle
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Iterable, Optional, Union
 
 import click
 
@@ -145,7 +145,7 @@ def colourized_formatter(
         return logging.Formatter(fmt)
 
 
-def get_logger_config(loggers=()):
+def _set_loggers_config(loggers=()):
 
     filename = None
     log_level = "info"
@@ -213,11 +213,24 @@ def get_logger_config(loggers=()):
     if "uvicorn.access" in LOG_CONFIG["loggers"]:
         LOG_CONFIG["loggers"]["uvicorn.access"]["handlers"] = ["console_access"]
 
+    logging.config.dictConfig(LOG_CONFIG)
+
+
+def configure_logger(logger: str) -> None:
+    """Configure a single logger (formatters, handlers)"""
+    _set_loggers_config((logger,))
+
+
+def configure_loggers(loggers: Iterable[str]) -> None:
+    """Configure multiple loggers (formatters, handlers)"""
+    _set_loggers_config(loggers)
+
+
+def get_loggers_config() -> Dict[str, Any]:
     return LOG_CONFIG
 
 
-def configure_logger(loggers):
-    """Get quetz logger"""
-    log_config = get_logger_config(loggers)
-    logging.config.dictConfig(log_config)
-    return log_config
+def get_configured_logger(name: str) -> logging.Logger:
+    logger = logging.getLogger(name)
+    configure_logger(name)
+    return logger
