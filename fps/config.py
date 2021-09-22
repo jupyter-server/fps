@@ -5,7 +5,7 @@ from types import ModuleType
 from typing import Dict, List, Tuple, Type
 
 import toml
-from pydantic import BaseModel
+from pydantic import BaseModel, create_model
 
 import fps
 from fps.errors import ConfigError
@@ -17,6 +17,10 @@ class PluginModel(BaseModel):
 
     class Config:
         extra = "forbid"
+
+
+def create_default_plugin_model(plugin_name: str):
+    return create_model(f"{plugin_name}Model", __base__=PluginModel)
 
 
 class FPSConfig(BaseModel):
@@ -33,6 +37,9 @@ class FPSConfig(BaseModel):
 
     # custom options
     open_browser: bool = False
+
+    # plugins
+    disabled_plugins: List[str] = []
 
 
 logger = logging.getLogger("fps")
@@ -183,6 +190,17 @@ class Config:
     def clear_names(cls):
         cls._plugin2name.clear()
         cls._pkg2name.clear()
+
+    @classmethod
+    def from_name(cls, plugin_name):
+        configs = [c for n, c in cls._models.values() if n == plugin_name]
+
+        if len(configs) == 0:
+            return None
+        elif len(configs) == 1:
+            return configs[0]
+        else:
+            raise ValueError("Conflict: same name declared in multiple plugins")
 
 
 def get_config(model: Type[PluginModel]) -> PluginModel:
