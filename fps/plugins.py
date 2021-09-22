@@ -32,7 +32,8 @@ def grouped_hookimpls_results(
     assert len(plugins) == len(result)
 
     grouped_results = {
-        p: [result[i] for i, _p in enumerate(plugins[::-1]) if p is _p] for p in set(plugins)
+        p: [result[i] for i, _p in enumerate(plugins[::-1]) if p is _p]
+        for p in set(plugins)
     }
 
     return grouped_results
@@ -135,6 +136,9 @@ def load_routers(app: FastAPI):
                 logger.info(f"No API router registered for plugin '{p_name}'")
                 continue
 
+            routes_count = 0
+            mounts_count = 0
+
             for plugin_router, plugin_kwargs in routers:
                 mounts = [
                     route for route in plugin_router.routes if isinstance(route, Mount)
@@ -142,10 +146,6 @@ def load_routers(app: FastAPI):
                 routes = [
                     route for route in plugin_router.routes if route not in mounts
                 ]
-                logger.info(
-                    f"{len(routes)} route(s) and {len(mounts)} mount(s) added from "
-                    f"plugin '{p_name}'"
-                )
 
                 router_paths = [
                     plugin_kwargs.get("prefix", "") + route.path
@@ -169,9 +169,16 @@ def load_routers(app: FastAPI):
                         **plugin_kwargs,
                         tags=tags,
                     )
+                    routes_count += len(routes)
 
                 if mounts:
                     for m in mounts:
                         app.router.routes.append(m)
+                    mounts_count += len(mounts)
+
+            logger.info(
+                f"{routes_count} route(s) and {mounts_count} mount(s) added from "
+                f"plugin '{p_name}'"
+            )
     else:
         logger.info("No plugin API router to load")
