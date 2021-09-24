@@ -93,6 +93,7 @@ def start(
     ctx: typer.Context,
     host: str = None,
     port: int = None,
+    root_path: str = None,
     reload: bool = typer.Option(
         None,
         help=(
@@ -122,6 +123,7 @@ def start(
 
     host = host or config.host
     port = port or config.port
+    root_path = root_path or config.root_path
     reload = reload if reload is not None else config.reload
     open_browser = open_browser if open_browser is not None else config.open_browser
     workers = workers or config.workers
@@ -134,6 +136,7 @@ def start(
         "fps.main:app",
         host=host,
         port=port,
+        root_path=root_path,
         workers=workers,
         log_config=get_loggers_config(),
         reload=reload,

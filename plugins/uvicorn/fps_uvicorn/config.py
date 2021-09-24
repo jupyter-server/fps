@@ -6,6 +6,7 @@ class UvicornConfig(PluginModel):
     # uvicorn server
     host: str = "127.0.0.1"
     port: int = 8000
+    root_path: str = ""
     reload: bool = False
     workers: int = 0
 
