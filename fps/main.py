@@ -178,6 +178,10 @@ def _load_routers(app: FastAPI) -> None:
                 plugin_config
                 and not plugin_config.enabled
                 or p_name in Config(FPSConfig).disabled_plugins
+                or (
+                    Config(FPSConfig).enabled_plugins
+                    and p_name not in Config(FPSConfig).enabled_plugins
+                )
             )
             if not routers or disabled:
                 disabled_msg = " (disabled)" if disabled else ""

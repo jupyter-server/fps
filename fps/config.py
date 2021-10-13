@@ -32,15 +32,17 @@ class FPSConfig(BaseModel):
     description: str = "A fast plugins server"
 
     # plugins
+    enabled_plugins: List[str] = []
     disabled_plugins: List[str] = []
 
-    @validator("disabled_plugins")
-    def disabled_plugins_format(cls, plugins):
+    @validator("enabled_plugins", "disabled_plugins")
+    def plugins_format(cls, plugins):
         warnings = [p for p in plugins if p.startswith("[") or p.endswith("]")]
-        logger.warning(
-            f"Disabled plugins {warnings} include list delimiter(s), "
-            "it could be due to bad configuration"
-        )
+        if warnings:
+            logger.warning(
+                f"Enabled or disabled plugins {warnings} include list delimiter(s), "
+                "it could be due to bad configuration"
+            )
         return plugins
 
 
