@@ -168,7 +168,7 @@ def _load_routers(app: FastAPI) -> None:
         pkg_names = {get_pkg_name(p, strip_fps=False) for p in grouped_routers}
         logger.info(f"Loading API routers from plugin package(s) {pkg_names}")
 
-        registered_paths = []
+        registered_paths = {}
 
         for p, routers in grouped_routers.items():
             p_name = Config.plugin_name(p)
@@ -209,11 +209,16 @@ def _load_routers(app: FastAPI) -> None:
                     path for path in router_paths if path in registered_paths
                 ]
                 if overwritten_paths:
+                    for p in overwritten_paths:
+                        logger.error(
+                            f"Path '{p}' defined by: {p_name}, {registered_paths[p]}"
+                        )
                     logger.error(
-                        f"Redefinition of path(s) {overwritten_paths} is not allowed."
+                        f"Redefinition of path(s) {overwritten_paths} is not allowed"
                     )
                     exit(1)
-                registered_paths += router_paths
+
+                registered_paths.update({r: p_name for r in router_paths})
 
                 if routes:
                     tags = plugin_kwargs.pop("tags", [])
