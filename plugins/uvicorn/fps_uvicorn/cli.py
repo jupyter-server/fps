@@ -36,7 +36,10 @@ def parse_extra_options(options: List[str]) -> Dict[str, Any]:
                     f"Plugin option must be of the form '<plugin-name>.<option>', got '{key}'"
                 )
             if "," in val:
-                return {key: [v for v in val.split(",")]}
+                if val.startswith("[") and val.endswith("]"):
+                    return {key: [v for v in val[1:-1].split(",")]}
+                else:
+                    return {key: [v for v in val.split(",")]}
             else:
                 return {key: val}
 
