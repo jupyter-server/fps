@@ -5,11 +5,13 @@ from types import ModuleType
 from typing import Dict, List, Tuple, Type
 
 import toml
-from pydantic import BaseModel, create_model
+from pydantic import BaseModel, create_model, validator
 
 import fps
 from fps.errors import ConfigError
 from fps.utils import get_pkg_name, get_plugin_name
+
+logger = logging.getLogger("fps")
 
 
 class PluginModel(BaseModel):
@@ -32,8 +34,14 @@ class FPSConfig(BaseModel):
     # plugins
     disabled_plugins: List[str] = []
 
-
-logger = logging.getLogger("fps")
+    @validator("disabled_plugins")
+    def disabled_plugins_format(cls, plugins):
+        warnings = [p for p in plugins if p.startswith("[") or p.endswith("]")]
+        logger.warning(
+            f"Disabled plugins {warnings} include list delimiter(s), "
+            "it could be due to bad configuration"
+        )
+        return plugins
 
 
 class Config:
