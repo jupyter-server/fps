@@ -169,6 +169,8 @@ def _load_routers(app: FastAPI) -> None:
         logger.info(f"Loading API routers from plugin package(s) {pkg_names}")
 
         registered_paths = {}
+        registered_routes = {}
+        registered_mounts = {}
 
         for p, routers in grouped_routers.items():
             p_name = Config.plugin_name(p)
@@ -201,10 +203,15 @@ def _load_routers(app: FastAPI) -> None:
                     route for route in plugin_router.routes if route not in mounts
                 ]
 
-                router_paths = [
-                    plugin_kwargs.get("prefix", "") + route.path
-                    for route in plugin_router.routes
-                ]
+                router_mounts = {
+                    plugin_kwargs.get("prefix", "") + m.path: m for m in mounts
+                }
+                router_routes = {
+                    plugin_kwargs.get("prefix", "") + r.path: r for r in routes
+                }
+                router_paths = [m for m in router_mounts] + [r for r in router_routes]
+
+                # Check multiple definitions of the same path
                 overwritten_paths = [
                     path for path in router_paths if path in registered_paths
                 ]
@@ -219,6 +226,24 @@ def _load_routers(app: FastAPI) -> None:
                     exit(1)
 
                 registered_paths.update({r: p_name for r in router_paths})
+                registered_routes.update({r: p_name for r in router_routes})
+                registered_mounts.update({m: p_name for m in router_mounts})
+
+                # Check masking paths
+                masked_paths = [
+                    (r, m)
+                    for r in registered_routes
+                    for m in registered_mounts
+                    if r.startswith(m)
+                ]
+                if masked_paths:
+                    for r, m in masked_paths:
+                        logger.error(
+                            f"Path {registered_routes[r]}:'{r}' masked by "
+                            f"mount {registered_mounts[m]}:'{m}'"
+                        )
+                    logger.error("Masking of path(s) is not allowed")
+                    exit(1)
 
                 if routes:
                     tags = plugin_kwargs.pop("tags", [])
@@ -230,8 +255,8 @@ def _load_routers(app: FastAPI) -> None:
                     )
                     routes_count += len(routes)
 
-                if mounts:
-                    for m in mounts:
+                if router_mounts:
+                    for m in router_mounts.values():
                         app.router.routes.append(m)
                     mounts_count += len(mounts)
 
