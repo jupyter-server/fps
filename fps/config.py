@@ -45,6 +45,9 @@ class FPSConfig(BaseModel):
             )
         return plugins
 
+    class Config:
+        extra = "forbid"
+
 
 class Config:
 
@@ -154,29 +157,33 @@ class Config:
 
         config_files = list(OrderedDict.fromkeys(config_files))
 
-        return [f for f in config_files if f and os.path.isfile(f)]
+        return [os.path.abspath(f) for f in config_files if f and os.path.isfile(f)]
 
     @classmethod
-    def register_plugin_name(cls, plugin: ModuleType, name: str = None):
+    def register_plugin_name(
+        cls,
+        plugin: ModuleType,
+        name: str = None,
+    ):
         plugin_name = get_plugin_name(plugin)
         pkg = get_pkg_name(plugin, strip_fps=False)
 
         if not name:
-            pkg_name = get_pkg_name(plugin, strip_fps=False)
-            if pkg_name in cls._pkg2name:
-                name = cls._pkg2name[pkg_name]
+            if pkg in cls._pkg2name:
+                name = cls._pkg2name[pkg]
                 logger.debug(f"Re-using plugins package name '{name}'")
             else:
                 name = get_pkg_name(plugin, strip_fps=True)
                 logger.debug(f"Using default name '{name}' for plugins package '{pkg}'")
-
-        if pkg not in cls._pkg2name:
-            logger.info(f"Registering name '{name}' for plugins package '{pkg}'")
+        else:
+            if pkg not in cls._pkg2name:
+                logger.info(f"Registering name '{name}' for plugins package '{pkg}'")
+                cls._pkg2name[pkg] = name
+            else:
+                raise ConfigError
 
         logger.debug(f"Registering name '{name}' for plugin '{plugin_name}'")
-
         cls._plugin2name[plugin] = name
-        cls._pkg2name[pkg] = name
 
         return name
 
@@ -188,11 +195,6 @@ class Config:
             return cls.register_plugin_name(plugin)
 
     @classmethod
-    def clear_names(cls):
-        cls._plugin2name.clear()
-        cls._pkg2name.clear()
-
-    @classmethod
     def from_name(cls, plugin_name):
         configs = [c for n, c in cls._models.values() if n == plugin_name]
 
@@ -202,6 +204,17 @@ class Config:
             return configs[0]
         else:
             raise ValueError("Conflict: same name declared in multiple plugins")
+
+    @classmethod
+    def clear_names(cls):
+        cls._plugin2name.clear()
+        cls._pkg2name.clear()
+
+    @classmethod
+    def clear_models(cls):
+        cls._models.clear()
+        cls._based_on.clear()
+        cls._files.clear()
 
 
 def get_config(model: Type[PluginModel]) -> PluginModel:
