@@ -5,6 +5,8 @@ dependencies:
   - toml
   - fastapi
   - pluggy >=1.0,<2.0
+  - click
   - pytest
   - pytest-mock
   - pytest-lazy-fixture
+  - requests

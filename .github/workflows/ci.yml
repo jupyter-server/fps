@@ -20,8 +20,12 @@ jobs:
       - uses: actions/checkout@v2
       - name: install micromamba
         uses: mamba-org/provision-with-micromamba@main
+        with:
+          environment-file: environment-dev.yml
       - name: test FPS
         shell: bash -l -eo pipefail {0}
         run: |
-          micromamba install -f environment-dev.yml python=${{ matrix.python-version }}
+          micromamba create -n test-env -f environment-dev.yml python=${{ matrix.python-version }}
+          micromamba activate test-env
+          pip install -e .
           pytest -vvv ./tests/
