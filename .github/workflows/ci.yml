@@ -21,7 +21,7 @@ jobs:
       - name: install micromamba
         uses: mamba-org/provision-with-micromamba@main
         with:
-          environment-file: environment-dev.yaml
+          environment-file: environment-dev.yml
       - name: test FPS
         shell: bash -l -eo pipefail {0}
         run: |
