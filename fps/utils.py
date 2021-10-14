@@ -16,14 +16,24 @@ def get_caller_module_name(stack_level: int = 1) -> str:
     return mod.__name__
 
 
-def get_plugin_name(module: ModuleType) -> str:
-    return module.__name__
+def get_plugin_name(plugin: ModuleType) -> str:
+    if isinstance(plugin, ModuleType):
+        return plugin.__name__
+    elif isinstance(plugin, object):
+        module = plugin.__module__
+        name = plugin.__class__.__qualname__
+        if module is not None and module != "__builtin__":
+            name = module + "." + name
+
+        return name
+    else:
+        raise TypeError("Plugin type not handled")
 
 
 def get_pkg_name(plugin: Union[str, ModuleType], strip_fps: bool = True) -> str:
     if not isinstance(plugin, str):
         plugin = get_plugin_name(plugin)
-
+    print(plugin)
     if plugin.startswith(("fps-", "fps_")) and strip_fps:
         plugin = plugin[4:]
 
