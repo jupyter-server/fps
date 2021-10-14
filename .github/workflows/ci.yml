@@ -26,4 +26,5 @@ jobs:
         shell: bash -l -eo pipefail {0}
         run: |
           micromamba update python=${{ matrix.python-version }}
+          pip install -e .
           pytest -vvv ./tests/
