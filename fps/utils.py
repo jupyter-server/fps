@@ -33,7 +33,6 @@ def get_plugin_name(plugin: ModuleType) -> str:
 def get_pkg_name(plugin: Union[str, ModuleType], strip_fps: bool = True) -> str:
     if not isinstance(plugin, str):
         plugin = get_plugin_name(plugin)
-    print(plugin)
     if plugin.startswith(("fps-", "fps_")) and strip_fps:
         plugin = plugin[4:]
 
