@@ -271,6 +271,49 @@ def _load_routers(app: FastAPI) -> None:
         logger.info("No plugin API router to load")
 
 
+def _load_middlewares(app: FastAPI) -> None:
+
+    pm = _get_pluggin_manager(HookType.MIDDLEWARE)
+
+    middleware_impls = pm.hook.middleware.get_hookimpls()
+    if middleware_impls:
+        grouped_middlewares = _grouped_hookimpls_results(pm.hook.middleware)
+        pkg_names = {get_pkg_name(p, strip_fps=False) for p in grouped_middlewares}
+        logger.info(f"Loading middlewares from plugin package(s) {pkg_names}")
+
+        for p, middlewares in grouped_middlewares.items():
+            p_name = Config.plugin_name(p)
+            plugin_config = Config.from_name(p_name)
+
+            disabled = (
+                plugin_config
+                and not plugin_config.enabled
+                or p_name in Config(FPSConfig).disabled_plugins
+                or (
+                    Config(FPSConfig).enabled_plugins
+                    and p_name not in Config(FPSConfig).enabled_plugins
+                )
+            )
+            if not middlewares or disabled:
+                disabled_msg = " (disabled)" if disabled else ""
+                logger.info(
+                    f"No middleware registered for plugin '{p_name}'{disabled_msg}"
+                )
+                continue
+
+            for plugin_middleware, plugin_kwargs in middlewares:
+                app.add_middleware(
+                    plugin_middleware,
+                    **plugin_kwargs,
+                )
+
+            logger.info(
+                f"{len(middlewares)} middleware(s) added from plugin '{p_name}'"
+            )
+    else:
+        logger.info("No plugin middleware to load")
+
+
 def create_app():
 
     logging.getLogger("fps")
@@ -283,6 +326,7 @@ def create_app():
 
     _load_routers(app)
     _load_exceptions_handlers(app)
+    _load_middlewares(app)
 
     Config.check_not_used_sections()
 

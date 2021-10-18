@@ -12,6 +12,7 @@ class HookType(Enum):
     ROUTER = "fps_router"
     CONFIG = "fps_config"
     EXCEPTION = "fps_exception"
+    MIDDLEWARE = "fps_middleware"
 
 
 @pluggy.HookspecMarker(HookType.ROUTER.value)
@@ -74,4 +75,18 @@ def register_plugin_name(plugin_name: str):
 
     return pluggy.HookimplMarker(HookType.CONFIG.value)(
         function=plugin_name_callback, specname="plugin_name"
+    )
+
+
+@pluggy.HookspecMarker(HookType.MIDDLEWARE.value)
+def middleware() -> Tuple[type, Dict[str, Any]]:
+    pass
+
+
+def register_middleware(m: type, **kwargs: Dict[str, Any]):
+    def middleware_callback() -> Tuple[type, Dict[str, Any]]:
+        return m, kwargs
+
+    return pluggy.HookimplMarker(HookType.MIDDLEWARE.value)(
+        function=middleware_callback, specname="middleware"
     )
