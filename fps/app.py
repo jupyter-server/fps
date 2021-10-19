@@ -275,9 +275,10 @@ def _load_middlewares(app: FastAPI) -> None:
 
     pm = _get_pluggin_manager(HookType.MIDDLEWARE)
 
-    middleware_impls = pm.hook.middleware.get_hookimpls()
-    if middleware_impls:
-        grouped_middlewares = _grouped_hookimpls_results(pm.hook.middleware)
+    grouped_middlewares = _grouped_hookimpls_results(pm.hook.middleware)
+
+    if grouped_middlewares:
+
         pkg_names = {get_pkg_name(p, strip_fps=False) for p in grouped_middlewares}
         logger.info(f"Loading middlewares from plugin package(s) {pkg_names}")
 
@@ -302,6 +303,13 @@ def _load_middlewares(app: FastAPI) -> None:
                 continue
 
             for plugin_middleware, plugin_kwargs in middlewares:
+                if plugin_middleware in [
+                    middleware.cls for middleware in app.user_middleware
+                ]:
+                    logger.error(
+                        f"Redefinition of middleware '{plugin_middleware}' is not allowed."
+                    )
+                    exit(1)
                 app.add_middleware(
                     plugin_middleware,
                     **plugin_kwargs,
