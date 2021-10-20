@@ -35,7 +35,10 @@ class FPSConfig(BaseModel):
     enabled_plugins: List[str] = []
     disabled_plugins: List[str] = []
 
-    @validator("enabled_plugins", "disabled_plugins")
+    # plugin middlewares
+    middlewares: List[str] = []
+
+    @validator("enabled_plugins", "disabled_plugins", "middlewares")
     def plugins_format(cls, plugins):
         warnings = [p for p in plugins if p.startswith("[") or p.endswith("]")]
         if warnings:

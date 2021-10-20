@@ -294,6 +294,7 @@ def _load_middlewares(app: FastAPI) -> None:
                     Config(FPSConfig).enabled_plugins
                     and p_name not in Config(FPSConfig).enabled_plugins
                 )
+                or p_name not in Config(FPSConfig).middlewares
             )
             if not middlewares or disabled:
                 disabled_msg = " (disabled)" if disabled else ""
@@ -303,13 +304,6 @@ def _load_middlewares(app: FastAPI) -> None:
                 continue
 
             for plugin_middleware, plugin_kwargs in middlewares:
-                if plugin_middleware in [
-                    middleware.cls for middleware in app.user_middleware
-                ]:
-                    logger.error(
-                        f"Redefinition of middleware '{plugin_middleware}' is not allowed."
-                    )
-                    exit(1)
                 app.add_middleware(
                     plugin_middleware,
                     **plugin_kwargs,
