@@ -2,6 +2,7 @@ import logging
 import os
 import threading
 import webbrowser
+from pathlib import Path
 from typing import Any, Dict, List
 
 import toml
@@ -86,7 +87,7 @@ def store_extra_options(options: Dict[str, Any]):
         f_name = "fps_cli_args.toml"
         with open(f_name, "w") as f:
             toml.dump(opts, f)
-        os.environ["FPS_CLI_CONFIG_FILE"] = f_name
+        os.environ["FPS_CLI_CONFIG_FILE"] = str(Path(f_name).resolve())
 
 
 @app.command(

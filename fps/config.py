@@ -2,7 +2,7 @@ import logging
 import os
 from collections import OrderedDict
 from types import ModuleType
-from typing import Dict, List, Tuple, Type
+from typing import Any, Dict, List, Tuple, Type
 
 import toml
 from pydantic import BaseModel, create_model, validator
@@ -25,6 +25,11 @@ def create_default_plugin_model(plugin_name: str):
     return create_model(f"{plugin_name}Model", __base__=PluginModel)
 
 
+class MiddlewareModel(BaseModel):
+    class_path: str
+    kwargs: Dict[str, Any] = {}
+
+
 class FPSConfig(BaseModel):
     # fastapi
     title: str = "FPS"
@@ -36,9 +41,9 @@ class FPSConfig(BaseModel):
     disabled_plugins: List[str] = []
 
     # plugin middlewares
-    middlewares: List[str] = []
+    middlewares: List[MiddlewareModel] = []
 
-    @validator("enabled_plugins", "disabled_plugins", "middlewares")
+    @validator("enabled_plugins", "disabled_plugins")
     def plugins_format(cls, plugins):
         warnings = [p for p in plugins if p.startswith("[") or p.endswith("]")]
         if warnings:

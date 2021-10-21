@@ -79,13 +79,13 @@ def register_plugin_name(plugin_name: str):
 
 
 @pluggy.HookspecMarker(HookType.MIDDLEWARE.value)
-def middleware() -> Tuple[type, Dict[str, Any]]:
+def middleware() -> type:
     pass
 
 
-def register_middleware(m: type, **kwargs: Dict[str, Any]):
-    def middleware_callback() -> Tuple[type, Dict[str, Any]]:
-        return m, kwargs
+def register_middleware(m: type):
+    def middleware_callback() -> type:
+        return m
 
     return pluggy.HookimplMarker(HookType.MIDDLEWARE.value)(
         function=middleware_callback, specname="middleware"

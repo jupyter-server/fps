@@ -282,6 +282,7 @@ def _load_middlewares(app: FastAPI) -> None:
         pkg_names = {get_pkg_name(p, strip_fps=False) for p in grouped_middlewares}
         logger.info(f"Loading middlewares from plugin package(s) {pkg_names}")
 
+        middleware_dict = {}
         for p, middlewares in grouped_middlewares.items():
             p_name = Config.plugin_name(p)
             plugin_config = Config.from_name(p_name)
@@ -294,7 +295,6 @@ def _load_middlewares(app: FastAPI) -> None:
                     Config(FPSConfig).enabled_plugins
                     and p_name not in Config(FPSConfig).enabled_plugins
                 )
-                or p_name not in Config(FPSConfig).middlewares
             )
             if not middlewares or disabled:
                 disabled_msg = " (disabled)" if disabled else ""
@@ -303,15 +303,36 @@ def _load_middlewares(app: FastAPI) -> None:
                 )
                 continue
 
-            for plugin_middleware, plugin_kwargs in middlewares:
-                app.add_middleware(
-                    plugin_middleware,
-                    **plugin_kwargs,
+            logger.info(f"Registered middleware(s) for plugin '{p_name}':")
+            for middleware in middlewares:
+                logger.info(
+                    f"Middleware: {middleware.__module__}.{middleware.__qualname__}"
                 )
 
-            logger.info(
-                f"{len(middlewares)} middleware(s) added from plugin '{p_name}'"
+            middleware_dict.update(
+                {
+                    f"{middleware.__module__}.{middleware.__qualname__}": middleware
+                    for middleware in middlewares
+                }
             )
+
+        middleware_cnt = 0
+        for middleware in Config(FPSConfig).middlewares:
+            middleware_class_path = middleware.class_path
+            if middleware_class_path not in middleware_dict:
+                logger.warning(f"Unknown middleware {middleware_class_path}")
+                continue
+
+            logger.info(f"Adding middleware {middleware_class_path}")
+            middleware_class = middleware_dict[middleware_class_path]
+            app.add_middleware(
+                middleware_class,
+                **middleware.kwargs,
+            )
+            middleware_cnt += 1
+
+        logger.info(f"{middleware_cnt} middleware(s) added")
+
     else:
         logger.info("No plugin middleware to load")
 
