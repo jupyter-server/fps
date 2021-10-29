@@ -37,9 +37,9 @@ def parse_extra_options(options: List[str]) -> Dict[str, Any]:
                 )
             if "," in val:
                 if val.startswith("[") and val.endswith("]"):
-                    return {key: [v for v in val[1:-1].split(",")]}
+                    return {key: [v.strip() for v in val[1:-1].split(",")]}
                 else:
-                    return {key: [v for v in val.split(",")]}
+                    return {key: [v.strip() for v in val.split(",")]}
             else:
                 return {key: val}
 
