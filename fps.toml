@@ -3,4 +3,5 @@ title = "Test FPS"
 version = "0.0.0"
 description = "some test server"
 
+[uvicorn]
 port = 8080
