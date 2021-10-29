@@ -1,5 +1,19 @@
-0.0.8 (September 22, 2021)
+0.0.9 (October 29, 2021)
 ========================
+
+New features:
+- Add root_path to uvicorn plugin (#38 @davidborchart)
+- Add enabled_plugins config (#42 @adriendelsalle)
+
+Improvements:
+- Handle list delimiters for disabled_plugins (#41 #52 @adriendelsalle)
+- Improve log messages for conflicting routes (#43 @adriendelsalle)
+- Catch mounts masking routes (#45 @adriendelsalle)
+- Add tests on configuration (#46 @adriendelsalle)
+- housekeeping (#47 #51 @adriendelsalle #48 @davidborchart)
+
+0.0.8 (September 22, 2021)
+==========================
 
 New features:
 - Add capability to disable plugins (#30 @adriendelsalle)
@@ -17,7 +31,7 @@ Breaking change:
 - Make uvicorn server a plugin (#32 #35 @adriendelsalle)
 
 0.0.7 (September 13, 2021)
-========================
+==========================
 
 New features:
 - Add testing module and `pytest` generic fixtures (#19 @adriendelsalle)
@@ -33,7 +47,7 @@ Documentation:
 - Document testing module (#20 #21 @adriendelsalle)
 
 0.0.6 (September 8, 2021)
-========================
+=========================
 
 New features:
 - Add capability to pass router kwargs when registering it (#10 @davidbrochart)
