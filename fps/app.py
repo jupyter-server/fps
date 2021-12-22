@@ -5,6 +5,8 @@ from typing import Callable, Dict, List
 import pluggy
 from fastapi import FastAPI
 from pluggy import PluginManager
+from rich.console import Console
+from rich.table import Table
 from starlette.routing import Mount
 
 from fps import hooks
@@ -271,6 +273,28 @@ def _load_routers(app: FastAPI) -> None:
         logger.info("No plugin API router to load")
 
 
+def show_endpoints(app: FastAPI):
+    table = Table(title="API Summary")
+    table.add_column("Path", justify="left", style="cyan", no_wrap=True)
+    table.add_column("Methods", justify="right", style="green")
+    table.add_column("Plugin", style="magenta")
+
+    openapi = app.openapi()
+    for k, v in openapi["paths"].items():
+        path = k
+        methods = ", ".join([method.upper() for method in v.keys()])
+        plugin = ", ".join({tag for i in v.values() for tag in i["tags"]})
+        table.add_row(path, methods, plugin)
+
+    console = Console()
+    with console.capture() as capture:
+        console.print()
+        console.print(table)
+
+    str_output = capture.get()
+    logger.info(str_output)
+
+
 def create_app():
 
     logging.getLogger("fps")
@@ -285,5 +309,7 @@ def create_app():
     _load_exceptions_handlers(app)
 
     Config.check_not_used_sections()
+
+    show_endpoints(app)
 
     return app
