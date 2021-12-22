@@ -4,6 +4,7 @@ from typing import Callable, Dict, List
 
 import pluggy
 from fastapi import FastAPI
+from fastapi.routing import APIWebSocketRoute
 from pluggy import PluginManager
 from rich.console import Console
 from rich.table import Table
@@ -155,7 +156,7 @@ def _load_configurations() -> None:
         logger.info("No plugin configuration to load")
 
 
-def _load_routers(app: FastAPI) -> None:
+def _load_routers(app: FastAPI) -> Dict[str, APIWebSocketRoute]:
 
     pm = _get_pluggin_manager(HookType.ROUTER)
 
@@ -167,6 +168,7 @@ def _load_routers(app: FastAPI) -> None:
             default_model = create_default_plugin_model(p_name)
             Config.register(p_name, default_model)
 
+    ws_routes = {}
     router_impls = pm.hook.router.get_hookimpls()
     if router_impls:
         grouped_routers = _grouped_hookimpls_results(pm.hook.router)
@@ -259,6 +261,13 @@ def _load_routers(app: FastAPI) -> None:
                         tags=tags,
                     )
                     routes_count += len(routes)
+                    ws_routes.update(
+                        {
+                            tags[0]: route
+                            for route in routes
+                            if isinstance(route, APIWebSocketRoute)
+                        }
+                    )
 
                 if router_mounts:
                     for m in router_mounts.values():
@@ -272,19 +281,26 @@ def _load_routers(app: FastAPI) -> None:
     else:
         logger.info("No plugin API router to load")
 
+    return ws_routes
 
-def show_endpoints(app: FastAPI):
+
+def show_endpoints(app: FastAPI, ws_routes: Dict[str, APIWebSocketRoute]):
     table = Table(title="API Summary")
     table.add_column("Path", justify="left", style="cyan", no_wrap=True)
     table.add_column("Methods", justify="right", style="green")
     table.add_column("Plugin", style="magenta")
 
+    # HTTP endpoints
     openapi = app.openapi()
     for k, v in openapi["paths"].items():
         path = k
         methods = ", ".join([method.upper() for method in v.keys()])
-        plugin = ", ".join({tag for i in v.values() for tag in i["tags"]})
+        plugin = ", ".join({i["tags"][0] for i in v.values()})
         table.add_row(path, methods, plugin)
+
+    # websockets endpoints
+    for plugin, ws_route in ws_routes.items():
+        table.add_row(f"[cyan on red]{ws_route.path}[/]", "WEBSOCKET", plugin)
 
     console = Console()
     with console.capture() as capture:
@@ -305,11 +321,11 @@ def create_app():
     fps_config = Config(FPSConfig)
     app = FastAPI(**fps_config.__dict__)
 
-    _load_routers(app)
+    ws_routes = _load_routers(app)
     _load_exceptions_handlers(app)
 
     Config.check_not_used_sections()
 
-    show_endpoints(app)
+    show_endpoints(app, ws_routes)
 
     return app
