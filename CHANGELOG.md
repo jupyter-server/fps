@@ -2,6 +2,24 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.0.10
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/fps-0.0.9...189716c887dcd008561292f4d33d6a5f252a920f))
+
+### Merged PRs
+
+- Prepare for use with Jupyter Releaser [#60](https://github.com/jupyter-server/fps/pull/60) ([@davidbrochart](https://github.com/davidbrochart))
+- Allow startup/shutdown to run in tests [#59](https://github.com/jupyter-server/fps/pull/59) ([@davidbrochart](https://github.com/davidbrochart))
+- [pre-commit.ci] pre-commit autoupdate [#57](https://github.com/jupyter-server/fps/pull/57) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2021-10-29&to=2022-05-17&type=c))
+
+[@adriendelsalle](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Aadriendelsalle+updated%3A2021-10-29..2022-05-17&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2021-10-29..2022-05-17&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Afcollonval+updated%3A2021-10-29..2022-05-17&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Apre-commit-ci+updated%3A2021-10-29..2022-05-17&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 0.0.9 (October 29, 2021)
 ========================
 
@@ -15,8 +33,6 @@ Improvements:
 - Catch mounts masking routes (#45 @adriendelsalle)
 - Add tests on configuration (#46 @adriendelsalle)
 - housekeeping (#47 #51 @adriendelsalle #48 @davidborchart)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 0.0.8 (September 22, 2021)
 ==========================
