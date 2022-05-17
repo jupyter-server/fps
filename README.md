@@ -1,9 +1,7 @@
 # FPS
 
-`FPS`, fast pluggable server, is a framework designed to compose and run a web-server based on plugins.
-It is based on top of `fastAPI`, `uvicorn`, `typer`, and `pluggy`.
-
- **:warning: `FPS` is an experimental project.**
+`FPS` (Fast Pluggable Server), is a framework designed to compose and run a web-server based on plugins.
+It is based on top of `FastAPI`, `uvicorn`, `typer`, and `pluggy`.
 
 ## Motivation 
 To better understand the motivations behind this project, please refer to the [Jupyter server team compass](https://github.com/jupyter-server/team-compass/issues/11).
