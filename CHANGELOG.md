@@ -1,3 +1,7 @@
+# Changes in FPS {#changelog}
+
+<!-- <START NEW CHANGELOG ENTRY> -->
+
 0.0.9 (October 29, 2021)
 ========================
 
@@ -11,6 +15,8 @@ Improvements:
 - Catch mounts masking routes (#45 @adriendelsalle)
 - Add tests on configuration (#46 @adriendelsalle)
 - housekeeping (#47 #51 @adriendelsalle #48 @davidborchart)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
 
 0.0.8 (September 22, 2021)
 ==========================
