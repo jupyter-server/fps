@@ -1,0 +1,13 @@
+include LICENSE
+include MANIFEST.in
+include *.md
+include *.toml
+include .pre-commit-config.yaml
+include .flake8
+include environment-dev.yml
+include plugins/helloworld/LICENSE
+include plugins/uvicorn/LICENSE
+recursive-include fps *.md
+recursive-include plugins *.in
+recursive-include plugins *.md
+recursive-include plugins *.py
