@@ -271,6 +271,72 @@ def _load_routers(app: FastAPI) -> None:
         logger.info("No plugin API router to load")
 
 
+def _load_middlewares(app: FastAPI) -> None:
+
+    pm = _get_pluggin_manager(HookType.MIDDLEWARE)
+
+    grouped_middlewares = _grouped_hookimpls_results(pm.hook.middleware)
+
+    if grouped_middlewares:
+
+        pkg_names = {get_pkg_name(p, strip_fps=False) for p in grouped_middlewares}
+        logger.info(f"Loading middlewares from plugin package(s) {pkg_names}")
+
+        middleware_dict = {}
+        for p, middlewares in grouped_middlewares.items():
+            p_name = Config.plugin_name(p)
+            plugin_config = Config.from_name(p_name)
+
+            disabled = (
+                plugin_config
+                and not plugin_config.enabled
+                or p_name in Config(FPSConfig).disabled_plugins
+                or (
+                    Config(FPSConfig).enabled_plugins
+                    and p_name not in Config(FPSConfig).enabled_plugins
+                )
+            )
+            if not middlewares or disabled:
+                disabled_msg = " (disabled)" if disabled else ""
+                logger.info(
+                    f"No middleware registered for plugin '{p_name}'{disabled_msg}"
+                )
+                continue
+
+            logger.info(f"Registered middleware(s) for plugin '{p_name}':")
+            for middleware in middlewares:
+                logger.info(
+                    f"Middleware: {middleware.__module__}.{middleware.__qualname__}"
+                )
+
+            middleware_dict.update(
+                {
+                    f"{middleware.__module__}.{middleware.__qualname__}": middleware
+                    for middleware in middlewares
+                }
+            )
+
+        middleware_cnt = 0
+        for middleware in Config(FPSConfig).middlewares:
+            middleware_class_path = middleware.class_path
+            if middleware_class_path not in middleware_dict:
+                logger.warning(f"Unknown middleware {middleware_class_path}")
+                continue
+
+            logger.info(f"Adding middleware {middleware_class_path}")
+            middleware_class = middleware_dict[middleware_class_path]
+            app.add_middleware(
+                middleware_class,
+                **middleware.kwargs,
+            )
+            middleware_cnt += 1
+
+        logger.info(f"{middleware_cnt} middleware(s) added")
+
+    else:
+        logger.info("No plugin middleware to load")
+
+
 def create_app():
 
     logging.getLogger("fps")
@@ -283,6 +349,7 @@ def create_app():
 
     _load_routers(app)
     _load_exceptions_handlers(app)
+    _load_middlewares(app)
 
     Config.check_not_used_sections()
 
