@@ -34,6 +34,7 @@ class FPSConfig(BaseModel):
     # plugins
     enabled_plugins: List[str] = []
     disabled_plugins: List[str] = []
+    show_endpoints: bool = False
 
     @validator("enabled_plugins", "disabled_plugins")
     def plugins_format(cls, plugins):

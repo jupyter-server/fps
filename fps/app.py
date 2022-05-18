@@ -1,9 +1,11 @@
+import json
 import logging
 from types import ModuleType
 from typing import Callable, Dict, List
 
 import pluggy
 from fastapi import FastAPI
+from fastapi.routing import APIWebSocketRoute
 from pluggy import PluginManager
 from starlette.routing import Mount
 
@@ -165,6 +167,7 @@ def _load_routers(app: FastAPI) -> None:
             default_model = create_default_plugin_model(p_name)
             Config.register(p_name, default_model)
 
+    ws_routes = {}
     router_impls = pm.hook.router.get_hookimpls()
     if router_impls:
         grouped_routers = _grouped_hookimpls_results(pm.hook.router)
@@ -257,6 +260,13 @@ def _load_routers(app: FastAPI) -> None:
                         tags=tags,
                     )
                     routes_count += len(routes)
+                    ws_routes.update(
+                        {
+                            tags[0]: route
+                            for route in routes
+                            if isinstance(route, APIWebSocketRoute)
+                        }
+                    )
 
                 if router_mounts:
                     for m in router_mounts.values():
@@ -269,6 +279,21 @@ def _load_routers(app: FastAPI) -> None:
             )
     else:
         logger.info("No plugin API router to load")
+
+    fps_config = Config(FPSConfig)
+    if fps_config.show_endpoints:
+        openapi = app.openapi()
+        logger.info("")
+        for k, v in openapi["paths"].items():
+            path = k
+            methods = [method.upper() for method in v.keys()]
+            plugin = list({i["tags"][0] for i in v.values()})
+            o = {"path": path, "methods": methods, "plugin": plugin}
+            logger.info(f"ENDPOINT: {json.dumps(o)}")
+        for plugin, ws_route in ws_routes.items():
+            o = {"path": ws_route.path, "methods": ["WEBSOCKET"], "plugin": [plugin]}
+            logger.info(f"ENDPOINT: {json.dumps(o)}")
+        logger.info("")
 
 
 def create_app():
