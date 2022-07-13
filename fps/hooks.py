@@ -4,6 +4,7 @@ from typing import Any, Dict, Tuple
 
 import pluggy
 from fastapi import APIRouter
+from starlette.applications import Starlette
 
 from .config import PluginModel
 
@@ -12,6 +13,7 @@ class HookType(Enum):
     ROUTER = "fps_router"
     CONFIG = "fps_config"
     EXCEPTION = "fps_exception"
+    APPLICATION = "fps_application"
 
 
 @pluggy.HookspecMarker(HookType.ROUTER.value)
@@ -74,4 +76,18 @@ def register_plugin_name(plugin_name: str):
 
     return pluggy.HookimplMarker(HookType.CONFIG.value)(
         function=plugin_name_callback, specname="plugin_name"
+    )
+
+
+@pluggy.HookspecMarker(HookType.APPLICATION.value)
+def application() -> Tuple[Starlette, Dict[str, Any]]:
+    pass
+
+
+def register_application(r: Starlette, **kwargs: Dict[str, Any]):
+    def application_callback() -> Tuple[Starlette, Dict[str, Any]]:
+        return r, kwargs
+
+    return pluggy.HookimplMarker(HookType.APPLICATION.value)(
+        function=application_callback, specname="application"
     )

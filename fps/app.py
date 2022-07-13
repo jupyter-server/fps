@@ -5,6 +5,7 @@ from typing import Callable, Dict, List
 import pluggy
 from fastapi import FastAPI
 from pluggy import PluginManager
+from starlette.applications import Starlette
 from starlette.routing import Mount
 
 from fps import hooks
@@ -74,7 +75,7 @@ def _load_exceptions_handlers(app: FastAPI) -> None:
                 f"plugin '{p_name}'"
             )
     else:
-        logger.info("No plugin exception handler to load")
+        logger.info("No exception handler plugin to load")
 
 
 def _load_configurations() -> None:
@@ -122,7 +123,7 @@ def _load_configurations() -> None:
             p_name = Config.plugin_name(p)
 
     else:
-        logger.info("No plugin name to load")
+        logger.info("No name plugin to load")
 
     # Register configurations
     # Configurations are pydantic models used to store static
@@ -150,7 +151,7 @@ def _load_configurations() -> None:
                 logger.info(f"Registering configuration model for '{p_name}'")
                 Config.register(p_name, configs[0])
     else:
-        logger.info("No plugin configuration to load")
+        logger.info("No configuration plugin to load")
 
 
 def _load_routers(app: FastAPI) -> None:
@@ -268,7 +269,39 @@ def _load_routers(app: FastAPI) -> None:
                 f"plugin '{p_name}'"
             )
     else:
-        logger.info("No plugin API router to load")
+        logger.info("No API router plugin to load")
+
+
+def _load_applications(app: FastAPI) -> Starlette:
+    pm = _get_pluggin_manager(HookType.APPLICATION)
+
+    apps = [a[0] for a in pm.hook.application()]
+    if not apps:
+        logger.info("No application plugin to load")
+        return app
+
+    grouped_applications = _grouped_hookimpls_results(pm.hook.application)
+    pkg_names = {get_pkg_name(p, strip_fps=False) for p in grouped_applications}
+    logger.info(f"Loading application(s) from plugin package(s) {pkg_names}")
+
+    for p, applications in grouped_applications.items():
+        p_name = Config.plugin_name(p)
+
+        logger.info(f"{len(applications)} application(s) added from plugin '{p_name}'")
+
+    async def new_app(scope, receive, send):
+        # plugin applications
+        for a in apps:
+            # plugin classes must have:
+            # - a check_scope method that returns True to enable the application
+            # - a __call__ method
+            if a.check_scope(scope):
+                await a(scope, receive, send)
+                return
+        # FastAPI application
+        await app(scope, receive, send)
+
+    return new_app
 
 
 def create_app():
@@ -283,7 +316,8 @@ def create_app():
 
     _load_routers(app)
     _load_exceptions_handlers(app)
+    new_app = _load_applications(app)
 
     Config.check_not_used_sections()
 
-    return app
+    return new_app
