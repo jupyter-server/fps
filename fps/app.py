@@ -1,12 +1,12 @@
 import logging
 from types import ModuleType
-from typing import Callable, Dict, List
+from typing import Awaitable, Callable, Dict, List
 
 import pluggy
 from fastapi import FastAPI
 from pluggy import PluginManager
-from starlette.applications import Starlette
 from starlette.routing import Mount
+from starlette.types import Receive, Scope, Send
 
 from fps import hooks
 from fps.config import Config, FPSConfig, create_default_plugin_model
@@ -272,13 +272,12 @@ def _load_routers(app: FastAPI) -> None:
         logger.info("No API router plugin to load")
 
 
-def _load_applications(app: FastAPI) -> Starlette:
+def _load_applications() -> FastAPI:
     pm = _get_pluggin_manager(HookType.APPLICATION)
 
     apps = [a[0] for a in pm.hook.application()]
     if not apps:
         logger.info("No application plugin to load")
-        return app
 
     grouped_applications = _grouped_hookimpls_results(pm.hook.application)
     pkg_names = {get_pkg_name(p, strip_fps=False) for p in grouped_applications}
@@ -286,22 +285,23 @@ def _load_applications(app: FastAPI) -> Starlette:
 
     for p, applications in grouped_applications.items():
         p_name = Config.plugin_name(p)
-
         logger.info(f"{len(applications)} application(s) added from plugin '{p_name}'")
 
-    async def new_app(scope, receive, send):
-        # plugin applications
-        for a in apps:
-            # plugin classes must have:
-            # - a check_scope method that returns True to enable the application
-            # - a __call__ method
-            if a.check_scope(scope):
-                await a(scope, receive, send)
-                return
-        # FastAPI application
-        await app(scope, receive, send)
+    class App(FastAPI):
+        async def __call__(
+            self, scope: Scope, receive: Receive, send: Send
+        ) -> Awaitable:
+            # plugin applications
+            for a in apps:
+                # plugin classes must have:
+                # - a check_scope method that returns True to enable the application
+                # - a __call__ async method
+                if a.check_scope(scope):
+                    return await a.__call__(scope, receive, send)
+            # FastAPI application
+            return await super().__call__(scope, receive, send)
 
-    return new_app
+    return App
 
 
 def create_app():
@@ -312,12 +312,12 @@ def create_app():
     _load_configurations()
 
     fps_config = Config(FPSConfig)
-    app = FastAPI(**fps_config.__dict__)
+    App = _load_applications()
+    app = App(**fps_config.__dict__)
 
     _load_routers(app)
     _load_exceptions_handlers(app)
-    new_app = _load_applications(app)
 
     Config.check_not_used_sections()
 
-    return new_app
+    return app
