@@ -2,6 +2,24 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.0.11
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.0.10...1474ca165a9e6aa8434ed630382fb111d065715b))
+
+### Merged PRs
+
+- Add application pluggin [#64](https://github.com/jupyter-server/fps/pull/64) ([@davidbrochart](https://github.com/davidbrochart))
+- [pre-commit.ci] pre-commit autoupdate [#63](https://github.com/jupyter-server/fps/pull/63) ([@pre-commit-ci](https://github.com/pre-commit-ci))
+- FPS is not experimental anymore [#62](https://github.com/jupyter-server/fps/pull/62) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2022-05-17&to=2022-07-14&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2022-05-17..2022-07-14&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Apre-commit-ci+updated%3A2022-05-17..2022-07-14&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.0.10
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/fps-0.0.9...189716c887dcd008561292f4d33d6a5f252a920f))
@@ -17,8 +35,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2021-10-29&to=2022-05-17&type=c))
 
 [@adriendelsalle](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Aadriendelsalle+updated%3A2021-10-29..2022-05-17&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2021-10-29..2022-05-17&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Afcollonval+updated%3A2021-10-29..2022-05-17&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Apre-commit-ci+updated%3A2021-10-29..2022-05-17&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 0.0.9 (October 29, 2021)
 ========================
