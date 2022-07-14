@@ -2,6 +2,22 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.0.12
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.0.11...724caf852e8952a5e7eb89c604d3d5d6179e4040))
+
+### Merged PRs
+
+- Rework application plugin [#66](https://github.com/jupyter-server/fps/pull/66) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2022-07-14&to=2022-07-14&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2022-07-14..2022-07-14&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.0.11
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.0.10...1474ca165a9e6aa8434ed630382fb111d065715b))
@@ -17,8 +33,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2022-05-17&to=2022-07-14&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2022-05-17..2022-07-14&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Apre-commit-ci+updated%3A2022-05-17..2022-07-14&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.0.10
 
