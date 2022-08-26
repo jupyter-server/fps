@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 from collections import OrderedDict
 from types import ModuleType
 from typing import Dict, List, Tuple, Type
@@ -62,7 +63,7 @@ class Config:
             return cls._models[plugin_model][1]
         except KeyError:
             logger.error(f"Config model '{plugin_model}' is not yet registered")
-            exit(1)
+            sys.exit(1)
 
     @classmethod
     def register(
