@@ -2,6 +2,22 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.0.15
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.0.14...a5caf65d3a8c88c3be11b509812fae58bad3414a))
+
+### Merged PRs
+
+- Fix releasing of fps-uvicorn [#74](https://github.com/jupyter-server/fps/pull/74) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2022-08-29&to=2022-08-29&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2022-08-29..2022-08-29&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.0.14
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.0.13...1d48dbfa3838e1f5635edcc7f3ced17714901518))
@@ -15,8 +31,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2022-08-29&to=2022-08-29&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2022-08-29..2022-08-29&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.0.13
 
