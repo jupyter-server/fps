@@ -1,11 +1,5 @@
-[tool.jupyter-releaser]
-skip = ["check-links", "check-manifest"]
-
-[tool.jupyter-releaser.options]
-python_packages = [".:fps", "plugins/uvicorn:fps-uvicorn"]
-
 [tool.check-manifest]
-ignore = [".mailmap", "*.yml", "*.yaml"]
+ignore = [".*"]
 
 [tool.tbump.version]
 current = "0.0.14"
@@ -19,4 +13,7 @@ message_template = "Bump to {new_version}"
 tag_template = "v{new_version}"
 
 [[tool.tbump.file]]
-src = "fps/__init__.py"
+src = "fps_uvicorn/__init__.py"
+
+[tool.jupyter-releaser]
+skip = ["check-links"]
