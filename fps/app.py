@@ -1,4 +1,5 @@
 import logging
+import sys
 from types import ModuleType
 from typing import Awaitable, Callable, Dict, List
 
@@ -66,7 +67,7 @@ def _load_exceptions_handlers(app: FastAPI) -> None:
                     logger.error(
                         f"Redefinition of handler for '{exc_class}' exception is not allowed."
                     )
-                    exit(1)
+                    sys.exit(1)
 
                 app.add_exception_handler(exc_class, exc_handler)
 
@@ -117,7 +118,7 @@ def _load_configurations() -> None:
                         f"Plugin '{get_plugin_name(p)}' registered name should be a string, not a "
                         f"{type(name).__name__}"
                     )
-                    exit(1)
+                    sys.exit(1)
                 Config.register_plugin_name(p, name)
 
             p_name = Config.plugin_name(p)
@@ -146,7 +147,7 @@ def _load_configurations() -> None:
                     f"Plugin '{p_name}' should not register more than 1 hook using "
                     f"'register_config' (got {len(configs)})"
                 )
-                exit(1)
+                sys.exit(1)
             else:
                 logger.info(f"Registering configuration model for '{p_name}'")
                 Config.register(p_name, configs[0])
@@ -227,7 +228,7 @@ def _load_routers(app: FastAPI) -> None:
                     logger.error(
                         f"Redefinition of path(s) {overwritten_paths} is not allowed"
                     )
-                    exit(1)
+                    sys.exit(1)
 
                 registered_paths.update({r: p_name for r in router_paths})
                 registered_routes.update({r: p_name for r in router_routes})
@@ -247,7 +248,7 @@ def _load_routers(app: FastAPI) -> None:
                             f"mount {registered_mounts[m]}:'{m}'"
                         )
                     logger.error("Masking of path(s) is not allowed")
-                    exit(1)
+                    sys.exit(1)
 
                 if routes:
                     tags = plugin_kwargs.pop("tags", [])

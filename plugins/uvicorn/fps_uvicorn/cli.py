@@ -1,6 +1,8 @@
 import logging
 import os
+import sys
 import threading
+import time
 import webbrowser
 from typing import Any, Dict, List
 
@@ -14,6 +16,7 @@ from fps.logging import configure_loggers, get_loggers_config
 from fps.utils import merge_dicts
 
 app = typer.Typer()
+QUERY_PARAMS = {}
 
 
 def parse_extra_options(options: List[str]) -> Dict[str, Any]:
@@ -79,7 +82,7 @@ def parse_extra_options(options: List[str]) -> Dict[str, Any]:
     return formatted_options
 
 
-def store_extra_options(options: Dict[str, Any]):
+def store_extra_options(options: List[str]):
 
     if options:
         opts = parse_extra_options(options)
@@ -117,19 +120,37 @@ def start(
             os.environ["FPS_EXTRA_CONFIG_FILE"] = config
         else:
             logger.error(f"Invalid configuration file '{config}'")
-            exit(1)
-
-    store_extra_options(ctx.args)
+            sys.exit(1)
 
     Config.register("uvicorn", UvicornConfig)
     config = Config(UvicornConfig)
 
-    host = host or config.host
-    port = port or config.port
-    root_path = root_path or config.root_path
-    reload = reload if reload is not None else config.reload
-    open_browser = open_browser if open_browser is not None else config.open_browser
-    workers = workers or config.workers
+    if host:
+        ctx.args.append(f"--uvicorn.host={host}")
+    else:
+        host = config.host
+    if port:
+        ctx.args.append(f"--uvicorn.port={port}")
+    else:
+        port = config.port
+    if root_path:
+        ctx.args.append(f"--uvicorn.root_path={root_path}")
+    else:
+        root_path = config.root_path
+    if reload is not None:
+        ctx.args.append(f"--uvicorn.reload={reload}")
+    else:
+        reload = config.reload
+    if open_browser is not None:
+        ctx.args.append(f"--uvicorn.open_browser={open_browser}")
+    else:
+        open_browser = config.open_browser
+    if workers:
+        ctx.args.append(f"--uvicorn.workers={workers}")
+    else:
+        workers = config.workers
+
+    store_extra_options(ctx.args)
 
     if open_browser:
         threading.Thread(target=launch_browser, args=(host, port), daemon=True).start()
@@ -148,4 +169,11 @@ def start(
 
 
 def launch_browser(host: str, port: int):
-    webbrowser.open_new(f"{host}:{port}")
+    time.sleep(1)  # FIXME: wait for server to start
+    query_params = "&".join([f"{k}={v}" for k, v in QUERY_PARAMS.items()])
+    query_params = f"?{query_params}" if query_params else ""
+    webbrowser.open_new(f"{host}:{port}{query_params}")
+
+
+def add_query_params(query_params: Dict[Any, Any]):
+    QUERY_PARAMS.update(query_params)

@@ -11,7 +11,7 @@ class UvicornConfig(PluginModel):
     workers: int = 0
 
     # custom CLI options
-    open_browser: bool = False
+    open_browser: bool = True
 
 
 c = register_config(UvicornConfig)
