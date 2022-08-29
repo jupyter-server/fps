@@ -2,6 +2,22 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.0.14
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.0.13...1d48dbfa3838e1f5635edcc7f3ced17714901518))
+
+### Merged PRs
+
+- Store Uvicorn CLI options, add possibility to pass query parameters [#72](https://github.com/jupyter-server/fps/pull/72) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2022-08-29&to=2022-08-29&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2022-08-29..2022-08-29&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.0.13
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.0.12...166041e3346e3fa6773f8d6f48b08dacee785cb5))
@@ -17,8 +33,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2022-07-14&to=2022-08-29&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2022-07-14..2022-08-29&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Apre-commit-ci+updated%3A2022-07-14..2022-08-29&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.0.12
 
