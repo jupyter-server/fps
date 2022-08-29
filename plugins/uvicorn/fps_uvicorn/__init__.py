@@ -1,1 +1,1 @@
-from fps_uvicorn._version import __version__  # noqa
+__version__ = "0.0.14"
