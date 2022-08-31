@@ -2,6 +2,12 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.0.19
+
+No merged PRs
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.0.18
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.0.17...e1f6ea6f9a2f02e0e00bbea1dfbd0c6f52e4c23a))
@@ -15,8 +21,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2022-08-30&to=2022-08-31&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2022-08-30..2022-08-31&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.0.17
 
