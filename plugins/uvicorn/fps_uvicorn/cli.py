@@ -16,10 +16,7 @@ from fps.logging import configure_loggers, get_loggers_config
 from fps.utils import merge_dicts
 
 app = typer.Typer()
-SERVER = dict(
-    query_params={},
-    server=None
-)
+SERVER = dict(query_params={}, server=None)
 
 
 def parse_extra_options(options: List[str]) -> Dict[str, Any]:
