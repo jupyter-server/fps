@@ -1,19 +1,57 @@
+[build-system]
+requires = [
+    "hatchling>=1.9.0",
+]
+build-backend = "hatchling.build"
+
+[project]
+name = "fps-uvicorn"
+dynamic = [
+    "version",
+]
+description = "A uvicorn plugin for FPS"
+readme = "README.md"
+license = ""
+requires-python = ">=3.7"
+authors = [
+    { name = "Jupyter Development Team", email = "jupyter@googlegroups.com" },
+]
+keywords = [
+    "fastapi",
+    "fps",
+    "pluggy",
+    "plugins",
+    "server",
+    "uvicorn",
+]
+dependencies = [
+    "fps",
+    "uvicorn",
+]
+
+[project.scripts]
+fps-uvicorn = "fps_uvicorn.cli:app"
+
+[project.entry-points.fps_config]
+fps_uvicorn_config = "fps_uvicorn.config"
+
+[project.urls]
+Homepage = "https://github.com/jupyter-server/fps"
+
+[tool.hatch.version]
+path = "fps_uvicorn/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/fps_uvicorn",
+]
+
 [tool.check-manifest]
-ignore = [".*"]
-
-[tool.tbump.version]
-current = "0.0.19"
-regex = '''
-  (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)
-  ((?P<channel>a|b|rc|.dev)(?P<release>\d+))?
-'''
-
-[tool.tbump.git]
-message_template = "Bump to {new_version}"
-tag_template = "v{new_version}"
-
-[[tool.tbump.file]]
-src = "fps_uvicorn/__init__.py"
+ignore = [
+    ".*",
+]
 
 [tool.jupyter-releaser]
-skip = ["check-links"]
+skip = [
+    "check-links",
+]

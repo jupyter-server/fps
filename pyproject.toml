@@ -1,22 +1,66 @@
+[build-system]
+requires = [
+    "hatchling>=1.9.0",
+]
+build-backend = "hatchling.build"
+
+[project]
+name = "fps"
+dynamic = [
+    "version",
+]
+description = "A pluggable server"
+readme = "README.md"
+license = ""
+requires-python = ">=3.7"
+authors = [
+    { name = "Jupyter Development Team", email = "jupyter@googlegroups.com" },
+]
+keywords = [
+    "asgi",
+    "fastapi",
+    "pluggy",
+    "plugins",
+    "server",
+]
+dependencies = [
+    "fastapi",
+    "pluggy>=1.0,<2.0",
+    "toml",
+    "typer[all]",
+]
+
+[project.optional-dependencies]
+uvicorn = [
+    "fps-uvicorn",
+]
+
+[project.urls]
+Homepage = "https://github.com/jupyter-server/fps"
+
+[tool.hatch.version]
+path = "fps/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/fps",
+]
+
 [tool.jupyter-releaser]
-skip = ["check-links", "check-manifest"]
+skip = [
+    "check-links",
+    "check-manifest",
+]
 
 [tool.jupyter-releaser.options]
-python_packages = [".:fps", "plugins/uvicorn:fps-uvicorn"]
+python_packages = [
+    ".:fps",
+    "plugins/uvicorn:fps-uvicorn",
+]
 
 [tool.check-manifest]
-ignore = [".mailmap", "*.yml", "*.yaml"]
-
-[tool.tbump.version]
-current = "0.0.19"
-regex = '''
-  (?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)
-  ((?P<channel>a|b|rc|.dev)(?P<release>\d+))?
-'''
-
-[tool.tbump.git]
-message_template = "Bump to {new_version}"
-tag_template = "v{new_version}"
-
-[[tool.tbump.file]]
-src = "fps/__init__.py"
+ignore = [
+    ".mailmap",
+    "*.yml",
+    "*.yaml",
+]
