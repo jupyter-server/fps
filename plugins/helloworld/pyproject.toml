@@ -1,0 +1,51 @@
+[build-system]
+requires = [
+    "hatchling>=1.9.0",
+]
+build-backend = "hatchling.build"
+
+[project]
+name = "fps-helloworld"
+dynamic = [
+    "version",
+]
+description = "A plugin demo for FPS"
+readme = "README.md"
+license = ""
+requires-python = ">=3.7"
+authors = [
+    { name = "Adrien DELSALLE", email = "adrien.delsalle@quantstack.net" },
+]
+keywords = [
+    "fastapi",
+    "pluggy",
+    "plugins",
+    "server",
+]
+dependencies = [
+    "fps",
+    "fps-uvicorn",
+]
+
+[project.scripts]
+helloworld = "fps_uvicorn.cli:app"
+
+[project.entry-points.fps_config]
+fps_helloworld_config = "fps_helloworld.config"
+
+[project.entry-points.fps_exception]
+fps_helloworld_exception = "fps_helloworld.exceptions"
+
+[project.entry-points.fps_router]
+fps_helloworld_router = "fps_helloworld.routes"
+
+[project.urls]
+Homepage = "https://github.com/adriendelsalle/fps"
+
+[tool.hatch.version]
+path = "fps_helloworld/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/fps_helloworld",
+]

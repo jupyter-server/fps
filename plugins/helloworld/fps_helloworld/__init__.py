@@ -1,1 +1,1 @@
-from fps._version import __version__  # noqa
+__version__ = "0.0.3"
