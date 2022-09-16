@@ -16,7 +16,10 @@ from fps.logging import configure_loggers, get_loggers_config
 from fps.utils import merge_dicts
 
 app = typer.Typer()
-QUERY_PARAMS = {}
+SERVER = dict(
+    query_params={},
+    server=None
+)
 
 
 def parse_extra_options(options: List[str]) -> Dict[str, Any]:
@@ -156,7 +159,8 @@ def start(
         threading.Thread(target=launch_browser, args=(host, port), daemon=True).start()
 
     configure_loggers(("uvicorn", "uvicorn.access", "uvicorn.error"))
-    uvicorn.run(
+
+    config = uvicorn.Config(
         "fps.main:app",
         host=host,
         port=port,
@@ -166,14 +170,20 @@ def start(
         reload=reload,
         reload_dirs=reload_dirs,
     )
+    SERVER["server"] = server = uvicorn.Server(config)
+    server.run()
 
 
 def launch_browser(host: str, port: int):
-    time.sleep(1)  # FIXME: wait for server to start
-    query_params = "&".join([f"{k}={v}" for k, v in QUERY_PARAMS.items()])
+    while True:
+        time.sleep(0.1)
+        if SERVER["server"] is not None and SERVER["server"].started:
+            break
+
+    query_params = "&".join([f"{k}={v}" for k, v in SERVER["query_params"].items()])
     query_params = f"?{query_params}" if query_params else ""
     webbrowser.open_new(f"{host}:{port}{query_params}")
 
 
 def add_query_params(query_params: Dict[Any, Any]):
-    QUERY_PARAMS.update(query_params)
+    SERVER["query_params"].update(query_params)
