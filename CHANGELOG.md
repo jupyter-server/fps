@@ -2,11 +2,26 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.0.20
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.0.19...503fbae2b5d54306c27b8fc9a195e4af1ec96c4e))
+
+### Merged PRs
+
+- Wait for server started before opening browser [#83](https://github.com/jupyter-server/fps/pull/83) ([@davidbrochart](https://github.com/davidbrochart))
+- Switch to hatch [#82](https://github.com/jupyter-server/fps/pull/82) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2022-08-31&to=2022-09-19&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2022-08-31..2022-09-19&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Apre-commit-ci+updated%3A2022-08-31..2022-09-19&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.0.19
 
 No merged PRs
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.0.18
 
