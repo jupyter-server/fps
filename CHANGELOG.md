@@ -2,6 +2,22 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.0.21
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.0.20...c7e394d1ee94837c4118d24a0c86f9499ae90e3d))
+
+### Merged PRs
+
+- Allow setting log level [#86](https://github.com/jupyter-server/fps/pull/86) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2022-09-19&to=2022-11-23&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2022-09-19..2022-11-23&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Apre-commit-ci+updated%3A2022-09-19..2022-11-23&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.0.20
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.0.19...503fbae2b5d54306c27b8fc9a195e4af1ec96c4e))
@@ -16,8 +32,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2022-08-31&to=2022-09-19&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2022-08-31..2022-09-19&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Apre-commit-ci+updated%3A2022-08-31..2022-09-19&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.0.19
 
