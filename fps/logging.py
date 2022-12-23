@@ -145,12 +145,12 @@ def colourized_formatter(
         return logging.Formatter(fmt)
 
 
-def _set_loggers_config(loggers=(), level="info"):
+def _set_loggers_config(loggers=(), level="info", filename=None):
 
-    filename = None
     log_level = level.upper()
-
     handlers = ["console"]
+    if filename:
+        handlers.append("file")
 
     LOG_FORMATTERS = {
         "colour": {
@@ -215,9 +215,9 @@ def _set_loggers_config(loggers=(), level="info"):
     logging.config.dictConfig(LOG_CONFIG)
 
 
-def configure_logger(logger: str, level: str = "info") -> None:
+def configure_logger(logger: str, level: str = "info", filename=None) -> None:
     """Configure a single logger (formatters, handlers)"""
-    _set_loggers_config((logger,), level)
+    _set_loggers_config((logger,), level, filename)
 
 
 def configure_loggers(loggers: Iterable[str], level: str = "info") -> None:
@@ -229,7 +229,9 @@ def get_loggers_config() -> Dict[str, Any]:
     return LOG_CONFIG
 
 
-def get_configured_logger(name: str, level: str = "info") -> logging.Logger:
+def get_configured_logger(
+    name: str, level: str = "info", filename=None
+) -> logging.Logger:
     logger = logging.getLogger(name)
-    configure_logger(name, level)
+    configure_logger(name, level, filename)
     return logger
