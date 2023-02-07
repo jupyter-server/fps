@@ -51,7 +51,6 @@ class FPSConfig(BaseModel):
 
 
 class Config:
-
     _models: Dict[Type[PluginModel], Tuple[str, PluginModel]] = {}
     _based_on: Dict[Type[PluginModel], List[str]] = {}
     _files: Dict[str, dict] = {}

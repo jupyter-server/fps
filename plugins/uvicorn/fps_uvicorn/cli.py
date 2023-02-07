@@ -83,7 +83,6 @@ def parse_extra_options(options: List[str]) -> Dict[str, Any]:
 
 
 def store_extra_options(options: List[str]):
-
     if options:
         opts = parse_extra_options(options)
         f_name = "fps_cli_args.toml"

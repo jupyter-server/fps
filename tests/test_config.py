@@ -17,7 +17,6 @@ def hookimpl_config(func):
 
 
 def test_forbid_extras(config_file, plugin_manager):
-
     with open(config_file, "w") as f:
         f.write("[fps]\nsome_extra = 'extra'")
 
@@ -57,7 +56,6 @@ class Plugin2:
     ),
 )
 def test_plugin_names(app, plugins):
-
     assert len(Config._plugin2name) == len(plugins)
     assert Config._plugin2name == {plugins[0]: "some-plugin"}
 
@@ -106,7 +104,6 @@ class TestConfigFiles:
         @classmethod
         @hookimpl_config
         def plugin_config(cls):
-
             return cls.Plugin3Config
 
     @staticmethod
@@ -128,7 +125,6 @@ class TestConfigFiles:
         ),
     )
     def test_no_file(self, app, config_file, plugins):
-
         assert self.Plugin3.Plugin3Config in Config._models
         assert Config._models[self.Plugin3.Plugin3Config] == (
             "tests",
@@ -153,7 +149,6 @@ class TestConfigFiles:
         "config_content", (pytest.lazy_fixture(("fps_only_config",)))
     )
     def test_fps_config(self, app, plugins, config_file, config_content):
-
         assert self.Plugin3.Plugin3Config in Config._models
         assert Config._models[self.Plugin3.Plugin3Config] == (
             "tests",
@@ -181,7 +176,6 @@ class TestConfigFiles:
         "config_content", (pytest.lazy_fixture(("plugin_config",)))
     )
     def test_plugin_config(self, app, plugins, config_file, config_content):
-
         assert self.Plugin3.Plugin3Config in Config._models
         assert Config._models[self.Plugin3.Plugin3Config] == (
             "tests",

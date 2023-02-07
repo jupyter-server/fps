@@ -11,7 +11,6 @@ from fps.app import create_app
 
 @pytest.fixture
 def config_content():
-
     yield ""
 
 

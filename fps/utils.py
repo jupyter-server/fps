@@ -10,7 +10,6 @@ else:
 
 
 def get_caller_module_name(stack_level: int = 1) -> str:
-
     frm = inspect.stack()[stack_level]
     mod = inspect.getmodule(frm[0])
     return mod.__name__
@@ -40,7 +39,6 @@ def get_pkg_name(plugin: Union[str, ModuleType], strip_fps: bool = True) -> str:
 
 
 def get_all_plugins_pkgs_names() -> Set[str]:
-
     names = []
     for dist in list(importlib_metadata.distributions()):
         for ep in dist.entry_points:
