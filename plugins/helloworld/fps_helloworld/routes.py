@@ -12,7 +12,6 @@ r = APIRouter()
 
 @r.get("/hello")
 async def root(name: str = "world", config=Depends(get_config)):
-
     if config.random:
         name = " ".join((name, str(random.randint(0, 250))))
     else:

@@ -31,7 +31,6 @@ def _get_pluggin_manager(hook_type: HookType) -> PluginManager:
 def _grouped_hookimpls_results(
     hook: pluggy._hooks._HookCaller,
 ) -> Dict[ModuleType, List[Callable]]:
-
     plugins = [impl.plugin for impl in hook.get_hookimpls()]
     result = hook()
     assert len(plugins) == len(result)
@@ -45,7 +44,6 @@ def _grouped_hookimpls_results(
 
 
 def _load_exceptions_handlers(app: FastAPI) -> None:
-
     pm = _get_pluggin_manager(HookType.EXCEPTION)
 
     grouped_exceptions_handlers = _grouped_hookimpls_results(pm.hook.exception_handler)
@@ -53,7 +51,6 @@ def _load_exceptions_handlers(app: FastAPI) -> None:
     app.add_exception_handler(RedirectException, _redirect_exception_handler)
 
     if grouped_exceptions_handlers:
-
         pkg_names = {
             get_pkg_name(p, strip_fps=False) for p in grouped_exceptions_handlers
         }
@@ -62,7 +59,7 @@ def _load_exceptions_handlers(app: FastAPI) -> None:
         for p, exceptions in grouped_exceptions_handlers.items():
             p_name = Config.plugin_name(p)
 
-            for (exc_class, exc_handler) in exceptions:
+            for exc_class, exc_handler in exceptions:
                 if exc_class in app.exception_handlers:
                     logger.error(
                         f"Redefinition of handler for '{exc_class}' exception is not allowed."
@@ -80,7 +77,6 @@ def _load_exceptions_handlers(app: FastAPI) -> None:
 
 
 def _load_configurations() -> None:
-
     Config.clear_names()
     Config.clear_models()
 
@@ -97,12 +93,10 @@ def _load_configurations() -> None:
     grouped_plugin_names = _grouped_hookimpls_results(pm.hook.plugin_name)
 
     if plugin_name_impls:
-
         pkg_names = {get_pkg_name(p, strip_fps=False) for p in grouped_plugin_names}
         logger.info(f"Loading names from plugin package(s) {pkg_names}")
 
         for p, plugin_names in grouped_plugin_names.items():
-
             if not plugin_names:
                 name = Config.register_plugin_name(p)
             elif len(plugin_names) > 1:
@@ -131,7 +125,6 @@ def _load_configurations() -> None:
     # config values, and load them from files
     config_impls = pm.hook.config.get_hookimpls()
     if config_impls:
-
         grouped_configs = _grouped_hookimpls_results(pm.hook.config)
         pkg_names = {get_pkg_name(p, strip_fps=False) for p in grouped_plugin_names}
         logger.info(f"Loading configurations from plugin package(s) {pkg_names}")
@@ -156,7 +149,6 @@ def _load_configurations() -> None:
 
 
 def _load_routers(app: FastAPI) -> None:
-
     pm = _get_pluggin_manager(HookType.ROUTER)
 
     # Ensure any plugins package has a name registered
@@ -306,7 +298,6 @@ def _load_applications() -> FastAPI:
 
 
 def create_app():
-
     logging.getLogger("fps")
     configure_loggers(logging.root.manager.loggerDict.keys())
 

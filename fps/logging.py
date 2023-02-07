@@ -17,7 +17,6 @@ LOG_CONFIG: Dict[str, Union[str, int, float]] = dict()
 
 
 class ColouredPercentStyle(PercentStyle):
-
     validation_pattern = re.compile(
         r"%\(\w+\)[#0+ -]*(\*|\d+)?(\.(\*|\d+))?[diouxefgcrsa]|", re.I
     )
@@ -146,7 +145,6 @@ def colourized_formatter(
 
 
 def _set_loggers_config(loggers=(), level="info"):
-
     filename = None
     log_level = level.upper()
 
