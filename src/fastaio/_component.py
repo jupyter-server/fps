@@ -4,13 +4,16 @@ import sys
 
 from contextlib import AsyncExitStack
 from inspect import isawaitable
-from typing import Any, Iterable
+from typing import TYPE_CHECKING, Any, Callable, Iterable
 
 import anyio
 from anyio import Event, create_task_group, move_on_after
 from anyioutils import create_task, wait, FIRST_COMPLETED
 
 from ._context import Context
+
+if TYPE_CHECKING:
+    from ._context import Resource  # pragma: no cover
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup  # pragma: no cover
@@ -28,7 +31,7 @@ class Component:
         self._prepare_timeout = prepare_timeout
         self._start_timeout = start_timeout
         self._stop_timeout = stop_timeout
-        self._parent = None
+        self._parent: Component | None = None
         self._context = Context()
         self._prepared = Event()
         self._started = Event()
@@ -37,11 +40,11 @@ class Component:
             self._name = str(self)
         else:
             self._name = name
-        self._path = []
-        self._components = {}
-        self._added_resources = {}
-        self._acquired_resources = {}
-        self._context_manager_exits = []
+        self._path: list[str] = []
+        self._components: dict[str, Component] = {}
+        self._added_resources: dict[Any, Resource] = {}
+        self._acquired_resources: dict[Any, Resource] = {}
+        self._context_manager_exits: list[Callable] = []
 
     @property
     def path(self) -> str:
