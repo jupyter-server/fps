@@ -1,7 +1,11 @@
+import sys
 
 import pytest
 
 from fastaio import Component
+
+if sys.version_info < (3, 11):
+    from exceptiongroup import ExceptionGroup  # pragma: no cover
 
 pytestmark = pytest.mark.anyio
 

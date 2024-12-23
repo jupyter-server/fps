@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from contextlib import AsyncExitStack
 from inspect import isawaitable
 from typing import Any, Iterable
@@ -10,6 +12,8 @@ from anyioutils import create_task, wait, FIRST_COMPLETED
 
 from ._context import Context
 
+if sys.version_info < (3, 11):
+    from exceptiongroup import ExceptionGroup  # pragma: no cover
 
 class Component:
 

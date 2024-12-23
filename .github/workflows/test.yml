@@ -1,0 +1,35 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: ${{ matrix.os }} python-${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13' ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: pip install -e ".[test]"
+      - name: Run tests
+        if: ${{ !((matrix.python-version == '3.13') && (matrix.os == 'ubuntu-latest')) }}
+        run: pytest --color=yes -v tests
+      - name: Run code coverage
+        if: ${{ (matrix.python-version == '3.13') && (matrix.os == 'ubuntu-latest') }}
+        run: |
+          coverage run -m pytest tests
+          coverage report --fail-under=100
