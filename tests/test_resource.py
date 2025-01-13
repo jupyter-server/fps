@@ -51,18 +51,18 @@ async def test_resource():
     class Component0(Component):
         def __init__(self, name):
             super().__init__(name)
-            self.subcomponent0 = self.add_component(Subcomponent0, "subcomponent0")
-            self.subcomponent1 = self.add_component(Subcomponent1, "subcomponent1")
+            self.add_component(Subcomponent0, "subcomponent0")
+            self.add_component(Subcomponent1, "subcomponent1")
 
     component0 = Component0("component0")
 
     async with component0:
         pass
 
-    assert type(component0.subcomponent1.resource0) == Resource0
-    assert type(component0.subcomponent0.resource1) == Resource1
-    assert component0.subcomponent1.resource0 == resource0
-    assert component0.subcomponent0.resource1 == resource1
+    assert type(component0.components["subcomponent1"].resource0) == Resource0
+    assert type(component0.components["subcomponent0"].resource1) == Resource1
+    assert component0.components["subcomponent1"].resource0 == resource0
+    assert component0.components["subcomponent0"].resource1 == resource1
 
 
 async def test_resource_with_context_manager(capsys):
