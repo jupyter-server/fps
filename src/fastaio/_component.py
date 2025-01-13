@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 
 from contextlib import AsyncExitStack
-from inspect import isawaitable
+from inspect import isawaitable, signature
 from typing import TYPE_CHECKING, Any, Callable, Iterable
 
 import anyio
@@ -22,7 +22,7 @@ class Component:
 
     def __init__(
         self,
-        name: str | None = None,
+        name: str,
         prepare_timeout=1,
         start_timeout=1,
         stop_timeout=1,
@@ -36,10 +36,7 @@ class Component:
         self._prepared = Event()
         self._started = Event()
         self._stopped = Event()
-        if name is None:
-            self._name = str(self)
-        else:
-            self._name = name
+        self._name = name
         self._path: list[str] = []
         self._components: dict[str, Component] = {}
         self._added_resources: dict[Any, Resource] = {}
@@ -56,12 +53,19 @@ class Component:
         except AttributeError:
             raise RuntimeError("You must call super().__init__() in the __init__ method of your component")
 
-    def add_component(self, component: "Component", name: str | None = None) -> "Component":
+    @property
+    def components(self) -> dict[str, Component]:
+        return self._components
+
+    def add_component(
+        self,
+        component_class: type["Component"],
+        name: str,
+        **config,
+    ) -> "Component":
         self._check_initialized()
-        if name is None:
-            name = component._name
-        else:
-            component._name = name
+        component = component_class(name, **config)
+        component._name = name
         component._path = self._path + [self._name]
         if name in self._components:
             raise RuntimeError(f"Component name already exists: {name}")

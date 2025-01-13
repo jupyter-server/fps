@@ -1,2 +1,3 @@
-from ._context import Context
-from ._component import Component
+from ._context import Context as Context
+from ._component import Component as Component
+from ._config import get_root_component as get_root_component
