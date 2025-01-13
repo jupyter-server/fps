@@ -59,12 +59,12 @@ async def test_task(capsys):
             self.drop_resource(self.resource0)
 
     class Component0(Component):
-        def __init__(self):
-            super().__init__()
-            self.add_component(Subcomponent0())
-            self.add_component(Subcomponent1())
+        def __init__(self, name):
+            super().__init__(name)
+            self.add_component(Subcomponent0, "subcomponent0")
+            self.add_component(Subcomponent1, "subcomponent1")
 
-    component0 = Component0()
+    component0 = Component0("component0")
 
     async with component0:
         pass
@@ -99,12 +99,12 @@ async def test_failing_task(capsys):
         pass
 
     class Component0(Component):
-        def __init__(self):
-            super().__init__()
-            self.add_component(Subcomponent0())
-            self.add_component(Subcomponent1())
+        def __init__(self, name):
+            super().__init__(name)
+            self.add_component(Subcomponent0, "subcomponent0")
+            self.add_component(Subcomponent1, "subcomponent1")
 
-    component0 = Component0()
+    component0 = Component0("component0")
 
     with pytest.raises(ExceptionGroup) as excinfo:
         async with component0:

@@ -49,12 +49,12 @@ async def test_resource():
             self.done()
 
     class Component0(Component):
-        def __init__(self):
-            super().__init__()
-            self.subcomponent0 = self.add_component(Subcomponent0())
-            self.subcomponent1 = self.add_component(Subcomponent1())
+        def __init__(self, name):
+            super().__init__(name)
+            self.subcomponent0 = self.add_component(Subcomponent0, "subcomponent0")
+            self.subcomponent1 = self.add_component(Subcomponent1, "subcomponent1")
 
-    component0 = Component0()
+    component0 = Component0("component0")
 
     async with component0:
         pass
@@ -94,7 +94,7 @@ async def test_resource_with_context_manager(capsys):
             self.done()
             print("stop")
 
-    async with Component0():
+    async with Component0("component0"):
         pass
 
     assert capsys.readouterr().out.splitlines() == [
@@ -115,9 +115,9 @@ async def test_add_resource_with_type():
             self.done()
 
     class Component0(Component):
-        def __init__(self):
-            super().__init__()
-            self.add_component(Subcomponent0())
+        def __init__(self, name):
+            super().__init__(name)
+            self.add_component(Subcomponent0, "subcomponent0")
 
         async def start(self):
             self.resource = await self.get_resource(int)
@@ -128,7 +128,7 @@ async def test_add_resource_with_type():
             self.drop_resource(self.resource)
             self.done()
 
-    async with Component0():
+    async with Component0("component0"):
         pass
 
 
@@ -140,7 +140,7 @@ async def test_add_same_resource_type():
             self.add_resource(0)
 
     with pytest.raises(ExceptionGroup) as excinfo:
-        async with Component0():
+        async with Component0("component0"):
             pass
 
     assert len(excinfo.value.exceptions) == 1
@@ -165,13 +165,13 @@ async def test_add_exclusive_resource(capsys):
             self.done()
 
     class Component0(Component):
-        def __init__(self):
-            super().__init__()
-            self.add_component(Subcomponent0())
-            self.add_component(Subcomponent1())
-            self.add_component(Subcomponent1())
+        def __init__(self, name):
+            super().__init__(name)
+            self.add_component(Subcomponent0, "subcomponent0")
+            self.add_component(Subcomponent1, "subcomponent1")
+            self.add_component(Subcomponent1, "subcomponent2")
 
-    async with Component0():
+    async with Component0("component0"):
         pass
 
     assert capsys.readouterr().out.splitlines() == [
@@ -192,7 +192,7 @@ async def test_resource_not_freed():
     class Component0(Component):
         def __init__(self, name, stop_timeout):
             super().__init__(name, stop_timeout=stop_timeout)
-            self.add_component(Subcomponent0(), name="subcomponent0")
+            self.add_component(Subcomponent0, "subcomponent0")
 
         async def start(self):
             self.resource = await self.get_resource(int)
@@ -203,7 +203,7 @@ async def test_resource_not_freed():
             pass
 
     with pytest.raises(ExceptionGroup) as excinfo:
-        async with Component0(name="component0", stop_timeout=0.1):
+        async with Component0("component0", stop_timeout=0.1):
             pass
 
     assert len(excinfo.value.exceptions) == 2
@@ -225,9 +225,9 @@ async def test_all_resources_freed(capsys):
             self.done()
 
     class Component0(Component):
-        def __init__(self):
-            super().__init__()
-            self.add_component(Subcomponent0())
+        def __init__(self, name):
+            super().__init__(name)
+            self.add_component(Subcomponent0, "subcomponent0")
 
         async def start(self):
             self.resource = await self.get_resource(int)
@@ -239,7 +239,7 @@ async def test_all_resources_freed(capsys):
             print("resource dropped")
             self.done()
 
-    async with Component0():
+    async with Component0("component0"):
         pass
 
     assert capsys.readouterr().out.splitlines() == [

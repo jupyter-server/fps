@@ -28,7 +28,7 @@ async def test_exception_prepare(capsys):
             self.done()
 
     with pytest.raises(ExceptionGroup) as excinfo:
-        async with Component0():
+        async with Component0("component0"):
             pass
 
     assert len(excinfo.value.exceptions) == 1
@@ -55,7 +55,7 @@ async def test_exception_start(capsys):
             self.done()
 
     with pytest.raises(ExceptionGroup) as excinfo:
-        async with Component0():
+        async with Component0("component0"):
             pass
 
     assert len(excinfo.value.exceptions) == 1
@@ -81,7 +81,7 @@ async def test_exception_stop(capsys):
             raise RuntimeError("stop0")
 
     with pytest.raises(ExceptionGroup) as excinfo:
-        async with Component0():
+        async with Component0("component0"):
             pass
 
     assert len(excinfo.value.exceptions) == 1
@@ -107,7 +107,7 @@ async def test_exception_prepare_stop(capsys):
             raise RuntimeError("stop0")
 
     with pytest.raises(ExceptionGroup) as excinfo:
-        async with Component0():
+        async with Component0("component0"):
             pass
 
     assert len(excinfo.value.exceptions) == 2
@@ -134,7 +134,7 @@ async def test_exception_start_stop(capsys):
             raise RuntimeError("stop0")
 
     with pytest.raises(ExceptionGroup) as excinfo:
-        async with Component0():
+        async with Component0("component0"):
             pass
 
     assert len(excinfo.value.exceptions) == 2
@@ -161,9 +161,9 @@ async def test_exception_subcomponent(capsys):
             raise RuntimeError("sub stop0")
 
     class Component0(Component):
-        def __init__(self):
-            super().__init__()
-            self.add_component(Subcomponent0())
+        def __init__(self, name):
+            super().__init__(name)
+            self.add_component(Subcomponent0, "subcomponent0")
 
         async def prepare(self):
             print("prepare0")
@@ -178,7 +178,7 @@ async def test_exception_subcomponent(capsys):
             self.done()
 
     with pytest.raises(ExceptionGroup) as excinfo:
-        async with Component0():
+        async with Component0("component0"):
             pass
 
     assert len(excinfo.value.exceptions) == 2

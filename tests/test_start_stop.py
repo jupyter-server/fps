@@ -17,7 +17,7 @@ async def test_prepare():
             # will never prepare because doesn't call self.done()
             pass
 
-    component0 = Component0(name="component0", prepare_timeout=0.1)
+    component0 = Component0("component0", prepare_timeout=0.1)
 
     with pytest.raises(ExceptionGroup) as excinfo:
         async with component0:
@@ -38,9 +38,9 @@ async def test_nested_prepare():
     class Component0(Component):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
-            self.subcomponent0 = self.add_component(Subcomponent0(), name="subcomponent0")
+            self.subcomponent0 = self.add_component(Subcomponent0, "subcomponent0")
 
-    component0 = Component0(name="component0", prepare_timeout=0.1)
+    component0 = Component0("component0", prepare_timeout=0.1)
 
     with pytest.raises(ExceptionGroup) as excinfo:
         async with component0:
@@ -58,7 +58,7 @@ async def test_start():
             # will never start because doesn't call self.done()
             pass
 
-    component0 = Component0(name="component0", start_timeout=0.1)
+    component0 = Component0("component0", start_timeout=0.1)
 
     with pytest.raises(ExceptionGroup) as excinfo:
         async with component0:
@@ -77,11 +77,11 @@ async def test_nested_start():
             pass
 
     class Component0(Component):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.subcomponent0 = self.add_component(Subcomponent0(*args, **kwargs), name="subcomponent0")
+        def __init__(self, name, start_timeout):
+            super().__init__(name, start_timeout=start_timeout)
+            self.subcomponent0 = self.add_component(Subcomponent0, "subcomponent0")
 
-    component0 = Component0(name="component0", start_timeout=0.1)
+    component0 = Component0("component0", start_timeout=0.1)
 
     with pytest.raises(ExceptionGroup) as excinfo:
         async with component0:
@@ -99,7 +99,7 @@ async def test_stop():
             # will never stop because doesn't call self.done()
             pass
 
-    component0 = Component0(name="component0", stop_timeout=0.1)
+    component0 = Component0("component0", stop_timeout=0.1)
 
     with pytest.raises(ExceptionGroup) as excinfo:
         async with component0:
@@ -117,11 +117,11 @@ async def test_nested_stop():
             pass
 
     class Component0(Component):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            self.subcomponent0 = self.add_component(Subcomponent0(*args, **kwargs), name="subcomponent0")
+        def __init__(self, name, stop_timeout):
+            super().__init__(name, stop_timeout=stop_timeout)
+            self.subcomponent0 = self.add_component(Subcomponent0, "subcomponent0")
 
-    component0 = Component0(name="component0", stop_timeout=0.1)
+    component0 = Component0("component0", stop_timeout=0.1)
 
     with pytest.raises(ExceptionGroup) as excinfo:
         async with component0:

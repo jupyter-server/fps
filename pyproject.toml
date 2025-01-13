@@ -28,7 +28,6 @@ requires-python = ">= 3.9"
 dependencies = [
     "anyio",
     "anyioutils >=0.4.9",
-    "httpx",
 ]
 
 [project.optional-dependencies]
