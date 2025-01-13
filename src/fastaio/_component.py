@@ -27,7 +27,7 @@ class Component:
         start_timeout=1,
         stop_timeout=1,
     ):
-        self._initialized = True
+        self._initialized = False
         self._prepare_timeout = prepare_timeout
         self._start_timeout = start_timeout
         self._stop_timeout = stop_timeout
@@ -38,6 +38,7 @@ class Component:
         self._stopped = Event()
         self._name = name
         self._path: list[str] = []
+        self._uninitialized_components: dict[str, Any] = {}
         self._components: dict[str, Component] = {}
         self._added_resources: dict[Any, Resource] = {}
         self._acquired_resources: dict[Any, Resource] = {}
@@ -47,7 +48,7 @@ class Component:
     def path(self) -> str:
         return ".".join(self._path + [self._name])
 
-    def _check_initialized(self):
+    def _check_init(self):
         try:
             self._initialized
         except AttributeError:
@@ -62,16 +63,14 @@ class Component:
         component_class: type["Component"],
         name: str,
         **config,
-    ) -> "Component":
-        self._check_initialized()
-        component = component_class(name, **config)
-        component._name = name
-        component._path = self._path + [self._name]
-        if name in self._components:
+    ) -> None:
+        self._check_init()
+        if name in self._uninitialized_components:
             raise RuntimeError(f"Component name already exists: {name}")
-        self._components[name] = component
-        component._parent = self
-        return component
+        self._uninitialized_components[name] = {
+            "component_class": component_class,
+            "config": config,
+        }
 
     async def resource_freed(self, resource: Any) -> None:
         await self._added_resources[resource].wait_no_borrower()
@@ -102,7 +101,8 @@ class Component:
         return resource._value
 
     async def __aenter__(self):
-        self._check_initialized()
+        self._check_init()
+        initialize(self)
         async with AsyncExitStack() as exit_stack:
             self._task_group = await exit_stack.enter_async_context(create_task_group())
             self._exceptions = []
@@ -251,3 +251,16 @@ class Component:
             anyio.run(self._main)
         except KeyboardInterrupt:
             pass
+
+
+def initialize(component: Component) -> None:
+    if component._initialized:
+        return
+    for name, info in component._uninitialized_components.items():
+        subcomponent = info["component_class"](name, **info["config"])
+        subcomponent._path = component._path + [component._name]
+        subcomponent._parent = component
+        component._components[name] = subcomponent
+        initialize(subcomponent)
+    component._uninitialized_components = {}
+    component._initialized = True

@@ -12,15 +12,15 @@ def get_components(component_dict: dict[str, Any], root : bool = True) -> Compon
 def get_components(component_dict, root=False):
     components = []
     for component_name, component_info in component_dict.items():
-        component_type = component_info["type"]
-        subcomponents = component_info.get("components", {})
         component_config = component_info.get("config", {})
-        component = component_type, component_name, component_config
-        component_instance = component_type(component_name, **component_config)
+        if root:
+            component_instance = component_info["type"](component_name, **component_config)
+        subcomponents = component_info.get("components", {})
+        component = component_name, component_config
         components.append(component)
         for subcomponent in get_components(subcomponents):
-            subcomponent_type , subcomponent_name, subcomponent_config = subcomponent
-            component_instance.add_component(subcomponent_type, subcomponent_name, **subcomponent_config)
+            subcomponent_name, subcomponent_config = subcomponent
+            component_instance._uninitialized_components[subcomponent_name]["config"].update(subcomponent_config)
     if root:
         return component_instance
     return components
