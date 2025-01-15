@@ -28,6 +28,7 @@ requires-python = ">= 3.9"
 dependencies = [
     "anyio",
     "anyioutils >=0.4.9",
+    "click >=8.1.8,<9",
 ]
 
 [project.optional-dependencies]
@@ -43,6 +44,9 @@ test = [
 [project.urls]
 Source = "https://github.com/davidbrochart/fastaio"
 Issues = "https://github.com/davidbrochart/fastaio/issues"
+
+[project.scripts]
+fastaio = "fastaio._cli:main"
 
 [tool.hatch.build.targets.wheel]
 ignore-vcs = true
