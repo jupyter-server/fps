@@ -18,7 +18,8 @@ def test_cli():
         "--set", "component1.param1=bar",
         "--set", "component2.param2=baz",
         "--set", "component2.component3.param3=123",
-        ])
+        ]
+    )
     assert get_config() == {
         "root_component": {
             "type": Component,

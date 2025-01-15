@@ -68,8 +68,9 @@ class Component:
         if name in self._uninitialized_components:
             raise RuntimeError(f"Component name already exists: {name}")
         self._uninitialized_components[name] = {
-            "component_class": component_class,
+            "type": component_class,
             "config": config,
+            "components": {},
         }
 
     async def resource_freed(self, resource: Any) -> None:
@@ -253,14 +254,22 @@ class Component:
             pass
 
 
-def initialize(component: Component) -> None:
-    if component._initialized:
+def initialize(root_component: Component) -> None:
+    if root_component._initialized:
         return
-    for name, info in component._uninitialized_components.items():
-        subcomponent = info["component_class"](name, **info["config"])
-        subcomponent._path = component._path + [component._name]
-        subcomponent._parent = component
-        component._components[name] = subcomponent
-        initialize(subcomponent)
-    component._uninitialized_components = {}
-    component._initialized = True
+
+    _initialize(root_component._uninitialized_components, root_component, root_component._uninitialized_components)
+    root_component._uninitialized_components = {}
+    root_component._initialized = True
+
+
+def _initialize(subcomponents: dict[str, Any], parent_component: Component, root_component_components: dict[str, Any]) -> None:
+    for name, info in subcomponents.items():
+        config = info["config"]
+        config.update(root_component_components.get(name, {}).get("config", {}))
+        subcomponent_instance: Component = info["type"](name, **config)
+        subcomponent_instance._path = parent_component._path + [parent_component._name]
+        subcomponent_instance._parent = parent_component
+        parent_component._components[name] = subcomponent_instance
+        _initialize(subcomponent_instance._uninitialized_components, subcomponent_instance, root_component_components.get(name, {}).get("components", {}))
+        subcomponent_instance._uninitialized_components = {}
