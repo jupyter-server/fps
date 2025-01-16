@@ -1,3 +1,5 @@
+import pytest
+
 from fastaio import Component, get_root_component, initialize
 
 
@@ -22,7 +24,13 @@ def test_config_override():
     class Subcomponent3(Component):
         def __init__(self, name, param3="param3"):
             super().__init__(name)
+            self.add_component(Subcomponent4, "subcomponent4", param4="param4*")
             self.param3 = param3
+
+    class Subcomponent4(Component):
+        def __init__(self, name, param4="param4"):
+            super().__init__(name)
+            self.param4 = param4
 
     class Component0(Component):
         def __init__(self, name, param0="param0"):
@@ -41,6 +49,7 @@ def test_config_override():
     assert component0.components["subcomponent1"].param0 == "param0"
     assert component0.components["subcomponent2"].param2 == "param2*"
     assert component0.components["subcomponent2"].components["subcomponent3"].param3 == "param3*"
+    assert component0.components["subcomponent2"].components["subcomponent3"].components["subcomponent4"].param4 == "param4*"
 
 
 def test_config_from_dict():
@@ -64,7 +73,13 @@ def test_config_from_dict():
     class Subcomponent3(Component):
         def __init__(self, name, param3="param3"):
             super().__init__(name)
+            self.add_component(Subcomponent4, "subcomponent4", param4="foo")
             self.param3 = param3
+
+    class Subcomponent4(Component):
+        def __init__(self, name, param4="param4"):
+            super().__init__(name)
+            self.param4 = param4
 
     class Component0(Component):
         def __init__(self, name, param0="param0"):
@@ -100,6 +115,13 @@ def test_config_from_dict():
                             "config": {
                                 "param3": "param3*",
                             },
+                            "components": {
+                                "subcomponent4": {
+                                    "config": {
+                                        "param4": "param4*",
+                                    },
+                                },
+                            },
                         },
                     },
                 },
@@ -115,3 +137,69 @@ def test_config_from_dict():
     assert component0.components["subcomponent1"].param0 == "baz"
     assert component0.components["subcomponent2"].param2 == "param2*"
     assert component0.components["subcomponent2"].components["subcomponent3"].param3 == "param3*"
+    assert component0.components["subcomponent2"].components["subcomponent3"].components["subcomponent4"].param4 == "param4*"
+
+
+def test_wrong_config_from_dict_1():
+    class Component0(Component):
+        pass
+
+    config = {
+        "component0": {
+            "type": Component0,
+            "components": {
+                "subcomponent0": {
+                    "config": {
+                        "param0": "foo",
+                    },
+                },
+            },
+        },
+    }
+
+    component0 = get_root_component(config)
+
+    with pytest.raises(RuntimeError) as excinfo:
+        initialize(component0)
+
+    assert str(excinfo.value) == "Component not found: subcomponent0"
+
+
+def test_wrong_config_from_dict_2():
+    class Subcomponent0(Component):
+        def __init__(self, name, param0="param0", param1="param1"):
+            super().__init__(name)
+            self.param0 = param0
+            self.param1 = param1
+
+    class Component0(Component):
+        def __init__(self, name, param0="param0"):
+            super().__init__(name)
+            self.add_component(Subcomponent0, "subcomponent0", param0="foo")
+
+    config = {
+        "component0": {
+            "type": Component0,
+            "components": {
+                "subcomponent0": {
+                    "config": {
+                        "param0": "foo",
+                    },
+                    "components": {
+                        "subcomponent1": {
+                            "config": {
+                                "param1": "bar",
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    }
+
+    component0 = get_root_component(config)
+
+    with pytest.raises(RuntimeError) as excinfo:
+        initialize(component0)
+
+    assert str(excinfo.value) == "Component not found: subcomponent1"
