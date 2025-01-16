@@ -267,9 +267,14 @@ def _initialize(subcomponents: dict[str, Any], parent_component: Component, root
     for name, info in subcomponents.items():
         config = info["config"]
         config.update(root_component_components.get(name, {}).get("config", {}))
+        if "type" not in info:
+            raise RuntimeError(f"Component not found: {name}")
         subcomponent_instance: Component = info["type"](name, **config)
         subcomponent_instance._path = parent_component._path + [parent_component._name]
         subcomponent_instance._parent = parent_component
         parent_component._components[name] = subcomponent_instance
         _initialize(subcomponent_instance._uninitialized_components, subcomponent_instance, root_component_components.get(name, {}).get("components", {}))
         subcomponent_instance._uninitialized_components = {}
+    for name in root_component_components:
+        if name not in subcomponents:
+            raise RuntimeError(f"Component not found: {name}")
