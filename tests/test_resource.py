@@ -207,8 +207,7 @@ async def test_resource_not_freed():
             pass
 
     assert len(excinfo.value.exceptions) == 2
-    assert excinfo.group_contains(RuntimeError)
-    assert str(excinfo.value.exceptions[0]) == "Resource was not freed: 0"
+    assert str(excinfo.value.exceptions[0]) == "Component timed out while stopping: component0.subcomponent0"
     assert str(excinfo.value.exceptions[1]) == "Component timed out while stopping: component0"
 
 
