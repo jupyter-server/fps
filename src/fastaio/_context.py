@@ -24,9 +24,10 @@ class Resource:
             self._dropped = Event()
 
     async def wait_no_borrower(self):
-        if not self._borrowers:
-            return
-        await self._dropped.wait()
+        while True:
+            if not self._borrowers:
+                return
+            await self._dropped.wait()
 
 
 class Context:

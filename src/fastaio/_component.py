@@ -19,6 +19,7 @@ if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup  # pragma: no cover
 
 class Component:
+    _exited: Event
 
     def __init__(
         self,
@@ -43,6 +44,15 @@ class Component:
         self._added_resources: dict[Any, Resource] = {}
         self._acquired_resources: dict[Any, Resource] = {}
         self._context_manager_exits: list[Callable] = []
+
+    @property
+    def parent(self) -> Component | None:
+        return self._parent
+
+    @parent.setter
+    def parent(self, value: Component) -> None:
+        self._parent = value
+        self._exited = value._exited
 
     @property
     def path(self) -> str:
@@ -80,19 +90,23 @@ class Component:
         for resource in self._added_resources.values():
             await resource.wait_no_borrower()
 
+    def drop_all_resources(self) -> None:
+        for resource in self._acquired_resources.values():
+            resource.drop(self)
+
     def drop_resource(self, resource: Any) -> None:
         self._acquired_resources[resource].drop(self)
 
     def add_resource(self, resource: Any, types: Iterable | Any | None = None, exclusive: bool = False) -> None:
         self._added_resources[resource] = self._context.add_resource(resource, self, types, exclusive)
-        if self._parent is not None:
-            self._added_resources[resource] = self._parent._context.add_resource(resource, self, types, exclusive)
+        if self.parent is not None:
+            self._added_resources[resource] = self.parent._context.add_resource(resource, self, types, exclusive)
 
     async def get_resource(self, resource_type: Any) -> Any:
         async with create_task_group() as tg:
             tasks = [create_task(self._context.get_resource(resource_type, self), tg)]
-            if self._parent is not None:
-                tasks.append(create_task(self._parent._context.get_resource(resource_type, self), tg))
+            if self.parent is not None:
+                tasks.append(create_task(self.parent._context.get_resource(resource_type, self), tg))
             done, pending = await wait(tasks, tg, return_when=FIRST_COMPLETED)
             for task in done:
                 break
@@ -128,6 +142,7 @@ class Component:
         with move_on_after(self._stop_timeout) as scope:
             self._task_group.start_soon(self._stop, name=f"{self.path} stop")
             await self._all_stopped()
+        self._exited.set()
         if scope.cancelled_caught:
             self._get_all_stop_timeout()
         await self._exit_stack.__aexit__(exc_type, exc_value, exc_tb)
@@ -202,12 +217,21 @@ class Component:
         elif self._phase == "starting":
             self._started.set()
         else:
-            for resource in self._acquired_resources.values():
-                resource.drop(self)
-            for resource in self._added_resources.values():
-                if resource._borrowers:
-                    raise RuntimeError(f"Resource was not freed: {resource._value}")
-            self._stopped.set()
+            self._task_group.start_soon(self._finish)
+
+    async def _finish(self):
+        tasks = (
+            create_task(self._drop_and_wait_resources(), self._task_group),
+            create_task(self._exited.wait(), self._task_group),
+        )
+        done, pending = await wait(tasks, self._task_group, return_when=FIRST_COMPLETED)
+        for task in pending:
+            task.cancel(raise_exception=False)
+
+    async def _drop_and_wait_resources(self):
+        self.drop_all_resources()
+        await self.all_resources_freed()
+        self._stopped.set()
 
     async def _start(self) -> None:
         try:
@@ -215,7 +239,7 @@ class Component:
                 for component in self._components.values():
                     component._task_group = tg
                     component._phase = self._phase
-                    tg.start_soon(component._start, name=f"{component.path} start")
+                    tg.start_soon(component._start, name=f"{component.path} _start")
                 tg.start_soon(self.start, name=f"{self.path} start")
         except Exception as exc:
             self._exceptions.append(exc)
@@ -230,7 +254,7 @@ class Component:
                 for component in self._components.values():
                     component._task_group = tg
                     component._phase = self._phase
-                    tg.start_soon(component._stop, name=f"{component.path} stop")
+                    tg.start_soon(component._stop, name=f"{component.path} _stop")
                 for context_manager_exit in self._context_manager_exits[::-1]:
                     res = context_manager_exit(None, None, None)
                     if isawaitable(res):
@@ -258,6 +282,7 @@ def initialize(root_component: Component) -> None:
     if root_component._initialized:
         return
 
+    root_component._exited = Event()
     _initialize(root_component._uninitialized_components, root_component, root_component._uninitialized_components)
     root_component._uninitialized_components = {}
     root_component._initialized = True
@@ -271,7 +296,7 @@ def _initialize(subcomponents: dict[str, Any], parent_component: Component, root
             raise RuntimeError(f"Component not found: {name}")
         subcomponent_instance: Component = info["type"](name, **config)
         subcomponent_instance._path = parent_component._path + [parent_component._name]
-        subcomponent_instance._parent = parent_component
+        subcomponent_instance.parent = parent_component
         parent_component._components[name] = subcomponent_instance
         _initialize(subcomponent_instance._uninitialized_components, subcomponent_instance, root_component_components.get(name, {}).get("components", {}))
         subcomponent_instance._uninitialized_components = {}
