@@ -32,6 +32,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+web = [
+    "fastapi",
+    "anycorn",
+]
 test = [
     "pytest >=8,<9",
     "trio >=0.27.0,<0.28",
@@ -39,6 +43,7 @@ test = [
     "ruff",
     "coverage[toml] >=7,<8",
     "exceptiongroup; python_version<'3.11'",
+    "httpx",
 ]
 
 [project.urls]
