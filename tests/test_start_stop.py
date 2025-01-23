@@ -17,15 +17,11 @@ async def test_prepare():
             # will never prepare because doesn't call self.done()
             pass
 
-    component0 = Component0("component0", prepare_timeout=0.1)
+    async with Component0("component0", prepare_timeout=0.1) as component0:
+        pass
 
-    with pytest.raises(ExceptionGroup) as excinfo:
-        async with component0:
-            pass
-
-    assert len(excinfo.value.exceptions) == 1
-    assert excinfo.group_contains(TimeoutError)
-    assert str(excinfo.value.exceptions[0]) == "Component timed out while preparing: component0"
+    assert len(component0.exceptions) == 1
+    assert str(component0.exceptions[0]) == "Component timed out while preparing: component0"
 
 
 async def test_nested_prepare():
@@ -40,15 +36,11 @@ async def test_nested_prepare():
             super().__init__(*args, **kwargs)
             self.subcomponent0 = self.add_component(Subcomponent0, "subcomponent0")
 
-    component0 = Component0("component0", prepare_timeout=0.1)
+    async with Component0("component0", prepare_timeout=0.1) as component0:
+        pass
 
-    with pytest.raises(ExceptionGroup) as excinfo:
-        async with component0:
-            pass
-
-    assert len(excinfo.value.exceptions) == 1
-    assert excinfo.group_contains(TimeoutError)
-    assert str(excinfo.value.exceptions[0]) == "Component timed out while preparing: component0.subcomponent0"
+    assert len(component0.exceptions) == 1
+    assert str(component0.exceptions[0]) == "Component timed out while preparing: component0.subcomponent0"
 
 
 async def test_start():
@@ -58,15 +50,11 @@ async def test_start():
             # will never start because doesn't call self.done()
             pass
 
-    component0 = Component0("component0", start_timeout=0.1)
+    async with Component0("component0", start_timeout=0.1) as component0:
+        pass
 
-    with pytest.raises(ExceptionGroup) as excinfo:
-        async with component0:
-            pass
-
-    assert len(excinfo.value.exceptions) == 1
-    assert excinfo.group_contains(TimeoutError)
-    assert str(excinfo.value.exceptions[0]) == "Component timed out while starting: component0"
+    assert len(component0.exceptions) == 1
+    assert str(component0.exceptions[0]) == "Component timed out while starting: component0"
 
 
 async def test_nested_start():
@@ -81,15 +69,11 @@ async def test_nested_start():
             super().__init__(name, start_timeout=start_timeout)
             self.subcomponent0 = self.add_component(Subcomponent0, "subcomponent0")
 
-    component0 = Component0("component0", start_timeout=0.1)
+    async with Component0("component0", start_timeout=0.1) as component0:
+        pass
 
-    with pytest.raises(ExceptionGroup) as excinfo:
-        async with component0:
-            pass
-
-    assert len(excinfo.value.exceptions) == 1
-    assert excinfo.group_contains(TimeoutError)
-    assert str(excinfo.value.exceptions[0]) == "Component timed out while starting: component0.subcomponent0"
+    assert len(component0.exceptions) == 1
+    assert str(component0.exceptions[0]) == "Component timed out while starting: component0.subcomponent0"
 
 
 async def test_stop():
@@ -101,13 +85,11 @@ async def test_stop():
 
     component0 = Component0("component0", stop_timeout=0.1)
 
-    with pytest.raises(ExceptionGroup) as excinfo:
-        async with component0:
-            pass
+    async with component0:
+        pass
 
-    assert len(excinfo.value.exceptions) == 1
-    assert excinfo.group_contains(TimeoutError)
-    assert str(excinfo.value.exceptions[0]) == "Component timed out while stopping: component0"
+    assert len(component0.exceptions) == 1
+    assert str(component0.exceptions[0]) == "Component timed out while stopping: component0"
 
 async def test_nested_stop():
 
@@ -121,12 +103,8 @@ async def test_nested_stop():
             super().__init__(name, stop_timeout=stop_timeout)
             self.subcomponent0 = self.add_component(Subcomponent0, "subcomponent0")
 
-    component0 = Component0("component0", stop_timeout=0.1)
+    async with Component0("component0", stop_timeout=0.1) as component0:
+        pass
 
-    with pytest.raises(ExceptionGroup) as excinfo:
-        async with component0:
-            pass
-
-    assert len(excinfo.value.exceptions) == 1
-    assert excinfo.group_contains(TimeoutError)
-    assert str(excinfo.value.exceptions[0]) == "Component timed out while stopping: component0.subcomponent0"
+    assert len(component0.exceptions) == 1
+    assert str(component0.exceptions[0]) == "Component timed out while stopping: component0.subcomponent0"

@@ -65,26 +65,27 @@ async def test_resource():
     assert component0.components["subcomponent0"].resource1 == resource1
 
 
-async def test_resource_with_context_manager(capsys):
+async def test_resource_with_context_manager():
+    outputs = []
 
     class Resource0:
         async def __aenter__(self):
-            print("aenter")
+            outputs.append("aenter")
             return self
 
         async def __aexit__(self, exc_type, exc_value, exc_tb):
-            print("aexit")
+            outputs.append("aexit")
 
         def __enter__(self):
-            print("enter")
+            outputs.append("enter")
             return self
 
         def __exit__(self, exc_type, exc_value, exc_tb):
-            print("exit")
+            outputs.append("exit")
 
     class Component0(Component):
         async def start(self):
-            print("start")
+            outputs.append("start")
             resource0 = Resource0()
             await self.async_context_manager(resource0)
             self.context_manager(resource0)
@@ -92,12 +93,12 @@ async def test_resource_with_context_manager(capsys):
 
         async def stop(self):
             self.done()
-            print("stop")
+            outputs.append("stop")
 
     async with Component0("component0"):
         pass
 
-    assert capsys.readouterr().out.splitlines() == [
+    assert outputs == [
         "start",
         "aenter",
         "enter",
@@ -139,16 +140,16 @@ async def test_add_same_resource_type():
             self.add_resource(0)
             self.add_resource(0)
 
-    with pytest.raises(ExceptionGroup) as excinfo:
-        async with Component0("component0"):
-            pass
+    async with Component0("component0") as component0:
+        pass
 
-    assert len(excinfo.value.exceptions) == 1
-    assert excinfo.group_contains(RuntimeError)
-    assert str(excinfo.value.exceptions[0]) == """Resource type "<class 'int'>" already exists"""
+    assert len(component0.exceptions) == 1
+    assert type(component0.exceptions[0]) is RuntimeError
+    assert str(component0.exceptions[0]) == """Resource type "<class 'int'>" already exists"""
 
 
-async def test_add_exclusive_resource(capsys):
+async def test_add_exclusive_resource():
+    outputs = []
 
     class Subcomponent0(Component):
         async def start(self):
@@ -158,9 +159,9 @@ async def test_add_exclusive_resource(capsys):
     class Subcomponent1(Component):
         async def start(self):
             resource = await self.get_resource(int)
-            print("get")
+            outputs.append("get")
             await sleep(0.1)
-            print("drop")
+            outputs.append("drop")
             self.drop_resource(resource)
             self.done()
 
@@ -174,7 +175,7 @@ async def test_add_exclusive_resource(capsys):
     async with Component0("component0"):
         pass
 
-    assert capsys.readouterr().out.splitlines() == [
+    assert outputs == [
         "get",
         "drop",
         "get",
@@ -202,16 +203,16 @@ async def test_resource_not_freed():
         async def stop(self):
             pass
 
-    with pytest.raises(ExceptionGroup) as excinfo:
-        async with Component0("component0", stop_timeout=0.1):
-            pass
+    async with Component0("component0", stop_timeout=0.1) as component0:
+        pass
 
-    assert len(excinfo.value.exceptions) == 2
-    assert str(excinfo.value.exceptions[0]) == "Component timed out while stopping: component0.subcomponent0"
-    assert str(excinfo.value.exceptions[1]) == "Component timed out while stopping: component0"
+    assert len(component0.exceptions) == 2
+    assert str(component0.exceptions[0]) == "Component timed out while stopping: component0.subcomponent0"
+    assert str(component0.exceptions[1]) == "Component timed out while stopping: component0"
 
 
-async def test_all_resources_freed(capsys):
+async def test_all_resources_freed():
+    outputs = []
 
     class Subcomponent0(Component):
         async def start(self):
@@ -220,7 +221,7 @@ async def test_all_resources_freed(capsys):
 
         async def stop(self):
             await self.all_resources_freed()
-            print("all resources freed")
+            outputs.append("all resources freed")
             self.done()
 
     class Component0(Component):
@@ -235,13 +236,13 @@ async def test_all_resources_freed(capsys):
 
         async def stop(self):
             self.drop_resource(self.resource)
-            print("resource dropped")
+            outputs.append("resource dropped")
             self.done()
 
     async with Component0("component0"):
         pass
 
-    assert capsys.readouterr().out.splitlines() == [
+    assert outputs == [
         "resource dropped",
         "all resources freed",
     ]

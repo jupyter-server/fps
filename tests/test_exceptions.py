@@ -10,155 +10,147 @@ if sys.version_info < (3, 11):
 pytestmark = pytest.mark.anyio
 
 
-async def test_exception_prepare(capsys):
+async def test_exception_prepare():
+    outputs = []
+    error = RuntimeError("prepare0")
 
     class Component0(Component):
         async def prepare(self):
-            print("prepare0")
-            raise RuntimeError("prepare0")
+            outputs.append("prepare0")
+            raise error
 
         async def start(self):
             # should not be called, since prepare failed
-            print("start0")  # pragma: no cover
+            outputs.append("start0")  # pragma: no cover
             self.done()  # pragma: no cover
 
         async def stop(self):
             # should always be called
-            print("stop0")
+            outputs.append("stop0")
             self.done()
 
-    with pytest.raises(ExceptionGroup) as excinfo:
-        async with Component0("component0"):
-            pass
+    async with Component0("component0") as component0:
+        pass
 
-    assert len(excinfo.value.exceptions) == 1
-    assert excinfo.group_contains(RuntimeError)
-    assert str(excinfo.value.exceptions[0]) == "prepare0"
-
-    assert capsys.readouterr().out.splitlines() == ["prepare0", "stop0"]
+    assert component0.exceptions == [error]
+    assert outputs == ["prepare0", "stop0"]
 
 
-async def test_exception_start(capsys):
+async def test_exception_start():
+    outputs = []
+    error = RuntimeError("start0")
 
     class Component0(Component):
         async def prepare(self):
-            print("prepare0")
+            outputs.append("prepare0")
             self.done()
 
         async def start(self):
-            print("start0")
-            raise RuntimeError("start0")
+            outputs.append("start0")
+            raise error
 
         async def stop(self):
             # should always be called
-            print("stop0")
+            outputs.append("stop0")
             self.done()
 
-    with pytest.raises(ExceptionGroup) as excinfo:
-        async with Component0("component0"):
-            pass
+    async with Component0("component0") as component0:
+        pass
 
-    assert len(excinfo.value.exceptions) == 1
-    assert excinfo.group_contains(RuntimeError)
-    assert str(excinfo.value.exceptions[0]) == "start0"
-
-    assert capsys.readouterr().out.splitlines() == ["prepare0", "start0", "stop0"]
+    assert component0.exceptions == [error]
 
 
-async def test_exception_stop(capsys):
+async def test_exception_stop():
+    outputs = []
+    error = RuntimeError("stop0")
 
     class Component0(Component):
         async def prepare(self):
-            print("prepare0")
+            outputs.append("prepare0")
             self.done()
 
         async def start(self):
-            print("start0")
+            outputs.append("start0")
             self.done()
 
         async def stop(self):
-            print("stop0")
-            raise RuntimeError("stop0")
+            outputs.append("stop0")
+            raise error
 
-    with pytest.raises(ExceptionGroup) as excinfo:
-        async with Component0("component0"):
-            pass
+    async with Component0("component0") as component0:
+        pass
 
-    assert len(excinfo.value.exceptions) == 1
-    assert excinfo.group_contains(RuntimeError)
-    assert str(excinfo.value.exceptions[0]) == "stop0"
-
-    assert capsys.readouterr().out.splitlines() == ["prepare0", "start0", "stop0"]
+    assert component0.exceptions == [error]
+    assert outputs == ["prepare0", "start0", "stop0"]
 
 
-async def test_exception_prepare_stop(capsys):
+async def test_exception_prepare_stop():
+    outputs = []
+    error_prepare0 = RuntimeError("prepare0")
+    error_stop0 = RuntimeError("stop0")
 
     class Component0(Component):
         async def prepare(self):
-            print("prepare0")
-            raise RuntimeError("prepare0")
+            outputs.append("prepare0")
+            raise error_prepare0
 
         async def start(self):
-            print("start0")  # pragma: no cover
+            outputs.append("start0")  # pragma: no cover
             self.done()  # pragma: no cover
 
         async def stop(self):
-            print("stop0")
-            raise RuntimeError("stop0")
+            outputs.append("stop0")
+            raise error_stop0
 
-    with pytest.raises(ExceptionGroup) as excinfo:
-        async with Component0("component0"):
-            pass
+    async with Component0("component0") as component0:
+        pass
 
-    assert len(excinfo.value.exceptions) == 2
-    assert excinfo.group_contains(RuntimeError)
-    assert str(excinfo.value.exceptions[0]) == "prepare0"
-    assert str(excinfo.value.exceptions[1]) == "stop0"
-
-    assert capsys.readouterr().out.splitlines() == ["prepare0", "stop0"]
+    assert component0.exceptions == [error_prepare0, error_stop0]
+    assert outputs == ["prepare0", "stop0"]
 
 
-async def test_exception_start_stop(capsys):
+async def test_exception_start_stop():
+    outputs = []
+    error_start0 = RuntimeError("start0")
+    error_stop0 = RuntimeError("stop0")
 
     class Component0(Component):
         async def prepare(self):
-            print("prepare0")
+            outputs.append("prepare0")
             self.done()
 
         async def start(self):
-            print("start0")
-            raise RuntimeError("start0")
+            outputs.append("start0")
+            raise error_start0
 
         async def stop(self):
-            print("stop0")
-            raise RuntimeError("stop0")
+            outputs.append("stop0")
+            raise error_stop0
 
-    with pytest.raises(ExceptionGroup) as excinfo:
-        async with Component0("component0"):
-            pass
+    async with Component0("component0") as component0:
+        pass
 
-    assert len(excinfo.value.exceptions) == 2
-    assert excinfo.group_contains(RuntimeError)
-    assert str(excinfo.value.exceptions[0]) == "start0"
-    assert str(excinfo.value.exceptions[1]) == "stop0"
-
-    assert capsys.readouterr().out.splitlines() == ["prepare0", "start0", "stop0"]
+    assert component0.exceptions == [error_start0, error_stop0]
+    assert outputs == ["prepare0", "start0", "stop0"]
 
 
-async def test_exception_subcomponent(capsys):
+async def test_exception_subcomponent():
+    outputs = []
+    error_sub_start0 = RuntimeError("sub start0")
+    error_sub_stop0 = RuntimeError("sub stop0")
 
     class Subcomponent0(Component):
         async def prepare(self):
-            print("sub prepare0")
+            outputs.append("sub prepare0")
             self.done()
 
         async def start(self):
-            print("sub start0")
-            raise RuntimeError("sub start0")
+            outputs.append("sub start0")
+            raise error_sub_start0
 
         async def stop(self):
-            print("sub stop0")
-            raise RuntimeError("sub stop0")
+            outputs.append("sub stop0")
+            raise error_sub_stop0
 
     class Component0(Component):
         def __init__(self, name):
@@ -166,27 +158,22 @@ async def test_exception_subcomponent(capsys):
             self.add_component(Subcomponent0, "subcomponent0")
 
         async def prepare(self):
-            print("prepare0")
+            outputs.append("prepare0")
             self.done()
 
         async def start(self):
-            print("start0")
+            outputs.append("start0")
             self.done()
 
         async def stop(self):
-            print("stop0")
+            outputs.append("stop0")
             self.done()
 
-    with pytest.raises(ExceptionGroup) as excinfo:
-        async with Component0("component0"):
-            pass
+    async with Component0("component0") as component0:
+        pass
 
-    assert len(excinfo.value.exceptions) == 2
-    assert excinfo.group_contains(RuntimeError)
-    assert str(excinfo.value.exceptions[0]) == "sub start0"
-    assert str(excinfo.value.exceptions[1]) == "sub stop0"
-
-    assert capsys.readouterr().out.splitlines() == [
+    assert component0.exceptions == [error_sub_start0, error_sub_stop0]
+    assert outputs == [
         "prepare0",
         "sub prepare0",
         "start0",

@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import logging
 import sys
+from importlib import import_module
 
 from contextlib import AsyncExitStack
 from inspect import isawaitable, signature
 from typing import TYPE_CHECKING, Any, Callable, Iterable
 
 import anyio
+import structlog
 from anyio import Event, create_task_group, move_on_after
 from anyioutils import create_task, wait, FIRST_COMPLETED
 
@@ -18,8 +21,13 @@ if TYPE_CHECKING:
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup  # pragma: no cover
 
+logging.disable()
+log = structlog.get_logger()
+
+
 class Component:
-    _exited: Event
+    _exit: Event
+    _exceptions: list[Exception]
 
     def __init__(
         self,
@@ -52,11 +60,19 @@ class Component:
     @parent.setter
     def parent(self, value: Component) -> None:
         self._parent = value
-        self._exited = value._exited
+        self._exit = value._exit
 
     @property
     def path(self) -> str:
         return ".".join(self._path + [self._name])
+
+    @property
+    def started(self) -> Event:
+        return self._started
+
+    @property
+    def exceptions(self) -> list[Exception]:
+        return self._exceptions
 
     def _check_init(self):
         try:
@@ -70,21 +86,27 @@ class Component:
 
     def add_component(
         self,
-        component_class: type["Component"],
+        component_type: type["Component"] | str,
         name: str,
         **config,
     ) -> None:
         self._check_init()
         if name in self._uninitialized_components:
             raise RuntimeError(f"Component name already exists: {name}")
+        if isinstance(component_type, str):
+            module_name, component_name = component_type.rsplit(":", 1)
+            module = import_module(module_name)
+            component_type = getattr(module, component_name)
         self._uninitialized_components[name] = {
-            "type": component_class,
+            "type": component_type,
             "config": config,
             "components": {},
         }
+        log.debug("Component added", path=self.path, name=name, component_type=component_type)
 
     async def resource_freed(self, resource: Any) -> None:
-        await self._added_resources[resource].wait_no_borrower()
+        resource_id = id(resource)
+        await self._added_resources[resource_id].wait_no_borrower()
 
     async def all_resources_freed(self) -> None:
         for resource in self._added_resources.values():
@@ -95,28 +117,36 @@ class Component:
             resource.drop(self)
 
     def drop_resource(self, resource: Any) -> None:
-        self._acquired_resources[resource].drop(self)
+        resource_id = id(resource)
+        self._acquired_resources[resource_id].drop(self)
 
     def add_resource(self, resource: Any, types: Iterable | Any | None = None, exclusive: bool = False) -> None:
-        self._added_resources[resource] = self._context.add_resource(resource, self, types, exclusive)
+        resource_id = id(resource)
+        resource_types = self._context.get_resource_types(resource, types)
+        self._added_resources[resource_id] = self._context.add_resource(resource, self, resource_types, exclusive)
         if self.parent is not None:
-            self._added_resources[resource] = self.parent._context.add_resource(resource, self, types, exclusive)
+            self._added_resources[resource_id] = self.parent._context.add_resource(resource, self, resource_types, exclusive)
+        log.debug("Component added resource", path=self.path, resource_types=resource_types)
 
     async def get_resource(self, resource_type: Any) -> Any:
-        async with create_task_group() as tg:
-            tasks = [create_task(self._context.get_resource(resource_type, self), tg)]
-            if self.parent is not None:
-                tasks.append(create_task(self.parent._context.get_resource(resource_type, self), tg))
-            done, pending = await wait(tasks, tg, return_when=FIRST_COMPLETED)
-            for task in done:
-                break
-            resource = await task.wait()
-            tg.cancel_scope.cancel()
-        self._acquired_resources[resource._value] = resource
+        log.debug("Component getting resource", path=self.path, resource_type=resource_type)
+        tasks = [create_task(self._context.get_resource(resource_type, self), self._task_group)]
+        if self.parent is not None:
+            tasks.append(create_task(self.parent._context.get_resource(resource_type, self), self._task_group))
+        done, pending = await wait(tasks, self._task_group, return_when=FIRST_COMPLETED)
+        for task in pending:
+            task.cancel(raise_exception=False)
+        for task in done:
+            break
+        resource = await task.wait()
+        resource_id = id(resource._value)
+        self._acquired_resources[resource_id] = resource
+        log.debug("Component got resource", path=self.path, resource_type=resource_type)
         return resource._value
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> Component:
         self._check_init()
+        log.debug("Running root component", name=self.path)
         initialize(self)
         async with AsyncExitStack() as exit_stack:
             self._task_group = await exit_stack.enter_async_context(create_task_group())
@@ -127,32 +157,45 @@ class Component:
                 await self._all_prepared()
             if scope.cancelled_caught:
                 self._get_all_prepare_timeout()
-            if not self._exceptions:
+            if self._exceptions:
+                self._exit.set()
+            else:
                 self._phase = "starting"
                 with move_on_after(self._start_timeout) as scope:
                     self._task_group.start_soon(self._start, name=f"{self.path} start")
                     await self._all_started()
                 if scope.cancelled_caught:
                     self._get_all_start_timeout()
+                if self._exceptions:
+                    self._exit.set()
+                if not self._exit.is_set():
+                    log.debug("Application running")
             self._exit_stack = exit_stack.pop_all()
-            return self
+        return self
 
     async def __aexit__(self, exc_type, exc_value, exc_tb):
         self._phase = "stopping"
         with move_on_after(self._stop_timeout) as scope:
             self._task_group.start_soon(self._stop, name=f"{self.path} stop")
             await self._all_stopped()
-        self._exited.set()
+        self._exit.set()
         if scope.cancelled_caught:
             self._get_all_stop_timeout()
-        await self._exit_stack.__aexit__(exc_type, exc_value, exc_tb)
+        self._task_group.cancel_scope.cancel()
+        try:
+            await self._exit_stack.__aexit__(exc_type, exc_value, exc_tb)
+        except anyio.get_cancelled_exc_class():  # pragma: nocover
+            pass
         exceptions = []
         for exc in self._exceptions:
             while isinstance(exc, ExceptionGroup):
                 exc = exc.exceptions[0]
             exceptions.append(exc)
         if exceptions:
-            raise ExceptionGroup("Application failed", exceptions)
+            log.critical("Application failed")
+            for exception in exceptions:
+                log.critical("Exception", exc_info=exception)
+        log.debug("Application stopped")
 
     def context_manager(self, resource):
         self._context_manager_exits.append(resource.__exit__)
@@ -196,6 +239,7 @@ class Component:
         await self._stopped.wait()
 
     async def _prepare(self) -> None:
+        log.debug("Preparing component", path=self.path)
         try:
             async with create_task_group() as tg:
                 for component in self._components.values():
@@ -204,9 +248,10 @@ class Component:
                     component._exceptions = self._exceptions
                     tg.start_soon(component._prepare, name=f"{component.path} prepare")
                 tg.start_soon(self.prepare, name=f"{self.path} prepare")
-        except Exception as exc:
-            self._exceptions.append(exc)
+        except ExceptionGroup as exc:
+            self._exceptions.append(*exc.exceptions)
             self._prepared.set()
+            log.debug("Component failed while preparing", path=self.path, exc_info=exc)
 
     async def prepare(self) -> None:
         self.done()
@@ -214,15 +259,17 @@ class Component:
     def done(self) -> None:
         if self._phase == "preparing":
             self._prepared.set()
+            log.debug("Component prepared", path=self.path)
         elif self._phase == "starting":
             self._started.set()
+            log.debug("Component started", path=self.path)
         else:
             self._task_group.start_soon(self._finish)
 
     async def _finish(self):
         tasks = (
             create_task(self._drop_and_wait_resources(), self._task_group),
-            create_task(self._exited.wait(), self._task_group),
+            create_task(self._exit.wait(), self._task_group),
         )
         done, pending = await wait(tasks, self._task_group, return_when=FIRST_COMPLETED)
         for task in pending:
@@ -232,8 +279,10 @@ class Component:
         self.drop_all_resources()
         await self.all_resources_freed()
         self._stopped.set()
+        log.debug("Component stopped", path=self.path)
 
     async def _start(self) -> None:
+        log.debug("Starting component", path=self.path)
         try:
             async with create_task_group() as tg:
                 for component in self._components.values():
@@ -241,14 +290,15 @@ class Component:
                     component._phase = self._phase
                     tg.start_soon(component._start, name=f"{component.path} _start")
                 tg.start_soon(self.start, name=f"{self.path} start")
-        except Exception as exc:
-            self._exceptions.append(exc)
+        except ExceptionGroup as exc:
+            self._exceptions.append(*exc.exceptions)
             self._started.set()
 
     async def start(self) -> None:
         self.done()
 
     async def _stop(self) -> None:
+        log.debug("Stopping component", path=self.path)
         try:
             async with create_task_group() as tg:
                 for component in self._components.values():
@@ -260,8 +310,8 @@ class Component:
                     if isawaitable(res):
                         await res   
                 tg.start_soon(self.stop, name=f"{self.path} stop")
-        except Exception as exc:
-            self._exceptions.append(exc)
+        except ExceptionGroup as exc:
+            self._exceptions.append(*exc.exceptions)
             self._stopped.set()
 
     async def stop(self) -> None:
@@ -269,7 +319,7 @@ class Component:
 
     async def _main(self): # pragma: no cover
         async with self:
-            await Event().wait()
+            await self._exit.wait()
 
     def run(self):  # pragma: no cover
         try:
@@ -282,7 +332,7 @@ def initialize(root_component: Component) -> None:
     if root_component._initialized:
         return
 
-    root_component._exited = Event()
+    root_component._exit = Event()
     _initialize(root_component._uninitialized_components, root_component, root_component._uninitialized_components)
     root_component._uninitialized_components = {}
     root_component._initialized = True

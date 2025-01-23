@@ -1,29 +1,31 @@
 import pytest
 
+from anyio import create_task_group, sleep
 from fastaio import Component
 
 pytestmark = pytest.mark.anyio
 
 
-async def test_component(capsys):
+async def test_component():
+    outputs = []
 
     class Subcomponent0(Component):
         async def start(self):
             self.done()
-            print("started0")
+            outputs.append("started0")
 
         async def stop(self):
             self.done()
-            print("stopped0")
+            outputs.append("stopped0")
 
     class Subcomponent1(Component):
         async def start(self):
             self.done()
-            print("started1")
+            outputs.append("started1")
 
         async def stop(self):
             self.done()
-            print("stopped1")
+            outputs.append("stopped1")
 
     class Component0(Component):
         def __init__(self, name):
@@ -31,18 +33,28 @@ async def test_component(capsys):
             self.add_component(Subcomponent0, "subcomponent0")
             self.add_component(Subcomponent1, "subcomponent1")
 
-    component0 = Component0("component0")
-
-    async with component0:
+    async with Component0("component0") as component0:
         pass
 
-    captured = capsys.readouterr()
-    assert captured.out in (
-        "started0\nstarted1\nstopped0\nstopped1\n",
-        "started0\nstarted1\nstopped1\nstopped0\n",
-        "started1\nstarted0\nstopped1\nstopped0\n",
-        "started1\nstarted0\nstopped0\nstopped1\n",
+    assert component0.started
+    assert outputs in (
+        ["started0", "started1", "stopped0", "stopped1"],
+        ["started0", "started1", "stopped1", "stopped0"],
+        ["started1", "started0", "stopped1", "stopped0"],
+        ["started1", "started0", "stopped0", "stopped1"],
     )
+
+
+async def test_add_component_str():
+    class Component0(Component):
+        def __init__(self, name):
+            super().__init__(name)
+            self.add_component("fastaio:Component", "subcomponent0")
+
+    async with Component0("component0") as component0:
+        pass
+
+    assert type(component0.components["subcomponent0"]) is Component
 
 
 async def test_add_same_component_name():
