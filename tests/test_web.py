@@ -15,14 +15,11 @@ async def test_web(unused_tcp_port):
     class Subcomponent0(Component):
         async def prepare(self):
             self.app = await self.get_resource(FastAPI)
-            self.done()
 
         async def start(self):
             @self.app.get("/")
             def read_root():
                 return {"Hello": "World"}
-
-            self.done()
 
     class Component0(Component):
         def __init__(self, name):
@@ -35,7 +32,7 @@ async def test_web(unused_tcp_port):
             app = component0.components["subcomponent0"].app
             async with httpx.AsyncClient() as client:
                 response = await client.get(f"http://127.0.0.1:{unused_tcp_port}")
-    except Exception:
+    except Exception:  # pragma: nocover
         pass
 
     assert response.json() == {"Hello": "World"}

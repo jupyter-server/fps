@@ -11,20 +11,16 @@ async def test_component():
 
     class Subcomponent0(Component):
         async def start(self):
-            self.done()
             outputs.append("started0")
 
         async def stop(self):
-            self.done()
             outputs.append("stopped0")
 
     class Subcomponent1(Component):
         async def start(self):
-            self.done()
             outputs.append("started1")
 
         async def stop(self):
-            self.done()
             outputs.append("stopped1")
 
     class Component0(Component):

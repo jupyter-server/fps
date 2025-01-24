@@ -33,6 +33,7 @@ class FastAPIComponent(Component):
     async def start(self) -> None:
         config = Config()
         config.bind = [f"{self.host}:{self.port}"]
+        config.loglevel = "WARN"
         async with create_task_group() as tg:
             tg.start_soon(partial(serve, self.app, config, shutdown_trigger=self.shutdown_event.wait, mode="asgi"))  # type: ignore[arg-type]
             while True:

@@ -42,7 +42,6 @@ async def test_task():
             await self.resource_freed(self.resource0)
             self.tg1.cancel_scope.cancel()
             self.tg2.cancel_scope.cancel()
-            self.done()
             outputs.append("stopped0")
 
     class Subcomponent1(Component):
@@ -55,7 +54,6 @@ async def test_task():
 
         async def stop(self):
             self.tg.cancel_scope.cancel()
-            self.done()
             outputs.append("stopped1")
             self.drop_resource(self.resource0)
 
@@ -93,7 +91,6 @@ async def test_failing_task():
         async def start(self):
             async with create_task_group() as self.tg:
                 self.tg.start_soon(failing_task)
-                self.done()
                 outputs.append("started0")
 
     class Subcomponent1(Component):

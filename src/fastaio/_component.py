@@ -6,7 +6,7 @@ from importlib import import_module
 
 from contextlib import AsyncExitStack
 from inspect import isawaitable, signature
-from typing import TYPE_CHECKING, Any, Callable, Iterable
+from typing import TYPE_CHECKING, TypeVar, Any, Callable, Iterable
 
 import anyio
 import structlog
@@ -21,8 +21,10 @@ if TYPE_CHECKING:
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup  # pragma: no cover
 
-logging.disable()
 log = structlog.get_logger()
+structlog.stdlib.recreate_defaults(log_level=logging.INFO)
+
+T_Resource = TypeVar("T_Resource")
 
 
 class Component:
@@ -120,7 +122,7 @@ class Component:
         resource_id = id(resource)
         self._acquired_resources[resource_id].drop(self)
 
-    def add_resource(self, resource: Any, types: Iterable | Any | None = None, exclusive: bool = False) -> None:
+    def add_resource(self, resource: T_Resource, types: Iterable | Any | None = None, exclusive: bool = False) -> None:
         resource_id = id(resource)
         resource_types = self._context.get_resource_types(resource, types)
         self._added_resources[resource_id] = self._context.add_resource(resource, self, resource_types, exclusive)
@@ -128,17 +130,21 @@ class Component:
             self._added_resources[resource_id] = self.parent._context.add_resource(resource, self, resource_types, exclusive)
         log.debug("Component added resource", path=self.path, resource_types=resource_types)
 
-    async def get_resource(self, resource_type: Any) -> Any:
+    async def get_resource(self, resource_type: T_Resource, timeout: float = float("inf")) -> T_Resource | None:
         log.debug("Component getting resource", path=self.path, resource_type=resource_type)
         tasks = [create_task(self._context.get_resource(resource_type, self), self._task_group)]
         if self.parent is not None:
             tasks.append(create_task(self.parent._context.get_resource(resource_type, self), self._task_group))
-        done, pending = await wait(tasks, self._task_group, return_when=FIRST_COMPLETED)
-        for task in pending:
-            task.cancel(raise_exception=False)
-        for task in done:
-            break
-        resource = await task.wait()
+        with move_on_after(timeout) as scope:
+            done, pending = await wait(tasks, self._task_group, return_when=FIRST_COMPLETED)
+            for task in pending:
+                task.cancel(raise_exception=False)
+            for task in done:
+                break
+            resource = await task.wait()
+        if scope.cancelled_caught:
+            log.debug("Component did not get resource in time", path=self.path, resource_type=resource_type)
+            return None
         resource_id = id(resource._value)
         self._acquired_resources[resource_id] = resource
         log.debug("Component got resource", path=self.path, resource_type=resource_type)
@@ -153,7 +159,7 @@ class Component:
             self._exceptions = []
             self._phase = "preparing"
             with move_on_after(self._prepare_timeout) as scope:
-                self._task_group.start_soon(self._prepare, name=f"{self.path} prepare")
+                self._task_group.start_soon(self._prepare, name=f"{self.path} _prepare")
                 await self._all_prepared()
             if scope.cancelled_caught:
                 self._get_all_prepare_timeout()
@@ -246,15 +252,19 @@ class Component:
                     component._task_group = tg
                     component._phase = self._phase
                     component._exceptions = self._exceptions
-                    tg.start_soon(component._prepare, name=f"{component.path} prepare")
-                tg.start_soon(self.prepare, name=f"{self.path} prepare")
+                    tg.start_soon(component._prepare, name=f"{component.path} _prepare")
+                tg.start_soon(self._prepare_and_done, name=f"{self.path} _prepare_and_done")
         except ExceptionGroup as exc:
             self._exceptions.append(*exc.exceptions)
             self._prepared.set()
             log.debug("Component failed while preparing", path=self.path, exc_info=exc)
 
-    async def prepare(self) -> None:
+    async def _prepare_and_done(self) -> None:
+        await self.prepare()
         self.done()
+
+    async def prepare(self) -> None:
+        pass
 
     def done(self) -> None:
         if self._phase == "preparing":
@@ -289,13 +299,17 @@ class Component:
                     component._task_group = tg
                     component._phase = self._phase
                     tg.start_soon(component._start, name=f"{component.path} _start")
-                tg.start_soon(self.start, name=f"{self.path} start")
+                tg.start_soon(self._start_and_done, name=f"{self.path} _start_and_done")
         except ExceptionGroup as exc:
             self._exceptions.append(*exc.exceptions)
             self._started.set()
 
-    async def start(self) -> None:
+    async def _start_and_done(self) -> None:
+        await self.start()
         self.done()
+
+    async def start(self) -> None:
+        pass
 
     async def _stop(self) -> None:
         log.debug("Stopping component", path=self.path)
@@ -309,13 +323,17 @@ class Component:
                     res = context_manager_exit(None, None, None)
                     if isawaitable(res):
                         await res   
-                tg.start_soon(self.stop, name=f"{self.path} stop")
+                tg.start_soon(self._stop_and_done, name=f"{self.path} _stop_and_done")
         except ExceptionGroup as exc:
             self._exceptions.append(*exc.exceptions)
             self._stopped.set()
 
-    async def stop(self) -> None:
+    async def _stop_and_done(self) -> None:
+        await self.stop()
         self.done()
+
+    async def stop(self) -> None:
+        pass
 
     async def _main(self): # pragma: no cover
         async with self:

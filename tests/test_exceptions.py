@@ -22,12 +22,10 @@ async def test_exception_prepare():
         async def start(self):
             # should not be called, since prepare failed
             outputs.append("start0")  # pragma: no cover
-            self.done()  # pragma: no cover
 
         async def stop(self):
             # should always be called
             outputs.append("stop0")
-            self.done()
 
     async with Component0("component0") as component0:
         pass
@@ -43,7 +41,6 @@ async def test_exception_start():
     class Component0(Component):
         async def prepare(self):
             outputs.append("prepare0")
-            self.done()
 
         async def start(self):
             outputs.append("start0")
@@ -52,7 +49,6 @@ async def test_exception_start():
         async def stop(self):
             # should always be called
             outputs.append("stop0")
-            self.done()
 
     async with Component0("component0") as component0:
         pass
@@ -67,11 +63,9 @@ async def test_exception_stop():
     class Component0(Component):
         async def prepare(self):
             outputs.append("prepare0")
-            self.done()
 
         async def start(self):
             outputs.append("start0")
-            self.done()
 
         async def stop(self):
             outputs.append("stop0")
@@ -96,7 +90,6 @@ async def test_exception_prepare_stop():
 
         async def start(self):
             outputs.append("start0")  # pragma: no cover
-            self.done()  # pragma: no cover
 
         async def stop(self):
             outputs.append("stop0")
@@ -117,7 +110,6 @@ async def test_exception_start_stop():
     class Component0(Component):
         async def prepare(self):
             outputs.append("prepare0")
-            self.done()
 
         async def start(self):
             outputs.append("start0")
@@ -142,7 +134,6 @@ async def test_exception_subcomponent():
     class Subcomponent0(Component):
         async def prepare(self):
             outputs.append("sub prepare0")
-            self.done()
 
         async def start(self):
             outputs.append("sub start0")
@@ -159,15 +150,12 @@ async def test_exception_subcomponent():
 
         async def prepare(self):
             outputs.append("prepare0")
-            self.done()
 
         async def start(self):
             outputs.append("start0")
-            self.done()
 
         async def stop(self):
             outputs.append("stop0")
-            self.done()
 
     async with Component0("component0") as component0:
         pass

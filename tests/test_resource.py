@@ -28,12 +28,10 @@ async def test_resource():
             self.resource0 = Resource0()
             self.add_resource(self.resource0)
             self.resource1 = resource1 = await self.get_resource(Resource1)
-            self.done()
 
         async def stop(self):
             self.drop_resource(self.resource1)
             await self.resource_freed(self.resource0)
-            self.done()
 
     class Subcomponent1(Component):
         async def start(self):
@@ -41,12 +39,10 @@ async def test_resource():
             self.resource0 = resource0 = await self.get_resource(Resource0)
             self.resource1 = Resource1()
             self.add_resource(self.resource1)
-            self.done()
 
         async def stop(self):
             await self.resource_freed(self.resource1)
             self.drop_resource(self.resource0)
-            self.done()
 
     class Component0(Component):
         def __init__(self, name):
@@ -63,6 +59,18 @@ async def test_resource():
     assert type(component0.components["subcomponent0"].resource1) == Resource1
     assert component0.components["subcomponent1"].resource0 == resource0
     assert component0.components["subcomponent0"].resource1 == resource1
+
+
+async def test_get_resource_timeout():
+
+    class Component0(Component):
+        async def start(self):
+            self.resource0 = await self.get_resource(str, timeout=0)
+
+    async with Component0("component0") as component0:
+        pass
+
+    assert component0.resource0 is None
 
 
 async def test_resource_with_context_manager():
@@ -89,10 +97,8 @@ async def test_resource_with_context_manager():
             resource0 = Resource0()
             await self.async_context_manager(resource0)
             self.context_manager(resource0)
-            self.done()
 
         async def stop(self):
-            self.done()
             outputs.append("stop")
 
     async with Component0("component0"):
@@ -113,7 +119,6 @@ async def test_add_resource_with_type():
     class Subcomponent0(Component):
         async def start(self):
             self.add_resource(0, types=int)
-            self.done()
 
     class Component0(Component):
         def __init__(self, name):
@@ -123,11 +128,9 @@ async def test_add_resource_with_type():
         async def start(self):
             self.resource = await self.get_resource(int)
             assert self.resource == 0
-            self.done()
 
         async def stop(self):
             self.drop_resource(self.resource)
-            self.done()
 
     async with Component0("component0"):
         pass
@@ -154,7 +157,6 @@ async def test_add_exclusive_resource():
     class Subcomponent0(Component):
         async def start(self):
             self.add_resource(0, exclusive=True)
-            self.done()
 
     class Subcomponent1(Component):
         async def start(self):
@@ -163,7 +165,6 @@ async def test_add_exclusive_resource():
             await sleep(0.1)
             outputs.append("drop")
             self.drop_resource(resource)
-            self.done()
 
     class Component0(Component):
         def __init__(self, name):
@@ -188,20 +189,18 @@ async def test_resource_not_freed():
     class Subcomponent0(Component):
         async def start(self):
             self.add_resource(0, types=int)
-            self.done()
 
     class Component0(Component):
-        def __init__(self, name, stop_timeout):
-            super().__init__(name, stop_timeout=stop_timeout)
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
             self.add_component(Subcomponent0, "subcomponent0")
 
         async def start(self):
             self.resource = await self.get_resource(int)
             assert self.resource == 0
-            self.done()
 
         async def stop(self):
-            pass
+            await sleep(1)
 
     async with Component0("component0", stop_timeout=0.1) as component0:
         pass
@@ -217,12 +216,10 @@ async def test_all_resources_freed():
     class Subcomponent0(Component):
         async def start(self):
             self.add_resource(0, types=int)
-            self.done()
 
         async def stop(self):
             await self.all_resources_freed()
             outputs.append("all resources freed")
-            self.done()
 
     class Component0(Component):
         def __init__(self, name):
@@ -232,12 +229,10 @@ async def test_all_resources_freed():
         async def start(self):
             self.resource = await self.get_resource(int)
             assert self.resource == 0
-            self.done()
 
         async def stop(self):
             self.drop_resource(self.resource)
             outputs.append("resource dropped")
-            self.done()
 
     async with Component0("component0"):
         pass
