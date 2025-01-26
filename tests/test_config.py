@@ -140,6 +140,28 @@ def test_config_from_dict():
     assert component0.components["subcomponent2"].components["subcomponent3"].components["subcomponent4"].param4 == "param4*"
 
 
+def test_config_from_dict_with_type_as_str():
+    config = {
+        "component0": {
+            "type": "fastaio:Component",
+            "components": {
+                "component0": {
+                    "type": "fastaio:Component",
+                    "components": {
+                        "component00": {
+                            "type": "fastaio:Component",
+                        },
+                    },
+                },
+            },
+        },
+    }
+
+    component0 = get_root_component(config)
+    initialize(component0)
+    assert component0.components["component0"].components["component00"]
+
+
 def test_wrong_config_from_dict_1():
     class Component0(Component):
         pass

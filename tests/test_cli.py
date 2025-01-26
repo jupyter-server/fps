@@ -2,17 +2,35 @@ from click.testing import CliRunner
 from fastaio import Component, get_config, main
 
 
-def test_wrong_cli():
+def test_wrong_cli_1():
+    runner = CliRunner()
+    runner.invoke(main, [
+        "fastaio:Component",
+        "--set", "param",
+    ])
+
+def test_wrong_cli_2():
     runner = CliRunner()
     runner.invoke(main, [
         "fastaio.Component",
-        "--set", "param",
-        ])
+    ])
+
+def test_wrong_cli_3():
+    runner = CliRunner()
+    runner.invoke(main, [
+        "fastaio:WrongComponent",
+    ])
+
+def test_wrong_cli_4():
+    runner = CliRunner()
+    runner.invoke(main, [
+        "wrong_module:Component",
+    ])
 
 def test_cli():
     runner = CliRunner()
     runner.invoke(main, [
-        "fastaio.Component",
+        "fastaio:Component",
         "--set", "param=-1",
         "--set", "component0.param0=foo",
         "--set", "component1.param1=bar",

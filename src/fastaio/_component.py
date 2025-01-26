@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import sys
-from importlib import import_module
 
 from contextlib import AsyncExitStack
 from inspect import isawaitable, signature
@@ -14,6 +13,7 @@ from anyio import Event, create_task_group, move_on_after
 from anyioutils import create_task, wait, FIRST_COMPLETED
 
 from ._context import Context
+from ._importer import import_from_string
 
 if TYPE_CHECKING:
     from ._context import Resource  # pragma: no cover
@@ -95,10 +95,7 @@ class Component:
         self._check_init()
         if name in self._uninitialized_components:
             raise RuntimeError(f"Component name already exists: {name}")
-        if isinstance(component_type, str):
-            module_name, component_name = component_type.rsplit(":", 1)
-            module = import_module(module_name)
-            component_type = getattr(module, component_name)
+        component_type = import_from_string(component_type)
         self._uninitialized_components[name] = {
             "type": component_type,
             "config": config,
@@ -364,11 +361,12 @@ def _initialize(subcomponents: dict[str, Any], parent_component: Component, root
         else:
             subcomponents[name] = info
     for name, info in subcomponents.items():
-        config = info["config"]
+        config = info.get("config", {})
         config.update(root_component_components.get(name, {}).get("config", {}))
         if "type" not in info:
             raise RuntimeError(f"Component not found: {name}")
-        subcomponent_instance: Component = info["type"](name, **config)
+        component_type = import_from_string(info["type"])
+        subcomponent_instance: Component = component_type(name, **config)
         subcomponent_instance._path = parent_component._path + [parent_component._name]
         subcomponent_instance.parent = parent_component
         parent_component._components[name] = subcomponent_instance

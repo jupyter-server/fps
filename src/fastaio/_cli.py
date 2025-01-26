@@ -1,6 +1,6 @@
-from importlib import import_module
-
 import click
+
+from ._importer import import_from_string
 
 
 @click.command()
@@ -8,9 +8,7 @@ import click
 @click.argument("component")
 def main(component, set_):
     global CONFIG
-    module_name, component_name = component.rsplit(".", 1)
-    module = import_module(module_name)
-    component_type = getattr(module, component_name)
+    component_type = import_from_string(component)
     config = {
         "root_component": {
             "type": component_type,
