@@ -1,6 +1,6 @@
 import pytest
 
-from fastaio import Component, get_root_component, initialize
+from fastaio import Component, get_root_component, initialize, merge_config
 
 
 def test_config_override():
@@ -289,3 +289,85 @@ def test_config_from_dict_add_subcomponents():
     assert component0.components["subcomponent1"].param1 == "bar"
     assert component0.components["subcomponent1"].components["subcomponent10"].param0 == "baz"
     assert component0.components["subcomponent1"].components["subcomponent10"].param1 == "param1"
+
+
+def test_merge_config():
+    d0 = {
+        "component0": {
+            "type": "Component0",
+            "config": {
+                "param0": 0,
+                "param1": 1,
+            },
+            "components": {
+                "component1": {
+                    "type": "Component1",
+                    "components": {
+                        "component2": {
+                            "type": "Component2",
+                            "config": {
+                                "param2": 2,
+                                "param3": 3,
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    d1 = {
+        "component0": {
+            "config": {
+                "param1": 11,
+            },
+            "components": {
+                "component1": {
+                    "components": {
+                        "component2": {
+                            "config": {
+                                "param2": 22,
+                            },
+                        },
+                        "component3": {
+                            "type": "Component3",
+                            "config": {
+                                "param4": 4,
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    d = merge_config(d0, d1)
+    assert d == {
+        "component0": {
+            "type": "Component0",
+            "config": {
+                "param0": 0,
+                "param1": 11,
+            },
+            "components": {
+                "component1": {
+                    "type": "Component1",
+                    "components": {
+                        "component2": {
+                            "type": "Component2",
+                            "config": {
+                                "param2": 22,
+                                "param3": 3,
+                            }
+                        },
+                        "component3": {
+                            "type": "Component3",
+                            "config": {
+                                "param4": 4,
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
