@@ -203,3 +203,67 @@ def test_wrong_config_from_dict_2():
         initialize(component0)
 
     assert str(excinfo.value) == "Component not found: subcomponent1"
+
+
+def test_config_from_dict_add_subcomponents():
+    class Subcomponent0(Component):
+        def __init__(self, name, param0="param0", param1="param1"):
+            super().__init__(name)
+            self.param0 = param0
+            self.param1 = param1
+
+    class Subcomponent1(Component):
+        def __init__(self, name, param0="param0", param1="param1"):
+            super().__init__(name)
+            self.param0 = param0
+            self.param1 = param1
+
+    class Subcomponent10(Component):
+        def __init__(self, name, param0="param0", param1="param1"):
+            super().__init__(name)
+            self.param0 = param0
+            self.param1 = param1
+
+    class Component0(Component):
+        pass
+
+    config = {
+        "component0": {
+            "type": Component0,
+            "components": {
+                "subcomponent0": {
+                    "type": Subcomponent0,
+                    "config": {
+                        "param0": "foo",
+                    },
+                },
+                "subcomponent1": {
+                    "type": Subcomponent1,
+                    "config": {
+                        "param1": "bar",
+                    },
+                    "components": {
+                        "subcomponent10": {
+                            "type": Subcomponent10,
+                            "config": {
+                                "param0": "baz",
+                             },
+                        },
+                    },
+                },
+            },
+        },
+    }
+
+    component0 = get_root_component(config)
+    initialize(component0)
+    assert list(component0.components.keys()) == ["subcomponent0", "subcomponent1"]
+    assert list(component0.components["subcomponent0"].components.keys()) == []
+    assert list(component0.components["subcomponent1"].components.keys()) == ["subcomponent10"]
+    assert list(component0.components["subcomponent1"].components["subcomponent10"].components.keys()) == []
+    assert component0.components["subcomponent0"].param0 == "foo"
+    assert component0.components["subcomponent0"].param1 == "param1"
+    assert component0.components["subcomponent1"].param0 == "param0"
+    assert component0.components["subcomponent1"].param1 == "bar"
+    assert component0.components["subcomponent1"].components["subcomponent10"].param0 == "baz"
+    assert component0.components["subcomponent1"].components["subcomponent10"].param1 == "param1"

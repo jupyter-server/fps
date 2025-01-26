@@ -357,6 +357,12 @@ def initialize(root_component: Component) -> None:
 
 
 def _initialize(subcomponents: dict[str, Any], parent_component: Component, root_component_components: dict[str, Any]) -> None:
+    for name, info in root_component_components.items():
+        if name in subcomponents:
+            if info.get("type") is not None:
+                subcomponents[name]["type"] = info["type"]
+        else:
+            subcomponents[name] = info
     for name, info in subcomponents.items():
         config = info["config"]
         config.update(root_component_components.get(name, {}).get("config", {}))
@@ -368,6 +374,3 @@ def _initialize(subcomponents: dict[str, Any], parent_component: Component, root
         parent_component._components[name] = subcomponent_instance
         _initialize(subcomponent_instance._uninitialized_components, subcomponent_instance, root_component_components.get(name, {}).get("components", {}))
         subcomponent_instance._uninitialized_components = {}
-    for name in root_component_components:
-        if name not in subcomponents:
-            raise RuntimeError(f"Component not found: {name}")
