@@ -31,6 +31,7 @@ dependencies = [
     "click >=8.1.8,<9",
     "structlog",
     "exceptiongroup; python_version<'3.11'",
+    "importlib_metadata >=3.6; python_version<'3.10'",
 ]
 
 [project.optional-dependencies]
@@ -53,6 +54,9 @@ Issues = "https://github.com/davidbrochart/fastaio/issues"
 
 [project.scripts]
 fastaio = "fastaio._cli:main"
+
+[project.entry-points]
+"fastaio.components" = {fastaio_component = "fastaio.Component"}
 
 [tool.hatch.build.targets.wheel]
 ignore-vcs = true

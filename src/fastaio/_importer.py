@@ -1,5 +1,11 @@
 import importlib
+import sys
 from typing import Any
+
+if sys.version_info < (3, 10):  # pragma: nocover
+    from importlib_metadata import entry_points
+else:
+    from importlib.metadata import entry_points
 
 
 class ImportFromStringError(Exception):
@@ -10,11 +16,14 @@ def import_from_string(import_str: Any) -> Any:
     if not isinstance(import_str, str):
         return import_str
 
-    module_str, _, attrs_str = import_str.partition(":")
-    if not module_str or not attrs_str:
-        message = 'Import string "{import_str}" must be in format "<module>:<attribute>".'
-        raise ImportFromStringError(message.format(import_str=import_str))
+    if ":" not in import_str:
+        # this is an entry-point in the "fastaio.components" group
+        for ep in entry_points(group="fastaio.components"):
+            if ep.name == import_str:
+                return ep.value
+        raise RuntimeError(f'Component could not be found in entry-point group "fastaio.components": {import_str}')
 
+    module_str, _, attrs_str = import_str.partition(":")
     try:
         module = importlib.import_module(module_str)
     except ModuleNotFoundError as exc:
