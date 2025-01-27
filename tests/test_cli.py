@@ -2,13 +2,6 @@ from click.testing import CliRunner
 from fastaio import Component, get_config, main
 
 
-def test_cli_entry_point():
-    runner = CliRunner()
-    result = runner.invoke(main, [
-        "fastaio_component",
-    ])
-    assert result.exit_code == 0
-
 def test_wrong_cli_1():
     runner = CliRunner()
     result = runner.invoke(main, [
@@ -41,7 +34,7 @@ def test_wrong_cli_4():
 def test_cli():
     runner = CliRunner()
     runner.invoke(main, [
-        "fastaio:Component",
+        "fastaio_component",
         "--set", "param=-1",
         "--set", "component0.param0=foo",
         "--set", "component1.param1=bar",
