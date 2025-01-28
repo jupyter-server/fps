@@ -27,12 +27,9 @@ async def test_web(unused_tcp_port):
             self.add_component(FastAPIComponent, "fastapi_component", port=unused_tcp_port)
             self.add_component(Subcomponent0, "subcomponent0")
 
-    try:  # FIXME: lifespan failure
-        async with Component0("component0") as component0:
+    async with Component0("component0") as component0:
             app = component0.components["subcomponent0"].app
             async with httpx.AsyncClient() as client:
                 response = await client.get(f"http://127.0.0.1:{unused_tcp_port}")
-    except Exception:  # pragma: nocover
-        pass
 
     assert response.json() == {"Hello": "World"}

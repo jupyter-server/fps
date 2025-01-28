@@ -3,6 +3,7 @@ from __future__ import annotations
 from functools import partial
 
 from anyio import Event, connect_tcp, create_task_group
+from anyioutils import create_task
 from anycorn import Config, serve
 from fastapi import FastAPI
 
@@ -28,14 +29,13 @@ class FastAPIComponent(Component):
 
     async def prepare(self) -> None:
         self.add_resource(self.app)
-        self.done()
 
     async def start(self) -> None:
         config = Config()
         config.bind = [f"{self.host}:{self.port}"]
         config.loglevel = "WARN"
         async with create_task_group() as tg:
-            tg.start_soon(partial(serve, self.app, config, shutdown_trigger=self.shutdown_event.wait, mode="asgi"))  # type: ignore[arg-type]
+            self.server_task = create_task(serve(self.app, config, shutdown_trigger=self.shutdown_event.wait, mode="asgi"), tg)  # type: ignore[arg-type]
             while True:
                 try:
                     await connect_tcp(self.host, self.port)
@@ -47,4 +47,4 @@ class FastAPIComponent(Component):
 
     async def stop(self) -> None:
         self.shutdown_event.set()
-        self.done()
+        await self.server_task.wait()
