@@ -4,27 +4,27 @@ from ._importer import import_from_string
 
 
 @click.command()
-@click.option("--set", "set_", multiple=True, help="The assignment to the component parameter.")
-@click.argument("component")
-def main(component, set_):
+@click.option("--set", "set_", multiple=True, help="The assignment to the module parameter.")
+@click.argument("module")
+def main(module, set_):
     global CONFIG
-    component_type = import_from_string(component)
+    module_type = import_from_string(module)
     config = {
-        "root_component": {
-            "type": component_type,
+        "root_module": {
+            "type": module_type,
         }
     }
     for _set in set_:
         if "=" not in _set:
-            raise click.ClickException(f"No '=' while setting a component parameter: {_set}")
+            raise click.ClickException(f"No '=' while setting a module parameter: {_set}")
 
         key, value = _set.split("=", 1)
         path = key.split(".")
-        components = config["root_component"]
-        for component_name in path[:-1]:
-            components = components.setdefault("components", {})
-            components = components.setdefault(component_name, {})
-        _config = components.setdefault("config", {})
+        modules = config["root_module"]
+        for module_name in path[:-1]:
+            modules = modules.setdefault("modules", {})
+            modules = modules.setdefault(module_name, {})
+        _config = modules.setdefault("config", {})
         _config[path[-1]] = value
     CONFIG = config
 

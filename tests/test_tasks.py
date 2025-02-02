@@ -4,7 +4,7 @@ import pytest
 
 from anyio import TASK_STATUS_IGNORED, create_task_group, sleep
 from anyio.abc import TaskStatus
-from fastaio import Component
+from fastaio import Module
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup  # pragma: no cover
@@ -15,7 +15,7 @@ pytestmark = pytest.mark.anyio
 async def test_task():
     outputs = []
 
-    class Resource0:
+    class Value0:
         pass
 
     async def task(message: str, *, task_status: TaskStatus[None] = TASK_STATUS_IGNORED) -> None:
@@ -23,7 +23,7 @@ async def test_task():
         task_status.started()
         await sleep(float("inf"))
 
-    class Subcomponent0(Component):
+    class Submodule0(Module):
         async def prepare(self):
             async with create_task_group() as self.tg1:
                 await self.tg1.start(task, "prepare0", name="prepare0")
@@ -35,18 +35,18 @@ async def test_task():
                 await self.tg2.start(task, "start0", name="start0")
                 self.done()
                 outputs.append("started0")
-                self.resource0 = Resource0()
-                self.add_resource(self.resource0)
+                self.value0 = Value0()
+                self.put(self.value0)
 
         async def stop(self):
-            await self.resource_freed(self.resource0)
+            await self.value_freed(self.value0)
             self.tg1.cancel_scope.cancel()
             self.tg2.cancel_scope.cancel()
             outputs.append("stopped0")
 
-    class Subcomponent1(Component):
+    class Submodule1(Module):
         async def start(self):
-            self.resource0 = await self.get_resource(Resource0)
+            self.value0 = await self.get(Value0)
             async with create_task_group() as self.tg:
                 await self.tg.start(task, "start1", name="start1")
                 self.done()
@@ -55,17 +55,17 @@ async def test_task():
         async def stop(self):
             self.tg.cancel_scope.cancel()
             outputs.append("stopped1")
-            self.drop_resource(self.resource0)
+            self.drop_value(self.value0)
 
-    class Component0(Component):
+    class Module0(Module):
         def __init__(self, name):
             super().__init__(name)
-            self.add_component(Subcomponent0, "subcomponent0")
-            self.add_component(Subcomponent1, "subcomponent1")
+            self.add_module(Submodule0, "submodule0")
+            self.add_module(Submodule1, "submodule1")
 
-    component0 = Component0("component0")
+    module0 = Module0("module0")
 
-    async with component0:
+    async with module0:
         pass
 
     assert outputs == [
@@ -87,27 +87,27 @@ async def test_failing_task():
         await sleep(0.05)
         raise RuntimeError("start0")
 
-    class Subcomponent0(Component):
+    class Submodule0(Module):
         async def start(self):
             async with create_task_group() as self.tg:
                 self.tg.start_soon(failing_task)
                 outputs.append("started0")
 
-    class Subcomponent1(Component):
+    class Submodule1(Module):
         pass
 
-    class Component0(Component):
+    class Module0(Module):
         def __init__(self, name):
             super().__init__(name)
-            self.add_component(Subcomponent0, "subcomponent0")
-            self.add_component(Subcomponent1, "subcomponent1")
+            self.add_module(Submodule0, "submodule0")
+            self.add_module(Submodule1, "submodule1")
 
-    async with Component0("component0") as component0:
+    async with Module0("module0") as module0:
         await sleep(0.1)
     
-    assert len(component0.exceptions) == 1
-    assert type(component0.exceptions[0]) is ExceptionGroup
-    assert str(component0.exceptions[0].exceptions[0]) == "start0"
+    assert len(module0.exceptions) == 1
+    assert type(module0.exceptions[0]) is ExceptionGroup
+    assert str(module0.exceptions[0].exceptions[0]) == "start0"
 
     assert outputs == [
         "started0",

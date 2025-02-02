@@ -12,11 +12,11 @@ import structlog
 from anyio import Event, create_task_group, move_on_after
 from anyioutils import create_task, wait, FIRST_COMPLETED
 
-from ._context import Context
+from ._container import Container
 from ._importer import import_from_string
 
 if TYPE_CHECKING:
-    from ._context import Resource  # pragma: no cover
+    from ._container import Value  # pragma: no cover
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup  # pragma: no cover
@@ -24,10 +24,10 @@ if sys.version_info < (3, 11):
 log = structlog.get_logger()
 structlog.stdlib.recreate_defaults(log_level=logging.INFO)
 
-T_Resource = TypeVar("T_Resource")
+T_Value = TypeVar("T_Value")
 
 
-class Component:
+class Module:
     _exit: Event
     _exceptions: list[Exception]
 
@@ -42,25 +42,25 @@ class Component:
         self._prepare_timeout = prepare_timeout
         self._start_timeout = start_timeout
         self._stop_timeout = stop_timeout
-        self._parent: Component | None = None
-        self._context = Context()
+        self._parent: Module | None = None
+        self._container = Container()
         self._prepared = Event()
         self._started = Event()
         self._stopped = Event()
         self._name = name
         self._path: list[str] = []
-        self._uninitialized_components: dict[str, Any] = {}
-        self._components: dict[str, Component] = {}
-        self._added_resources: dict[Any, Resource] = {}
-        self._acquired_resources: dict[Any, Resource] = {}
+        self._uninitialized_modules: dict[str, Any] = {}
+        self._modules: dict[str, Module] = {}
+        self._added_values: dict[Any, Value] = {}
+        self._acquired_values: dict[Any, Value] = {}
         self._context_manager_exits: list[Callable] = []
 
     @property
-    def parent(self) -> Component | None:
+    def parent(self) -> Module | None:
         return self._parent
 
     @parent.setter
-    def parent(self, value: Component) -> None:
+    def parent(self, value: Module) -> None:
         self._parent = value
         self._exit = value._exit
 
@@ -80,76 +80,76 @@ class Component:
         try:
             self._initialized
         except AttributeError:
-            raise RuntimeError("You must call super().__init__() in the __init__ method of your component")
+            raise RuntimeError("You must call super().__init__() in the __init__ method of your module")
 
     @property
-    def components(self) -> dict[str, Component]:
-        return self._components
+    def modules(self) -> dict[str, Module]:
+        return self._modules
 
-    def add_component(
+    def add_module(
         self,
-        component_type: type["Component"] | str,
+        module_type: type["Module"] | str,
         name: str,
         **config,
     ) -> None:
         self._check_init()
-        if name in self._uninitialized_components:
-            raise RuntimeError(f"Component name already exists: {name}")
-        component_type = import_from_string(component_type)
-        self._uninitialized_components[name] = {
-            "type": component_type,
+        if name in self._uninitialized_modules:
+            raise RuntimeError(f"Module name already exists: {name}")
+        module_type = import_from_string(module_type)
+        self._uninitialized_modules[name] = {
+            "type": module_type,
             "config": config,
-            "components": {},
+            "modules": {},
         }
-        log.debug("Component added", path=self.path, name=name, component_type=component_type)
+        log.debug("Module added", path=self.path, name=name, module_type=module_type)
 
-    async def resource_freed(self, resource: Any) -> None:
-        resource_id = id(resource)
-        await self._added_resources[resource_id].wait_no_borrower()
+    async def value_freed(self, value: Any) -> None:
+        value_id = id(value)
+        await self._added_values[value_id].wait_no_borrower()
 
-    async def all_resources_freed(self) -> None:
-        for resource in self._added_resources.values():
-            await resource.wait_no_borrower()
+    async def all_values_freed(self) -> None:
+        for value in self._added_values.values():
+            await value.wait_no_borrower()
 
-    def drop_all_resources(self) -> None:
-        for resource in self._acquired_resources.values():
-            resource.drop(self)
+    def drop_all_values(self) -> None:
+        for value in self._acquired_values.values():
+            value.drop(self)
 
-    def drop_resource(self, resource: Any) -> None:
-        resource_id = id(resource)
-        self._acquired_resources[resource_id].drop(self)
+    def drop_value(self, value: Any) -> None:
+        value_id = id(value)
+        self._acquired_values[value_id].drop(self)
 
-    def add_resource(self, resource: T_Resource, types: Iterable | Any | None = None, exclusive: bool = False) -> None:
-        resource_id = id(resource)
-        resource_types = self._context.get_resource_types(resource, types)
-        self._added_resources[resource_id] = self._context.add_resource(resource, self, resource_types, exclusive)
+    def put(self, value: T_Value, types: Iterable | Any | None = None, exclusive: bool = False) -> None:
+        value_id = id(value)
+        value_types = self._container.get_value_types(value, types)
+        self._added_values[value_id] = self._container.put(value, self, value_types, exclusive)
         if self.parent is not None:
-            self._added_resources[resource_id] = self.parent._context.add_resource(resource, self, resource_types, exclusive)
-        log.debug("Component added resource", path=self.path, resource_types=resource_types)
+            self._added_values[value_id] = self.parent._container.put(value, self, value_types, exclusive)
+        log.debug("Module added value", path=self.path, value_types=value_types)
 
-    async def get_resource(self, resource_type: T_Resource, timeout: float = float("inf")) -> T_Resource | None:
-        log.debug("Component getting resource", path=self.path, resource_type=resource_type)
-        tasks = [create_task(self._context.get_resource(resource_type, self), self._task_group)]
+    async def get(self, value_type: T_Value, timeout: float = float("inf")) -> T_Value | None:
+        log.debug("Module getting value", path=self.path, value_type=value_type)
+        tasks = [create_task(self._container.get(value_type, self), self._task_group)]
         if self.parent is not None:
-            tasks.append(create_task(self.parent._context.get_resource(resource_type, self), self._task_group))
+            tasks.append(create_task(self.parent._container.get(value_type, self), self._task_group))
         with move_on_after(timeout) as scope:
             done, pending = await wait(tasks, self._task_group, return_when=FIRST_COMPLETED)
             for task in pending:
                 task.cancel(raise_exception=False)
             for task in done:
                 break
-            resource = await task.wait()
+            value = await task.wait()
         if scope.cancelled_caught:
-            log.debug("Component did not get resource in time", path=self.path, resource_type=resource_type)
+            log.debug("Module did not get value in time", path=self.path, value_type=value_type)
             return None
-        resource_id = id(resource._value)
-        self._acquired_resources[resource_id] = resource
-        log.debug("Component got resource", path=self.path, resource_type=resource_type)
-        return resource._value
+        value_id = id(value._value)
+        self._acquired_values[value_id] = value
+        log.debug("Module got value", path=self.path, value_type=value_type)
+        return value._value
 
-    async def __aenter__(self) -> Component:
+    async def __aenter__(self) -> Module:
         self._check_init()
-        log.debug("Running root component", name=self.path)
+        log.debug("Running root module", name=self.path)
         initialize(self)
         async with AsyncExitStack() as exit_stack:
             self._task_group = await exit_stack.enter_async_context(create_task_group())
@@ -200,61 +200,61 @@ class Component:
                 log.critical("Exception", exc_info=exception)
         log.debug("Application stopped")
 
-    def context_manager(self, resource):
-        self._context_manager_exits.append(resource.__exit__)
-        return resource.__enter__()
+    def context_manager(self, value):
+        self._context_manager_exits.append(value.__exit__)
+        return value.__enter__()
 
-    async def async_context_manager(self, resource):
-        self._context_manager_exits.append(resource.__aexit__)
-        return await resource.__aenter__()
+    async def async_context_manager(self, value):
+        self._context_manager_exits.append(value.__aexit__)
+        return await value.__aenter__()
 
     def _get_all_prepare_timeout(self):
-        for component in self._components.values():
-            component._get_all_prepare_timeout()
+        for module in self._modules.values():
+            module._get_all_prepare_timeout()
         if not self._prepared.is_set():
-            self._exceptions.append(TimeoutError(f"Component timed out while preparing: {self.path}"))
+            self._exceptions.append(TimeoutError(f"Module timed out while preparing: {self.path}"))
 
     def _get_all_start_timeout(self):
-        for component in self._components.values():
-            component._get_all_start_timeout()
+        for module in self._modules.values():
+            module._get_all_start_timeout()
         if not self._started.is_set():
-            self._exceptions.append(TimeoutError(f"Component timed out while starting: {self.path}"))
+            self._exceptions.append(TimeoutError(f"Module timed out while starting: {self.path}"))
 
     def _get_all_stop_timeout(self):
-        for component in self._components.values():
-            component._get_all_stop_timeout()
+        for module in self._modules.values():
+            module._get_all_stop_timeout()
         if not self._stopped.is_set():
-            self._exceptions.append(TimeoutError(f"Component timed out while stopping: {self.path}"))
+            self._exceptions.append(TimeoutError(f"Module timed out while stopping: {self.path}"))
 
     async def _all_prepared(self):
-        for component in self._components.values():
-            await component._all_prepared()
+        for module in self._modules.values():
+            await module._all_prepared()
         await self._prepared.wait()
 
     async def _all_started(self):
-        for component in self._components.values():
-            await component._all_started()
+        for module in self._modules.values():
+            await module._all_started()
         await self._started.wait()
 
     async def _all_stopped(self):
-        for component in self._components.values():
-            await component._all_stopped()
+        for module in self._modules.values():
+            await module._all_stopped()
         await self._stopped.wait()
 
     async def _prepare(self) -> None:
-        log.debug("Preparing component", path=self.path)
+        log.debug("Preparing module", path=self.path)
         try:
             async with create_task_group() as tg:
-                for component in self._components.values():
-                    component._task_group = tg
-                    component._phase = self._phase
-                    component._exceptions = self._exceptions
-                    tg.start_soon(component._prepare, name=f"{component.path} _prepare")
+                for module in self._modules.values():
+                    module._task_group = tg
+                    module._phase = self._phase
+                    module._exceptions = self._exceptions
+                    tg.start_soon(module._prepare, name=f"{module.path} _prepare")
                 tg.start_soon(self._prepare_and_done, name=f"{self.path} _prepare_and_done")
         except ExceptionGroup as exc:
             self._exceptions.append(*exc.exceptions)
             self._prepared.set()
-            log.debug("Component failed while preparing", path=self.path, exc_info=exc)
+            log.debug("Module failed while preparing", path=self.path, exc_info=exc)
 
     async def _prepare_and_done(self) -> None:
         await self.prepare()
@@ -266,36 +266,36 @@ class Component:
     def done(self) -> None:
         if self._phase == "preparing":
             self._prepared.set()
-            log.debug("Component prepared", path=self.path)
+            log.debug("Module prepared", path=self.path)
         elif self._phase == "starting":
             self._started.set()
-            log.debug("Component started", path=self.path)
+            log.debug("Module started", path=self.path)
         else:
             self._task_group.start_soon(self._finish)
 
     async def _finish(self):
         tasks = (
-            create_task(self._drop_and_wait_resources(), self._task_group),
+            create_task(self._drop_and_wait_values(), self._task_group),
             create_task(self._exit.wait(), self._task_group),
         )
         done, pending = await wait(tasks, self._task_group, return_when=FIRST_COMPLETED)
         for task in pending:
             task.cancel(raise_exception=False)
 
-    async def _drop_and_wait_resources(self):
-        self.drop_all_resources()
-        await self.all_resources_freed()
+    async def _drop_and_wait_values(self):
+        self.drop_all_values()
+        await self.all_values_freed()
         self._stopped.set()
-        log.debug("Component stopped", path=self.path)
+        log.debug("Module stopped", path=self.path)
 
     async def _start(self) -> None:
-        log.debug("Starting component", path=self.path)
+        log.debug("Starting module", path=self.path)
         try:
             async with create_task_group() as tg:
-                for component in self._components.values():
-                    component._task_group = tg
-                    component._phase = self._phase
-                    tg.start_soon(component._start, name=f"{component.path} _start")
+                for module in self._modules.values():
+                    module._task_group = tg
+                    module._phase = self._phase
+                    tg.start_soon(module._start, name=f"{module.path} _start")
                 tg.start_soon(self._start_and_done, name=f"{self.path} _start_and_done")
         except ExceptionGroup as exc:
             self._exceptions.append(*exc.exceptions)
@@ -309,13 +309,13 @@ class Component:
         pass
 
     async def _stop(self) -> None:
-        log.debug("Stopping component", path=self.path)
+        log.debug("Stopping module", path=self.path)
         try:
             async with create_task_group() as tg:
-                for component in self._components.values():
-                    component._task_group = tg
-                    component._phase = self._phase
-                    tg.start_soon(component._stop, name=f"{component.path} _stop")
+                for module in self._modules.values():
+                    module._task_group = tg
+                    module._phase = self._phase
+                    tg.start_soon(module._stop, name=f"{module.path} _stop")
                 for context_manager_exit in self._context_manager_exits[::-1]:
                     res = context_manager_exit(None, None, None)
                     if isawaitable(res):
@@ -343,32 +343,32 @@ class Component:
             pass
 
 
-def initialize(root_component: Component) -> None:
-    if root_component._initialized:
+def initialize(root_module: Module) -> None:
+    if root_module._initialized:
         return
 
-    root_component._exit = Event()
-    _initialize(root_component._uninitialized_components, root_component, root_component._uninitialized_components)
-    root_component._uninitialized_components = {}
-    root_component._initialized = True
+    root_module._exit = Event()
+    _initialize(root_module._uninitialized_modules, root_module, root_module._uninitialized_modules)
+    root_module._uninitialized_modules = {}
+    root_module._initialized = True
 
 
-def _initialize(subcomponents: dict[str, Any], parent_component: Component, root_component_components: dict[str, Any]) -> None:
-    for name, info in root_component_components.items():
-        if name in subcomponents:
+def _initialize(submodules: dict[str, Any], parent_module: Module, root_module_modules: dict[str, Any]) -> None:
+    for name, info in root_module_modules.items():
+        if name in submodules:
             if info.get("type") is not None:
-                subcomponents[name]["type"] = info["type"]
+                submodules[name]["type"] = info["type"]
         else:
-            subcomponents[name] = info
-    for name, info in subcomponents.items():
+            submodules[name] = info
+    for name, info in submodules.items():
         config = info.get("config", {})
-        config.update(root_component_components.get(name, {}).get("config", {}))
+        config.update(root_module_modules.get(name, {}).get("config", {}))
         if "type" not in info:
-            raise RuntimeError(f"Component not found: {name}")
-        component_type = import_from_string(info["type"])
-        subcomponent_instance: Component = component_type(name, **config)
-        subcomponent_instance._path = parent_component._path + [parent_component._name]
-        subcomponent_instance.parent = parent_component
-        parent_component._components[name] = subcomponent_instance
-        _initialize(subcomponent_instance._uninitialized_components, subcomponent_instance, root_component_components.get(name, {}).get("components", {}))
-        subcomponent_instance._uninitialized_components = {}
+            raise RuntimeError(f"Module not found: {name}")
+        module_type = import_from_string(info["type"])
+        submodule_instance: Module = module_type(name, **config)
+        submodule_instance._path = parent_module._path + [parent_module._name]
+        submodule_instance.parent = parent_module
+        parent_module._modules[name] = submodule_instance
+        _initialize(submodule_instance._uninitialized_modules, submodule_instance, root_module_modules.get(name, {}).get("modules", {}))
+        submodule_instance._uninitialized_modules = {}

@@ -56,7 +56,7 @@ Issues = "https://github.com/davidbrochart/fastaio/issues"
 fastaio = "fastaio._cli:main"
 
 [project.entry-points]
-"fastaio.components" = {fastaio_component = "fastaio:Component"}
+"fastaio.modules" = {fastaio_module = "fastaio:Module"}
 
 [tool.hatch.build.targets.wheel]
 ignore-vcs = true

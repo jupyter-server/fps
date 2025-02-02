@@ -2,7 +2,7 @@ import sys
 
 import pytest
 
-from fastaio import Component
+from fastaio import Module
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup  # pragma: no cover
@@ -14,7 +14,7 @@ async def test_exception_prepare():
     outputs = []
     error = RuntimeError("prepare0")
 
-    class Component0(Component):
+    class Module0(Module):
         async def prepare(self):
             outputs.append("prepare0")
             raise error
@@ -27,10 +27,10 @@ async def test_exception_prepare():
             # should always be called
             outputs.append("stop0")
 
-    async with Component0("component0") as component0:
+    async with Module0("module0") as module0:
         pass
 
-    assert component0.exceptions == [error]
+    assert module0.exceptions == [error]
     assert outputs == ["prepare0", "stop0"]
 
 
@@ -38,7 +38,7 @@ async def test_exception_start():
     outputs = []
     error = RuntimeError("start0")
 
-    class Component0(Component):
+    class Module0(Module):
         async def prepare(self):
             outputs.append("prepare0")
 
@@ -50,17 +50,17 @@ async def test_exception_start():
             # should always be called
             outputs.append("stop0")
 
-    async with Component0("component0") as component0:
+    async with Module0("module0") as module0:
         pass
 
-    assert component0.exceptions == [error]
+    assert module0.exceptions == [error]
 
 
 async def test_exception_stop():
     outputs = []
     error = RuntimeError("stop0")
 
-    class Component0(Component):
+    class Module0(Module):
         async def prepare(self):
             outputs.append("prepare0")
 
@@ -71,10 +71,10 @@ async def test_exception_stop():
             outputs.append("stop0")
             raise error
 
-    async with Component0("component0") as component0:
+    async with Module0("module0") as module0:
         pass
 
-    assert component0.exceptions == [error]
+    assert module0.exceptions == [error]
     assert outputs == ["prepare0", "start0", "stop0"]
 
 
@@ -83,7 +83,7 @@ async def test_exception_prepare_stop():
     error_prepare0 = RuntimeError("prepare0")
     error_stop0 = RuntimeError("stop0")
 
-    class Component0(Component):
+    class Module0(Module):
         async def prepare(self):
             outputs.append("prepare0")
             raise error_prepare0
@@ -95,10 +95,10 @@ async def test_exception_prepare_stop():
             outputs.append("stop0")
             raise error_stop0
 
-    async with Component0("component0") as component0:
+    async with Module0("module0") as module0:
         pass
 
-    assert component0.exceptions == [error_prepare0, error_stop0]
+    assert module0.exceptions == [error_prepare0, error_stop0]
     assert outputs == ["prepare0", "stop0"]
 
 
@@ -107,7 +107,7 @@ async def test_exception_start_stop():
     error_start0 = RuntimeError("start0")
     error_stop0 = RuntimeError("stop0")
 
-    class Component0(Component):
+    class Module0(Module):
         async def prepare(self):
             outputs.append("prepare0")
 
@@ -119,19 +119,19 @@ async def test_exception_start_stop():
             outputs.append("stop0")
             raise error_stop0
 
-    async with Component0("component0") as component0:
+    async with Module0("module0") as module0:
         pass
 
-    assert component0.exceptions == [error_start0, error_stop0]
+    assert module0.exceptions == [error_start0, error_stop0]
     assert outputs == ["prepare0", "start0", "stop0"]
 
 
-async def test_exception_subcomponent():
+async def test_exception_submodule():
     outputs = []
     error_sub_start0 = RuntimeError("sub start0")
     error_sub_stop0 = RuntimeError("sub stop0")
 
-    class Subcomponent0(Component):
+    class Submodule0(Module):
         async def prepare(self):
             outputs.append("sub prepare0")
 
@@ -143,10 +143,10 @@ async def test_exception_subcomponent():
             outputs.append("sub stop0")
             raise error_sub_stop0
 
-    class Component0(Component):
+    class Module0(Module):
         def __init__(self, name):
             super().__init__(name)
-            self.add_component(Subcomponent0, "subcomponent0")
+            self.add_module(Submodule0, "submodule0")
 
         async def prepare(self):
             outputs.append("prepare0")
@@ -157,10 +157,10 @@ async def test_exception_subcomponent():
         async def stop(self):
             outputs.append("stop0")
 
-    async with Component0("component0") as component0:
+    async with Module0("module0") as module0:
         pass
 
-    assert component0.exceptions == [error_sub_start0, error_sub_stop0]
+    assert module0.exceptions == [error_sub_start0, error_sub_stop0]
     assert outputs == [
         "prepare0",
         "sub prepare0",

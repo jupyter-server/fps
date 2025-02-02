@@ -7,10 +7,10 @@ from anyioutils import create_task
 from anycorn import Config, serve
 from fastapi import FastAPI
 
-from fastaio import Context, Component
+from fastaio import Module
 
 
-class FastAPIComponent(Component):
+class FastAPIModule(Module):
     def __init__(
         self,
         name: str,
@@ -28,7 +28,7 @@ class FastAPIComponent(Component):
         self.shutdown_event = Event()
 
     async def prepare(self) -> None:
-        self.add_resource(self.app)
+        self.put(self.app)
 
     async def start(self) -> None:
         config = Config()

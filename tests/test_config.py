@@ -1,122 +1,122 @@
 import pytest
 
-from fastaio import Component, get_root_component, initialize, merge_config
+from fastaio import Module, get_root_module, initialize, merge_config
 
 
 def test_config_override():
-    class Subcomponent0(Component):
+    class Submodule0(Module):
         def __init__(self, name, param0="param0", param1="param1"):
             super().__init__(name)
             self.param0 = param0
             self.param1 = param1
     
-    class Subcomponent1(Component):
+    class Submodule1(Module):
         def __init__(self, name, param0="param0"):
             super().__init__(name)
             self.param0 = param0
 
-    class Subcomponent2(Component):
+    class Submodule2(Module):
         def __init__(self, name, param2="param2"):
             super().__init__(name)
-            self.add_component(Subcomponent3, "subcomponent3", param3="param3*")
+            self.add_module(Submodule3, "submodule3", param3="param3*")
             self.param2 = param2
 
-    class Subcomponent3(Component):
+    class Submodule3(Module):
         def __init__(self, name, param3="param3"):
             super().__init__(name)
-            self.add_component(Subcomponent4, "subcomponent4", param4="param4*")
+            self.add_module(Submodule4, "submodule4", param4="param4*")
             self.param3 = param3
 
-    class Subcomponent4(Component):
+    class Submodule4(Module):
         def __init__(self, name, param4="param4"):
             super().__init__(name)
             self.param4 = param4
 
-    class Component0(Component):
+    class Module0(Module):
         def __init__(self, name, param0="param0"):
             super().__init__(name)
-            self.add_component(Subcomponent0, "subcomponent0", param0="param0*")
-            self.add_component(Subcomponent1, "subcomponent1")
-            self.add_component(Subcomponent2, "subcomponent2", param2="param2*")
+            self.add_module(Submodule0, "submodule0", param0="param0*")
+            self.add_module(Submodule1, "submodule1")
+            self.add_module(Submodule2, "submodule2", param2="param2*")
             self.param0 = param0
 
-    component0 = Component0("component0", param0="bar")
-    initialize(component0)
-    initialize(component0)
-    assert component0.param0 == "bar"
-    assert component0.components["subcomponent0"].param0 == "param0*"
-    assert component0.components["subcomponent0"].param1 == "param1"
-    assert component0.components["subcomponent1"].param0 == "param0"
-    assert component0.components["subcomponent2"].param2 == "param2*"
-    assert component0.components["subcomponent2"].components["subcomponent3"].param3 == "param3*"
-    assert component0.components["subcomponent2"].components["subcomponent3"].components["subcomponent4"].param4 == "param4*"
+    module0 = Module0("module0", param0="bar")
+    initialize(module0)
+    initialize(module0)
+    assert module0.param0 == "bar"
+    assert module0.modules["submodule0"].param0 == "param0*"
+    assert module0.modules["submodule0"].param1 == "param1"
+    assert module0.modules["submodule1"].param0 == "param0"
+    assert module0.modules["submodule2"].param2 == "param2*"
+    assert module0.modules["submodule2"].modules["submodule3"].param3 == "param3*"
+    assert module0.modules["submodule2"].modules["submodule3"].modules["submodule4"].param4 == "param4*"
 
 
 def test_config_from_dict():
-    class Subcomponent0(Component):
+    class Submodule0(Module):
         def __init__(self, name, param0="param0", param1="param1"):
             super().__init__(name)
             self.param0 = param0
             self.param1 = param1
     
-    class Subcomponent1(Component):
+    class Submodule1(Module):
         def __init__(self, name, param0="param0"):
             super().__init__(name)
             self.param0 = param0
 
-    class Subcomponent2(Component):
+    class Submodule2(Module):
         def __init__(self, name, param2="param2"):
             super().__init__(name)
-            self.add_component(Subcomponent3, "subcomponent3")
+            self.add_module(Submodule3, "submodule3")
             self.param2 = param2
 
-    class Subcomponent3(Component):
+    class Submodule3(Module):
         def __init__(self, name, param3="param3"):
             super().__init__(name)
-            self.add_component(Subcomponent4, "subcomponent4", param4="foo")
+            self.add_module(Submodule4, "submodule4", param4="foo")
             self.param3 = param3
 
-    class Subcomponent4(Component):
+    class Submodule4(Module):
         def __init__(self, name, param4="param4"):
             super().__init__(name)
             self.param4 = param4
 
-    class Component0(Component):
+    class Module0(Module):
         def __init__(self, name, param0="param0"):
             super().__init__(name)
-            self.add_component(Subcomponent0, "subcomponent0", param0="foo")
-            self.add_component(Subcomponent1, "subcomponent1")
-            self.add_component(Subcomponent2, "subcomponent2")
+            self.add_module(Submodule0, "submodule0", param0="foo")
+            self.add_module(Submodule1, "submodule1")
+            self.add_module(Submodule2, "submodule2")
             self.param0 = param0
 
     config = {
-        "component0": {
-            "type": Component0,
+        "module0": {
+            "type": Module0,
             "config": {
                 "param0": "bar",
             },
-            "components": {
-                "subcomponent0": {
+            "modules": {
+                "submodule0": {
                     "config": {
                         "param0": "foo2",
                     },
                 },
-                "subcomponent1": {
+                "submodule1": {
                     "config": {
                         "param0": "baz",
                     },
                 },
-                "subcomponent2": {
+                "submodule2": {
                     "config": {
                         "param2": "param2*",
                     },
-                    "components": {
-                        "subcomponent3": {
+                    "modules": {
+                        "submodule3": {
                             "config": {
                                 "param3": "param3*",
                             },
-                            "components": {
-                                "subcomponent4": {
+                            "modules": {
+                                "submodule4": {
                                     "config": {
                                         "param4": "param4*",
                                     },
@@ -129,27 +129,27 @@ def test_config_from_dict():
         },
     }
 
-    component0 = get_root_component(config)
-    initialize(component0)
-    assert component0.param0 == "bar"
-    assert component0.components["subcomponent0"].param0 == "foo2"
-    assert component0.components["subcomponent0"].param1 == "param1"
-    assert component0.components["subcomponent1"].param0 == "baz"
-    assert component0.components["subcomponent2"].param2 == "param2*"
-    assert component0.components["subcomponent2"].components["subcomponent3"].param3 == "param3*"
-    assert component0.components["subcomponent2"].components["subcomponent3"].components["subcomponent4"].param4 == "param4*"
+    module0 = get_root_module(config)
+    initialize(module0)
+    assert module0.param0 == "bar"
+    assert module0.modules["submodule0"].param0 == "foo2"
+    assert module0.modules["submodule0"].param1 == "param1"
+    assert module0.modules["submodule1"].param0 == "baz"
+    assert module0.modules["submodule2"].param2 == "param2*"
+    assert module0.modules["submodule2"].modules["submodule3"].param3 == "param3*"
+    assert module0.modules["submodule2"].modules["submodule3"].modules["submodule4"].param4 == "param4*"
 
 
 def test_config_from_dict_with_type_as_str():
     config = {
-        "component0": {
-            "type": "fastaio:Component",
-            "components": {
-                "component0": {
-                    "type": "fastaio:Component",
-                    "components": {
-                        "component00": {
-                            "type": "fastaio:Component",
+        "module0": {
+            "type": "fastaio:Module",
+            "modules": {
+                "module0": {
+                    "type": "fastaio:Module",
+                    "modules": {
+                        "module00": {
+                            "type": "fastaio:Module",
                         },
                     },
                 },
@@ -157,20 +157,20 @@ def test_config_from_dict_with_type_as_str():
         },
     }
 
-    component0 = get_root_component(config)
-    initialize(component0)
-    assert component0.components["component0"].components["component00"]
+    module0 = get_root_module(config)
+    initialize(module0)
+    assert module0.modules["module0"].modules["module00"]
 
 
 def test_wrong_config_from_dict_1():
-    class Component0(Component):
+    class Module0(Module):
         pass
 
     config = {
-        "component0": {
-            "type": Component0,
-            "components": {
-                "subcomponent0": {
+        "module0": {
+            "type": Module0,
+            "modules": {
+                "submodule0": {
                     "config": {
                         "param0": "foo",
                     },
@@ -179,36 +179,36 @@ def test_wrong_config_from_dict_1():
         },
     }
 
-    component0 = get_root_component(config)
+    module0 = get_root_module(config)
 
     with pytest.raises(RuntimeError) as excinfo:
-        initialize(component0)
+        initialize(module0)
 
-    assert str(excinfo.value) == "Component not found: subcomponent0"
+    assert str(excinfo.value) == "Module not found: submodule0"
 
 
 def test_wrong_config_from_dict_2():
-    class Subcomponent0(Component):
+    class Submodule0(Module):
         def __init__(self, name, param0="param0", param1="param1"):
             super().__init__(name)
             self.param0 = param0
             self.param1 = param1
 
-    class Component0(Component):
+    class Module0(Module):
         def __init__(self, name, param0="param0"):
             super().__init__(name)
-            self.add_component(Subcomponent0, "subcomponent0", param0="foo")
+            self.add_module(Submodule0, "submodule0", param0="foo")
 
     config = {
-        "component0": {
-            "type": Component0,
-            "components": {
-                "subcomponent0": {
+        "module0": {
+            "type": Module0,
+            "modules": {
+                "submodule0": {
                     "config": {
                         "param0": "foo",
                     },
-                    "components": {
-                        "subcomponent1": {
+                    "modules": {
+                        "submodule1": {
                             "config": {
                                 "param1": "bar",
                             },
@@ -219,54 +219,54 @@ def test_wrong_config_from_dict_2():
         },
     }
 
-    component0 = get_root_component(config)
+    module0 = get_root_module(config)
 
     with pytest.raises(RuntimeError) as excinfo:
-        initialize(component0)
+        initialize(module0)
 
-    assert str(excinfo.value) == "Component not found: subcomponent1"
+    assert str(excinfo.value) == "Module not found: submodule1"
 
 
-def test_config_from_dict_add_subcomponents():
-    class Subcomponent0(Component):
+def test_config_from_dict_add_submodules():
+    class Submodule0(Module):
         def __init__(self, name, param0="param0", param1="param1"):
             super().__init__(name)
             self.param0 = param0
             self.param1 = param1
 
-    class Subcomponent1(Component):
+    class Submodule1(Module):
         def __init__(self, name, param0="param0", param1="param1"):
             super().__init__(name)
             self.param0 = param0
             self.param1 = param1
 
-    class Subcomponent10(Component):
+    class Submodule10(Module):
         def __init__(self, name, param0="param0", param1="param1"):
             super().__init__(name)
             self.param0 = param0
             self.param1 = param1
 
-    class Component0(Component):
+    class Module0(Module):
         pass
 
     config = {
-        "component0": {
-            "type": Component0,
-            "components": {
-                "subcomponent0": {
-                    "type": Subcomponent0,
+        "module0": {
+            "type": Module0,
+            "modules": {
+                "submodule0": {
+                    "type": Submodule0,
                     "config": {
                         "param0": "foo",
                     },
                 },
-                "subcomponent1": {
-                    "type": Subcomponent1,
+                "submodule1": {
+                    "type": Submodule1,
                     "config": {
                         "param1": "bar",
                     },
-                    "components": {
-                        "subcomponent10": {
-                            "type": Subcomponent10,
+                    "modules": {
+                        "submodule10": {
+                            "type": Submodule10,
                             "config": {
                                 "param0": "baz",
                              },
@@ -277,34 +277,34 @@ def test_config_from_dict_add_subcomponents():
         },
     }
 
-    component0 = get_root_component(config)
-    initialize(component0)
-    assert list(component0.components.keys()) == ["subcomponent0", "subcomponent1"]
-    assert list(component0.components["subcomponent0"].components.keys()) == []
-    assert list(component0.components["subcomponent1"].components.keys()) == ["subcomponent10"]
-    assert list(component0.components["subcomponent1"].components["subcomponent10"].components.keys()) == []
-    assert component0.components["subcomponent0"].param0 == "foo"
-    assert component0.components["subcomponent0"].param1 == "param1"
-    assert component0.components["subcomponent1"].param0 == "param0"
-    assert component0.components["subcomponent1"].param1 == "bar"
-    assert component0.components["subcomponent1"].components["subcomponent10"].param0 == "baz"
-    assert component0.components["subcomponent1"].components["subcomponent10"].param1 == "param1"
+    module0 = get_root_module(config)
+    initialize(module0)
+    assert list(module0.modules.keys()) == ["submodule0", "submodule1"]
+    assert list(module0.modules["submodule0"].modules.keys()) == []
+    assert list(module0.modules["submodule1"].modules.keys()) == ["submodule10"]
+    assert list(module0.modules["submodule1"].modules["submodule10"].modules.keys()) == []
+    assert module0.modules["submodule0"].param0 == "foo"
+    assert module0.modules["submodule0"].param1 == "param1"
+    assert module0.modules["submodule1"].param0 == "param0"
+    assert module0.modules["submodule1"].param1 == "bar"
+    assert module0.modules["submodule1"].modules["submodule10"].param0 == "baz"
+    assert module0.modules["submodule1"].modules["submodule10"].param1 == "param1"
 
 
 def test_merge_config():
     d0 = {
-        "component0": {
-            "type": "Component0",
+        "module0": {
+            "type": "Module0",
             "config": {
                 "param0": 0,
                 "param1": 1,
             },
-            "components": {
-                "component1": {
-                    "type": "Component1",
-                    "components": {
-                        "component2": {
-                            "type": "Component2",
+            "modules": {
+                "module1": {
+                    "type": "Module1",
+                    "modules": {
+                        "module2": {
+                            "type": "Module2",
                             "config": {
                                 "param2": 2,
                                 "param3": 3,
@@ -317,20 +317,20 @@ def test_merge_config():
     }
 
     d1 = {
-        "component0": {
+        "module0": {
             "config": {
                 "param1": 11,
             },
-            "components": {
-                "component1": {
-                    "components": {
-                        "component2": {
+            "modules": {
+                "module1": {
+                    "modules": {
+                        "module2": {
                             "config": {
                                 "param2": 22,
                             },
                         },
-                        "component3": {
-                            "type": "Component3",
+                        "module3": {
+                            "type": "Module3",
                             "config": {
                                 "param4": 4,
                             }
@@ -343,25 +343,25 @@ def test_merge_config():
 
     d = merge_config(d0, d1)
     assert d == {
-        "component0": {
-            "type": "Component0",
+        "module0": {
+            "type": "Module0",
             "config": {
                 "param0": 0,
                 "param1": 11,
             },
-            "components": {
-                "component1": {
-                    "type": "Component1",
-                    "components": {
-                        "component2": {
-                            "type": "Component2",
+            "modules": {
+                "module1": {
+                    "type": "Module1",
+                    "modules": {
+                        "module2": {
+                            "type": "Module2",
                             "config": {
                                 "param2": 22,
                                 "param3": 3,
                             }
                         },
-                        "component3": {
-                            "type": "Component3",
+                        "module3": {
+                            "type": "Module3",
                             "config": {
                                 "param4": 4,
                             }
