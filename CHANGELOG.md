@@ -1,5 +1,9 @@
 # Version history
 
+## 0.4.0
+
+- Change API names.
+
 ## 0.3.0
 
 - Fix server shutdown.
