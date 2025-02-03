@@ -50,15 +50,66 @@ async def test_value():
             self.add_module(Submodule0, "submodule0")
             self.add_module(Submodule1, "submodule1")
 
-    module0 = Module0("module0")
-
-    async with module0:
+    async with Module0("module0") as module0:
         pass
 
     assert type(module0.modules["submodule1"].value0) == Value0
     assert type(module0.modules["submodule0"].value1) == Value1
     assert module0.modules["submodule1"].value0 == value0
     assert module0.modules["submodule0"].value1 == value1
+
+
+async def test_value_level():
+
+    class Value0:
+        pass
+
+    class Value1:
+        pass
+
+    class Value2:
+        pass
+
+    class Module0(Module):
+        def __init__(self, name):
+            super().__init__(name)
+            self.add_module(Module1, "module1")
+
+        async def start(self):
+            self.value0 = Value0()
+            self.put(self.value0)
+            self.value1 = await self.get(Value1, timeout=0.1)
+            self.value2 = await self.get(Value2, timeout=0.1)
+
+    class Module1(Module):
+        def __init__(self, name):
+            super().__init__(name)
+            self.add_module(Module2, "module2")
+
+        async def start(self):
+            self.value1 = Value1()
+            self.put(self.value1)
+            self.value0 = await self.get(Value0, timeout=0.1)
+            self.value2 = await self.get(Value2, timeout=0.1)
+
+    class Module2(Module):
+        async def start(self):
+            self.value2 = Value2()
+            self.put(self.value2)
+            self.value0 = await self.get(Value0, timeout=0.1)
+            self.value1 = await self.get(Value1, timeout=0.1)
+
+    async with Module0("module0") as module0:
+        pass
+
+    module1 = module0.modules["module1"]
+    module2 = module1.modules["module2"]
+    assert module0.value1 == module1.value1
+    assert module0.value2 is None
+    assert module1.value0 == module0.value0
+    assert module1.value2 == module2.value2
+    assert module2.value0 is None
+    assert module2.value1 == module1.value1
 
 
 async def test_get_timeout():
