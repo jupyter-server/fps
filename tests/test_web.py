@@ -5,8 +5,8 @@ from anyio import connect_tcp, create_task_group
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from fastaio import Module
-from fastaio.web.fastapi import FastAPIModule
+from fps import Module
+from fps.web.fastapi import FastAPIModule
 
 pytestmark = pytest.mark.anyio
 

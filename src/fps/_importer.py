@@ -17,11 +17,11 @@ def import_from_string(import_str: Any) -> Any:
         return import_str
 
     if ":" not in import_str:
-        # this is an entry-point in the "fastaio.modules" group
-        for ep in entry_points(group="fastaio.modules"):
+        # this is an entry-point in the "fps.modules" group
+        for ep in entry_points(group="fps.modules"):
             if ep.name == import_str:
                 return ep.load()
-        raise RuntimeError(f'Module could not be found in entry-point group "fastaio.modules": {import_str}')
+        raise RuntimeError(f'Module could not be found in entry-point group "fps.modules": {import_str}')
 
     module_str, _, attrs_str = import_str.partition(":")
     try:

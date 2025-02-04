@@ -1,11 +1,11 @@
 from click.testing import CliRunner
-from fastaio import Module, get_config, main
+from fps import Module, get_config, main
 
 
 def test_wrong_cli_1():
     runner = CliRunner()
     result = runner.invoke(main, [
-        "fastaio:Module",
+        "fps:Module",
         "--set", "param",
     ])
     assert result.exit_code == 1
@@ -13,14 +13,14 @@ def test_wrong_cli_1():
 def test_wrong_cli_2():
     runner = CliRunner()
     result = runner.invoke(main, [
-        "fastaio.Module",
+        "fps.Module",
     ])
     assert result.exit_code == 1
 
 def test_wrong_cli_3():
     runner = CliRunner()
     result = runner.invoke(main, [
-        "fastaio:WrongModule",
+        "fps:WrongModule",
     ])
     assert result.exit_code == 1
 
@@ -34,7 +34,7 @@ def test_wrong_cli_4():
 def test_cli():
     runner = CliRunner()
     runner.invoke(main, [
-        "fastaio_module",
+        "fps",
         "--set", "param=-1",
         "--set", "module0.param0=foo",
         "--set", "module1.param1=bar",

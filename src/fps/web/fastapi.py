@@ -7,7 +7,7 @@ from anyioutils import create_task
 from anycorn import Config, serve
 from fastapi import FastAPI
 
-from fastaio import Module
+from fps import Module
 
 
 class FastAPIModule(Module):

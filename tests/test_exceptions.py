@@ -2,7 +2,7 @@ import sys
 
 import pytest
 
-from fastaio import Module
+from fps import Module
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup  # pragma: no cover

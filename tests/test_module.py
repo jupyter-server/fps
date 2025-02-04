@@ -1,7 +1,7 @@
 import pytest
 
 from anyio import create_task_group, sleep
-from fastaio import Module
+from fps import Module
 
 pytestmark = pytest.mark.anyio
 
@@ -45,7 +45,7 @@ async def test_add_module_str():
     class Module0(Module):
         def __init__(self, name):
             super().__init__(name)
-            self.add_module("fastaio:Module", "submodule0")
+            self.add_module("fps:Module", "submodule0")
 
     async with Module0("module0") as module0:
         pass

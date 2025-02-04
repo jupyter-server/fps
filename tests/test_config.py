@@ -1,6 +1,6 @@
 import pytest
 
-from fastaio import Module, get_root_module, initialize, merge_config
+from fps import Module, get_root_module, initialize, merge_config
 
 
 def test_config_override():
@@ -143,13 +143,13 @@ def test_config_from_dict():
 def test_config_from_dict_with_type_as_str():
     config = {
         "module0": {
-            "type": "fastaio:Module",
+            "type": "fps:Module",
             "modules": {
                 "module0": {
-                    "type": "fastaio:Module",
+                    "type": "fps:Module",
                     "modules": {
                         "module00": {
-                            "type": "fastaio:Module",
+                            "type": "fps:Module",
                         },
                     },
                 },

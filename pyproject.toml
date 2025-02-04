@@ -3,12 +3,12 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "fastaio"
-version = "0.5.0"
+name = "fps"
+version = "0.0.21"
 description = "A system for creating modular, configurable, pluggable and concurrent applications"
 readme = "README.md"
 authors = [
-    {name = "David Brochart", email = "david.brochart@gmail.com"},
+    { name = "Jupyter Development Team", email = "jupyter@googlegroups.com" },
 ]
 license = {file = "LICENSE"}
 classifiers = [
@@ -49,21 +49,24 @@ test = [
 ]
 
 [project.urls]
-Source = "https://github.com/davidbrochart/fastaio"
-Issues = "https://github.com/davidbrochart/fastaio/issues"
+Source = "https://github.com/jupyter-server/fps"
+Issues = "https://github.com/jupyter-server/fps/issues"
 
 [project.scripts]
-fastaio = "fastaio._cli:main"
+fps = "fps._cli:main"
 
 [project.entry-points]
-"fastaio.modules" = {fastaio_module = "fastaio:Module"}
+"fps.modules" = {fps_module = "fps:Module"}
+
+[tool.hatch.build.targets.sdist]
+include = ["src/fps"]
 
 [tool.hatch.build.targets.wheel]
 ignore-vcs = true
-packages = ["src/fastaio"]
+packages = ["src/fps"]
 
 [tool.coverage.run]
-source = ["fastaio", "tests"]
+source = ["fps", "tests"]
 
 [tool.coverage.report]
 show_missing = true

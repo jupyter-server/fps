@@ -4,7 +4,7 @@ import pytest
 
 from anyio import TASK_STATUS_IGNORED, create_task_group, sleep
 from anyio.abc import TaskStatus
-from fastaio import Module
+from fps import Module
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup  # pragma: no cover
