@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, TypeVar, Any, Callable, Iterable
 
 import anyio
 import structlog
-from anyio import Event, create_task_group, move_on_after
+from anyio import Event, create_task_group, fail_after, move_on_after
 from anyioutils import create_task, wait, FIRST_COMPLETED
 
 from ._container import Container
@@ -127,21 +127,18 @@ class Module:
             self._added_values[value_id] = self.parent._container.put(value, self, value_types, exclusive)
         log.debug("Module added value", path=self.path, value_types=value_types)
 
-    async def get(self, value_type: T_Value, timeout: float = float("inf")) -> T_Value | None:
+    async def get(self, value_type: type[T_Value], timeout: float = float("inf")) -> T_Value:
         log.debug("Module getting value", path=self.path, value_type=value_type)
         tasks = [create_task(self._container.get(value_type, self), self._task_group)]
         if self.parent is not None:
             tasks.append(create_task(self.parent._container.get(value_type, self), self._task_group))
-        with move_on_after(timeout) as scope:
+        with fail_after(timeout) as scope:
             done, pending = await wait(tasks, self._task_group, return_when=FIRST_COMPLETED)
             for task in pending:
                 task.cancel(raise_exception=False)
             for task in done:
                 break
             value = await task.wait()
-        if scope.cancelled_caught:
-            log.debug("Module did not get value in time", path=self.path, value_type=value_type)
-            return None
         value_id = id(value._value)
         self._acquired_values[value_id] = value
         log.debug("Module got value", path=self.path, value_type=value_type)
