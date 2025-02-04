@@ -35,13 +35,13 @@ class FastAPIModule(Module):
         async with create_task_group() as tg:
             self.server_task = create_task(
                 serve(
-                    self.app,
+                    self.app,  # type: ignore[arg-type]
                     config,
                     shutdown_trigger=self.shutdown_event.wait,
                     mode="asgi",
                 ),
                 tg,
-            )  # type: ignore[arg-type]
+            )
             while True:
                 try:
                     await connect_tcp(self.host, self.port)
