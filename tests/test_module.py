@@ -1,6 +1,5 @@
 import pytest
 
-from anyio import create_task_group, sleep
 from fps import Module
 
 pytestmark = pytest.mark.anyio
@@ -80,4 +79,7 @@ async def test_module_not_initialized():
         async with module0:
             pass  # pragma: no cover
 
-    assert str(excinfo.value) == "You must call super().__init__() in the __init__ method of your module"
+    assert (
+        str(excinfo.value)
+        == "You must call super().__init__() in the __init__ method of your module"
+    )

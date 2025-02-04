@@ -9,7 +9,7 @@ def test_config_override():
             super().__init__(name)
             self.param0 = param0
             self.param1 = param1
-    
+
     class Submodule1(Module):
         def __init__(self, name, param0="param0"):
             super().__init__(name)
@@ -49,7 +49,10 @@ def test_config_override():
     assert module0.modules["submodule1"].param0 == "param0"
     assert module0.modules["submodule2"].param2 == "param2*"
     assert module0.modules["submodule2"].modules["submodule3"].param3 == "param3*"
-    assert module0.modules["submodule2"].modules["submodule3"].modules["submodule4"].param4 == "param4*"
+    assert (
+        module0.modules["submodule2"].modules["submodule3"].modules["submodule4"].param4
+        == "param4*"
+    )
 
 
 def test_config_from_dict():
@@ -58,7 +61,7 @@ def test_config_from_dict():
             super().__init__(name)
             self.param0 = param0
             self.param1 = param1
-    
+
     class Submodule1(Module):
         def __init__(self, name, param0="param0"):
             super().__init__(name)
@@ -137,7 +140,10 @@ def test_config_from_dict():
     assert module0.modules["submodule1"].param0 == "baz"
     assert module0.modules["submodule2"].param2 == "param2*"
     assert module0.modules["submodule2"].modules["submodule3"].param3 == "param3*"
-    assert module0.modules["submodule2"].modules["submodule3"].modules["submodule4"].param4 == "param4*"
+    assert (
+        module0.modules["submodule2"].modules["submodule3"].modules["submodule4"].param4
+        == "param4*"
+    )
 
 
 def test_config_from_dict_with_type_as_str():
@@ -269,7 +275,7 @@ def test_config_from_dict_add_submodules():
                             "type": Submodule10,
                             "config": {
                                 "param0": "baz",
-                             },
+                            },
                         },
                     },
                 },
@@ -282,7 +288,9 @@ def test_config_from_dict_add_submodules():
     assert list(module0.modules.keys()) == ["submodule0", "submodule1"]
     assert list(module0.modules["submodule0"].modules.keys()) == []
     assert list(module0.modules["submodule1"].modules.keys()) == ["submodule10"]
-    assert list(module0.modules["submodule1"].modules["submodule10"].modules.keys()) == []
+    assert (
+        list(module0.modules["submodule1"].modules["submodule10"].modules.keys()) == []
+    )
     assert module0.modules["submodule0"].param0 == "foo"
     assert module0.modules["submodule0"].param1 == "param1"
     assert module0.modules["submodule1"].param0 == "param0"
@@ -308,11 +316,11 @@ def test_merge_config():
                             "config": {
                                 "param2": 2,
                                 "param3": 3,
-                            }
+                            },
                         }
-                    }
+                    },
                 }
-            }
+            },
         }
     }
 
@@ -333,11 +341,11 @@ def test_merge_config():
                             "type": "Module3",
                             "config": {
                                 "param4": 4,
-                            }
-                        }
+                            },
+                        },
                     }
                 }
-            }
+            },
         }
     }
 
@@ -358,16 +366,16 @@ def test_merge_config():
                             "config": {
                                 "param2": 22,
                                 "param3": 3,
-                            }
+                            },
                         },
                         "module3": {
                             "type": "Module3",
                             "config": {
                                 "param4": 4,
-                            }
-                        }
-                    }
+                            },
+                        },
+                    },
                 }
-            }
+            },
         }
     }

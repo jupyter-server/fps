@@ -21,7 +21,9 @@ def import_from_string(import_str: Any) -> Any:
         for ep in entry_points(group="fps.modules"):
             if ep.name == import_str:
                 return ep.load()
-        raise RuntimeError(f'Module could not be found in entry-point group "fps.modules": {import_str}')
+        raise RuntimeError(
+            f'Module could not be found in entry-point group "fps.modules": {import_str}'
+        )
 
     module_str, _, attrs_str = import_str.partition(":")
     try:
@@ -38,6 +40,8 @@ def import_from_string(import_str: Any) -> Any:
             instance = getattr(instance, attr_str)
     except AttributeError:
         message = 'Attribute "{attrs_str}" not found in module "{module_str}".'
-        raise ImportFromStringError(message.format(attrs_str=attrs_str, module_str=module_str))
+        raise ImportFromStringError(
+            message.format(attrs_str=attrs_str, module_str=module_str)
+        )
 
     return instance

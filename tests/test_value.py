@@ -1,18 +1,12 @@
-import sys
-
 import pytest
 
 from anyio import sleep
 from fps import Module
 
-if sys.version_info < (3, 11):
-    from exceptiongroup import ExceptionGroup  # pragma: no cover
-
 pytestmark = pytest.mark.anyio
 
 
 async def test_value():
-
     value0 = None
     value1 = None
 
@@ -53,14 +47,13 @@ async def test_value():
     async with Module0("module0") as module0:
         pass
 
-    assert type(module0.modules["submodule1"].value0) == Value0
-    assert type(module0.modules["submodule0"].value1) == Value1
+    assert type(module0.modules["submodule1"].value0) is Value0
+    assert type(module0.modules["submodule0"].value1) is Value1
     assert module0.modules["submodule1"].value0 == value0
     assert module0.modules["submodule0"].value1 == value1
 
 
 async def test_value_level():
-
     class Value0:
         pass
 
@@ -119,7 +112,6 @@ async def test_value_level():
 
 
 async def test_get_timeout():
-
     class Module0(Module):
         async def start(self):
             try:
@@ -175,7 +167,6 @@ async def test_value_with_context_manager():
 
 
 async def test_put_with_type():
-
     class Submodule0(Module):
         async def start(self):
             self.put(0, types=int)
@@ -197,7 +188,6 @@ async def test_put_with_type():
 
 
 async def test_put_same_value_type():
-
     class Module0(Module):
         async def start(self):
             self.put(0)
@@ -245,7 +235,6 @@ async def test_put_exclusive_value():
 
 
 async def test_value_not_freed():
-
     class Submodule0(Module):
         async def start(self):
             self.put(0, types=int)
@@ -266,7 +255,10 @@ async def test_value_not_freed():
         pass
 
     assert len(module0.exceptions) == 2
-    assert str(module0.exceptions[0]) == "Module timed out while stopping: module0.submodule0"
+    assert (
+        str(module0.exceptions[0])
+        == "Module timed out while stopping: module0.submodule0"
+    )
     assert str(module0.exceptions[1]) == "Module timed out while stopping: module0"
 
 

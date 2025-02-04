@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from functools import partial
-
 from anyio import Event, connect_tcp, create_task_group
 from anyioutils import create_task
 from anycorn import Config, serve
@@ -35,7 +33,15 @@ class FastAPIModule(Module):
         config.bind = [f"{self.host}:{self.port}"]
         config.loglevel = "WARN"
         async with create_task_group() as tg:
-            self.server_task = create_task(serve(self.app, config, shutdown_trigger=self.shutdown_event.wait, mode="asgi"), tg)  # type: ignore[arg-type]
+            self.server_task = create_task(
+                serve(
+                    self.app,
+                    config,
+                    shutdown_trigger=self.shutdown_event.wait,
+                    mode="asgi",
+                ),
+                tg,
+            )  # type: ignore[arg-type]
             while True:
                 try:
                     await connect_tcp(self.host, self.port)

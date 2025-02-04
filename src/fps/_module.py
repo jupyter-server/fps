@@ -4,7 +4,7 @@ import logging
 import sys
 
 from contextlib import AsyncExitStack
-from inspect import isawaitable, signature
+from inspect import isawaitable
 from typing import TYPE_CHECKING, TypeVar, Any, Callable, Iterable
 
 import anyio
@@ -80,7 +80,9 @@ class Module:
         try:
             self._initialized
         except AttributeError:
-            raise RuntimeError("You must call super().__init__() in the __init__ method of your module")
+            raise RuntimeError(
+                "You must call super().__init__() in the __init__ method of your module"
+            )
 
     @property
     def modules(self) -> dict[str, Module]:
@@ -119,21 +121,38 @@ class Module:
         value_id = id(value)
         self._acquired_values[value_id].drop(self)
 
-    def put(self, value: T_Value, types: Iterable | Any | None = None, exclusive: bool = False) -> None:
+    def put(
+        self,
+        value: T_Value,
+        types: Iterable | Any | None = None,
+        exclusive: bool = False,
+    ) -> None:
         value_id = id(value)
         value_types = self._container.get_value_types(value, types)
-        self._added_values[value_id] = self._container.put(value, self, value_types, exclusive)
+        self._added_values[value_id] = self._container.put(
+            value, self, value_types, exclusive
+        )
         if self.parent is not None:
-            self._added_values[value_id] = self.parent._container.put(value, self, value_types, exclusive)
+            self._added_values[value_id] = self.parent._container.put(
+                value, self, value_types, exclusive
+            )
         log.debug("Module added value", path=self.path, value_types=value_types)
 
-    async def get(self, value_type: type[T_Value], timeout: float = float("inf")) -> T_Value:
+    async def get(
+        self, value_type: type[T_Value], timeout: float = float("inf")
+    ) -> T_Value:
         log.debug("Module getting value", path=self.path, value_type=value_type)
         tasks = [create_task(self._container.get(value_type, self), self._task_group)]
         if self.parent is not None:
-            tasks.append(create_task(self.parent._container.get(value_type, self), self._task_group))
-        with fail_after(timeout) as scope:
-            done, pending = await wait(tasks, self._task_group, return_when=FIRST_COMPLETED)
+            tasks.append(
+                create_task(
+                    self.parent._container.get(value_type, self), self._task_group
+                )
+            )
+        with fail_after(timeout):
+            done, pending = await wait(
+                tasks, self._task_group, return_when=FIRST_COMPLETED
+            )
             for task in pending:
                 task.cancel(raise_exception=False)
             for task in done:
@@ -209,19 +228,25 @@ class Module:
         for module in self._modules.values():
             module._get_all_prepare_timeout()
         if not self._prepared.is_set():
-            self._exceptions.append(TimeoutError(f"Module timed out while preparing: {self.path}"))
+            self._exceptions.append(
+                TimeoutError(f"Module timed out while preparing: {self.path}")
+            )
 
     def _get_all_start_timeout(self):
         for module in self._modules.values():
             module._get_all_start_timeout()
         if not self._started.is_set():
-            self._exceptions.append(TimeoutError(f"Module timed out while starting: {self.path}"))
+            self._exceptions.append(
+                TimeoutError(f"Module timed out while starting: {self.path}")
+            )
 
     def _get_all_stop_timeout(self):
         for module in self._modules.values():
             module._get_all_stop_timeout()
         if not self._stopped.is_set():
-            self._exceptions.append(TimeoutError(f"Module timed out while stopping: {self.path}"))
+            self._exceptions.append(
+                TimeoutError(f"Module timed out while stopping: {self.path}")
+            )
 
     async def _all_prepared(self):
         for module in self._modules.values():
@@ -247,7 +272,9 @@ class Module:
                     module._phase = self._phase
                     module._exceptions = self._exceptions
                     tg.start_soon(module._prepare, name=f"{module.path} _prepare")
-                tg.start_soon(self._prepare_and_done, name=f"{self.path} _prepare_and_done")
+                tg.start_soon(
+                    self._prepare_and_done, name=f"{self.path} _prepare_and_done"
+                )
         except ExceptionGroup as exc:
             self._exceptions.append(*exc.exceptions)
             self._prepared.set()
@@ -316,7 +343,7 @@ class Module:
                 for context_manager_exit in self._context_manager_exits[::-1]:
                     res = context_manager_exit(None, None, None)
                     if isawaitable(res):
-                        await res   
+                        await res
                 tg.start_soon(self._stop_and_done, name=f"{self.path} _stop_and_done")
         except ExceptionGroup as exc:
             self._exceptions.append(*exc.exceptions)
@@ -329,7 +356,7 @@ class Module:
     async def stop(self) -> None:
         pass
 
-    async def _main(self): # pragma: no cover
+    async def _main(self):  # pragma: no cover
         async with self:
             await self._exit.wait()
 
@@ -345,12 +372,20 @@ def initialize(root_module: Module) -> None:
         return
 
     root_module._exit = Event()
-    _initialize(root_module._uninitialized_modules, root_module, root_module._uninitialized_modules)
+    _initialize(
+        root_module._uninitialized_modules,
+        root_module,
+        root_module._uninitialized_modules,
+    )
     root_module._uninitialized_modules = {}
     root_module._initialized = True
 
 
-def _initialize(submodules: dict[str, Any], parent_module: Module, root_module_modules: dict[str, Any]) -> None:
+def _initialize(
+    submodules: dict[str, Any],
+    parent_module: Module,
+    root_module_modules: dict[str, Any],
+) -> None:
     for name, info in root_module_modules.items():
         if name in submodules:
             if info.get("type") is not None:
@@ -367,5 +402,9 @@ def _initialize(submodules: dict[str, Any], parent_module: Module, root_module_m
         submodule_instance._path = parent_module._path + [parent_module._name]
         submodule_instance.parent = parent_module
         parent_module._modules[name] = submodule_instance
-        _initialize(submodule_instance._uninitialized_modules, submodule_instance, root_module_modules.get(name, {}).get("modules", {}))
+        _initialize(
+            submodule_instance._uninitialized_modules,
+            submodule_instance,
+            root_module_modules.get(name, {}).get("modules", {}),
+        )
         submodule_instance._uninitialized_modules = {}

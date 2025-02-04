@@ -35,16 +35,20 @@ class Container:
         self._context = {}
         self._value_added = Event()
 
-    def get_value_types(self, value: Any, types: Iterable | Any | None = None) -> Iterable:
+    def get_value_types(
+        self, value: Any, types: Iterable | Any | None = None
+    ) -> Iterable:
         types = types if types is not None else [type(value)]
         try:
             for value_type in types:
                 break
-        except TypeError as e:
+        except TypeError:
             types = [types]
         return types
 
-    def put(self, value: Any, owner: "Module", types: Iterable, exclusive: bool = False) -> Value:
+    def put(
+        self, value: Any, owner: "Module", types: Iterable, exclusive: bool = False
+    ) -> Value:
         _value = Value(value, owner, exclusive)
         for value_type in types:
             value_type_id = id(value_type)

@@ -12,17 +12,25 @@ def get_root_module(config: dict[str, Any]) -> Module:
         root_module = module_type(module_name, **module_config)
         submodules = module_info.get("modules", {})
         for submodule_name, submodule_info in submodules.items():
-            submodule_config = root_module._uninitialized_modules.setdefault(submodule_name, {}).setdefault("config", {})
+            submodule_config = root_module._uninitialized_modules.setdefault(
+                submodule_name, {}
+            ).setdefault("config", {})
             submodule_config.update(submodule_info.get("config", {}))
             submodule_type = submodule_info.get("type")
             if submodule_type is not None:
-                root_module._uninitialized_modules[submodule_name]["type"] = submodule_type
-            root_module._uninitialized_modules[submodule_name]["modules"] = submodule_info.get("modules", {})
+                root_module._uninitialized_modules[submodule_name]["type"] = (
+                    submodule_type
+                )
+            root_module._uninitialized_modules[submodule_name]["modules"] = (
+                submodule_info.get("modules", {})
+            )
         break
     return root_module
 
 
-def merge_config(config: dict[str, Any], override: dict[str, Any], root: bool = True) -> dict[str, Any]:
+def merge_config(
+    config: dict[str, Any], override: dict[str, Any], root: bool = True
+) -> dict[str, Any]:
     if root:
         config = deepcopy(config)
     for key, val in override.items():

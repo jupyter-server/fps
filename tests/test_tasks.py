@@ -18,7 +18,9 @@ async def test_task():
     class Value0:
         pass
 
-    async def task(message: str, *, task_status: TaskStatus[None] = TASK_STATUS_IGNORED) -> None:
+    async def task(
+        message: str, *, task_status: TaskStatus[None] = TASK_STATUS_IGNORED
+    ) -> None:
         outputs.append(message)
         task_status.started()
         await sleep(float("inf"))
@@ -104,7 +106,7 @@ async def test_failing_task():
 
     async with Module0("module0") as module0:
         await sleep(0.1)
-    
+
     assert len(module0.exceptions) == 1
     assert type(module0.exceptions[0]) is ExceptionGroup
     assert str(module0.exceptions[0].exceptions[0]) == "start0"

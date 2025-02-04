@@ -4,7 +4,9 @@ from ._importer import import_from_string
 
 
 @click.command()
-@click.option("--set", "set_", multiple=True, help="The assignment to the module parameter.")
+@click.option(
+    "--set", "set_", multiple=True, help="The assignment to the module parameter."
+)
 @click.argument("module")
 def main(module, set_):
     global CONFIG
@@ -16,7 +18,9 @@ def main(module, set_):
     }
     for _set in set_:
         if "=" not in _set:
-            raise click.ClickException(f"No '=' while setting a module parameter: {_set}")
+            raise click.ClickException(
+                f"No '=' while setting a module parameter: {_set}"
+            )
 
         key, value = _set.split("=", 1)
         path = key.split(".")

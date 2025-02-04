@@ -1,9 +1,7 @@
 import pytest
 
 import httpx
-from anyio import connect_tcp, create_task_group
 from fastapi import FastAPI
-from fastapi.testclient import TestClient
 
 from fps import Module
 from fps.web.fastapi import FastAPIModule
@@ -27,9 +25,8 @@ async def test_web(unused_tcp_port):
             self.add_module(FastAPIModule, "fastapi_module", port=unused_tcp_port)
             self.add_module(Submodule0, "submodule0")
 
-    async with Module0("module0") as module0:
-            app = module0.modules["submodule0"].app
-            async with httpx.AsyncClient() as client:
-                response = await client.get(f"http://127.0.0.1:{unused_tcp_port}")
+    async with Module0("module0"):
+        async with httpx.AsyncClient() as client:
+            response = await client.get(f"http://127.0.0.1:{unused_tcp_port}")
 
     assert response.json() == {"Hello": "World"}

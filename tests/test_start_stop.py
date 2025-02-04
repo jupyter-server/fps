@@ -1,18 +1,12 @@
-import sys
-
 import pytest
 
 from anyio import sleep
 from fps import Module
 
-if sys.version_info < (3, 11):
-    from exceptiongroup import ExceptionGroup  # pragma: no cover
-
 pytestmark = pytest.mark.anyio
 
 
 async def test_prepare():
-
     class Module0(Module):
         async def prepare(self):
             # will never prepare
@@ -26,7 +20,6 @@ async def test_prepare():
 
 
 async def test_nested_prepare():
-
     class Submodule0(Module):
         async def prepare(self):
             # will never prepare
@@ -41,11 +34,13 @@ async def test_nested_prepare():
         pass
 
     assert len(module0.exceptions) == 1
-    assert str(module0.exceptions[0]) == "Module timed out while preparing: module0.submodule0"
+    assert (
+        str(module0.exceptions[0])
+        == "Module timed out while preparing: module0.submodule0"
+    )
 
 
 async def test_start():
-
     class Module0(Module):
         async def start(self):
             # will never start
@@ -59,7 +54,6 @@ async def test_start():
 
 
 async def test_nested_start():
-
     class Submodule0(Module):
         async def start(self):
             # will never start
@@ -74,11 +68,13 @@ async def test_nested_start():
         pass
 
     assert len(module0.exceptions) == 1
-    assert str(module0.exceptions[0]) == "Module timed out while starting: module0.submodule0"
+    assert (
+        str(module0.exceptions[0])
+        == "Module timed out while starting: module0.submodule0"
+    )
 
 
 async def test_stop():
-
     class Module0(Module):
         async def stop(self):
             # will never stop
@@ -92,8 +88,8 @@ async def test_stop():
     assert len(module0.exceptions) == 1
     assert str(module0.exceptions[0]) == "Module timed out while stopping: module0"
 
-async def test_nested_stop():
 
+async def test_nested_stop():
     class Submodule0(Module):
         async def stop(self):
             # will never stop
@@ -108,4 +104,7 @@ async def test_nested_stop():
         pass
 
     assert len(module0.exceptions) == 1
-    assert str(module0.exceptions[0]) == "Module timed out while stopping: module0.submodule0"
+    assert (
+        str(module0.exceptions[0])
+        == "Module timed out while stopping: module0.submodule0"
+    )
