@@ -5,7 +5,6 @@ build-backend = "hatchling.build"
 [project]
 name = "fps"
 dynamic = ["version"]
-version = "0.0.21"
 description = "A system for creating modular, configurable, pluggable and concurrent applications"
 readme = "README.md"
 authors = [
