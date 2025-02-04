@@ -4,6 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fps"
+dynamic = ["version"]
 version = "0.0.21"
 description = "A system for creating modular, configurable, pluggable and concurrent applications"
 readme = "README.md"
@@ -57,6 +58,9 @@ fps = "fps._cli:main"
 
 [project.entry-points]
 "fps.modules" = {fps_module = "fps:Module"}
+
+[tool.hatch.version]
+path = "src/fps/__init__.py"
 
 [tool.hatch.build.targets.sdist]
 include = ["src/fps"]
