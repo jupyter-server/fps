@@ -1,5 +1,9 @@
 # Version history
 
+## 0.4.1
+
+- Add `py.typed`.
+
 ## 0.4.0
 
 - Change API names.

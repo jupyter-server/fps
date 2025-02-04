@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fastaio"
-version = "0.4.0"
+version = "0.4.1"
 description = "A system for creating modular, configurable, pluggable and concurrent applications"
 readme = "README.md"
 authors = [
