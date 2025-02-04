@@ -34,7 +34,7 @@ def test_wrong_cli_4():
 def test_cli():
     runner = CliRunner()
     runner.invoke(main, [
-        "fps",
+        "fps_module",
         "--set", "param=-1",
         "--set", "module0.param0=foo",
         "--set", "module1.param1=bar",
