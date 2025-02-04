@@ -1,5 +1,10 @@
 # Version history
 
+## 0.5.0
+
+- Fix `Module.get` value type.
+- Make `Module.get` raise `TimeoutError` when not getting a value in time.
+
 ## 0.4.1
 
 - Add `py.typed`.
