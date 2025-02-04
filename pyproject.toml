@@ -1,0 +1,69 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fastaio"
+version = "0.5.0"
+description = "A system for creating modular, configurable, pluggable and concurrent applications"
+readme = "README.md"
+authors = [
+    {name = "David Brochart", email = "david.brochart@gmail.com"},
+]
+license = {file = "LICENSE"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Typing :: Typed",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+requires-python = ">= 3.9"
+dependencies = [
+    "anyio",
+    "anyioutils >=0.4.9",
+    "click >=8.1.8,<9",
+    "structlog",
+    "exceptiongroup; python_version<'3.11'",
+    "importlib_metadata >=3.6; python_version<'3.10'",
+]
+
+[project.optional-dependencies]
+web = [
+    "fastapi",
+    "anycorn",
+]
+test = [
+    "pytest >=8,<9",
+    "trio >=0.27.0,<0.28",
+    "mypy",
+    "ruff",
+    "coverage[toml] >=7,<8",
+    "httpx",
+]
+
+[project.urls]
+Source = "https://github.com/davidbrochart/fastaio"
+Issues = "https://github.com/davidbrochart/fastaio/issues"
+
+[project.scripts]
+fastaio = "fastaio._cli:main"
+
+[project.entry-points]
+"fastaio.modules" = {fastaio_module = "fastaio:Module"}
+
+[tool.hatch.build.targets.wheel]
+ignore-vcs = true
+packages = ["src/fastaio"]
+
+[tool.coverage.run]
+source = ["fastaio", "tests"]
+
+[tool.coverage.report]
+show_missing = true
