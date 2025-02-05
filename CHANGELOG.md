@@ -1,4 +1,4 @@
-# Changes in FPS {#changelog}
+# Version history
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 

@@ -1,66 +1,75 @@
 [build-system]
-requires = [
-    "hatchling>=1.9.0",
-]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
 name = "fps"
-dynamic = [
-    "version",
-]
-description = "A pluggable server"
+dynamic = ["version"]
+description = "A system for creating modular, configurable, pluggable and concurrent applications"
 readme = "README.md"
-license = ""
-requires-python = ">=3.7"
 authors = [
     { name = "Jupyter Development Team", email = "jupyter@googlegroups.com" },
 ]
-keywords = [
-    "asgi",
-    "fastapi",
-    "pluggy",
-    "plugins",
-    "server",
+license = {file = "LICENSE"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Typing :: Typed",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
+requires-python = ">= 3.9"
 dependencies = [
-    "fastapi",
-    "pluggy>=1.0,<2.0",
-    "toml",
-    "typer[all]",
+    "anyio",
+    "anyioutils >=0.4.9",
+    "click >=8.1.8,<9",
+    "structlog",
+    "exceptiongroup; python_version<'3.11'",
+    "importlib_metadata >=3.6; python_version<'3.10'",
 ]
 
 [project.optional-dependencies]
-uvicorn = [
-    "fps-uvicorn",
+web = [
+    "fastapi",
+    "anycorn",
+]
+test = [
+    "pytest >=8,<9",
+    "trio >=0.27.0,<0.28",
+    "mypy",
+    "ruff",
+    "coverage[toml] >=7,<8",
+    "httpx",
 ]
 
 [project.urls]
-Homepage = "https://github.com/jupyter-server/fps"
+Source = "https://github.com/jupyter-server/fps"
+Issues = "https://github.com/jupyter-server/fps/issues"
+
+[project.scripts]
+fps = "fps._cli:main"
+
+[project.entry-points]
+"fps.modules" = {fps_module = "fps:Module"}
 
 [tool.hatch.version]
-path = "fps/__init__.py"
+path = "src/fps/__init__.py"
 
 [tool.hatch.build.targets.sdist]
-include = [
-    "/fps",
-]
+include = ["src/fps"]
 
-[tool.jupyter-releaser]
-skip = [
-    "check-links",
-    "check-manifest",
-]
+[tool.hatch.build.targets.wheel]
+ignore-vcs = true
+packages = ["src/fps"]
 
-[tool.jupyter-releaser.options]
-python_packages = [
-    ".:fps",
-    "plugins/uvicorn:fps-uvicorn",
-]
+[tool.coverage.run]
+source = ["fps", "tests"]
 
-[tool.check-manifest]
-ignore = [
-    ".mailmap",
-    "*.yml",
-    "*.yaml",
-]
+[tool.coverage.report]
+show_missing = true
