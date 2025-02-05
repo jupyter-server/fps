@@ -24,8 +24,8 @@ async def test_value():
             self.value1 = value1 = await self.get(Value1)
 
         async def stop(self):
-            self.drop_value(self.value1)
-            await self.value_freed(self.value0)
+            self.drop(self.value1)
+            await self.freed(self.value0)
 
     class Submodule1(Module):
         async def start(self):
@@ -35,8 +35,8 @@ async def test_value():
             self.put(self.value1)
 
         async def stop(self):
-            await self.value_freed(self.value1)
-            self.drop_value(self.value0)
+            await self.freed(self.value1)
+            self.drop(self.value0)
 
     class Module0(Module):
         def __init__(self, name):
@@ -181,7 +181,7 @@ async def test_put_with_type():
             assert self.value == 0
 
         async def stop(self):
-            self.drop_value(self.value)
+            self.drop(self.value)
 
     async with Module0("module0"):
         pass
@@ -214,7 +214,7 @@ async def test_put_exclusive_value():
             outputs.append("get")
             await sleep(0.1)
             outputs.append("drop")
-            self.drop_value(value)
+            self.drop(value)
 
     class Module0(Module):
         def __init__(self, name):
@@ -234,7 +234,7 @@ async def test_put_exclusive_value():
     ]
 
 
-async def test_value_not_freed():
+async def test_not_freed():
     class Submodule0(Module):
         async def start(self):
             self.put(0, types=int)
@@ -262,7 +262,7 @@ async def test_value_not_freed():
     assert str(module0.exceptions[1]) == "Module timed out while stopping: module0"
 
 
-async def test_all_values_freed():
+async def test_all_freed():
     outputs = []
 
     class Submodule0(Module):
@@ -270,8 +270,8 @@ async def test_all_values_freed():
             self.put(0, types=int)
 
         async def stop(self):
-            await self.all_values_freed()
-            outputs.append("all values freed")
+            await self.all_freed()
+            outputs.append("all freed")
 
     class Module0(Module):
         def __init__(self, name):
@@ -283,13 +283,13 @@ async def test_all_values_freed():
             assert self.value == 0
 
         async def stop(self):
-            self.drop_value(self.value)
-            outputs.append("value dropped")
+            self.drop(self.value)
+            outputs.append("dropped")
 
     async with Module0("module0"):
         pass
 
     assert outputs == [
-        "value dropped",
-        "all values freed",
+        "dropped",
+        "all freed",
     ]

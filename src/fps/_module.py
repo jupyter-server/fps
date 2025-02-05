@@ -105,19 +105,19 @@ class Module:
         }
         log.debug("Module added", path=self.path, name=name, module_type=module_type)
 
-    async def value_freed(self, value: Any) -> None:
+    async def freed(self, value: Any) -> None:
         value_id = id(value)
         await self._added_values[value_id].wait_no_borrower()
 
-    async def all_values_freed(self) -> None:
+    async def all_freed(self) -> None:
         for value in self._added_values.values():
             await value.wait_no_borrower()
 
-    def drop_all_values(self) -> None:
+    def drop_all(self) -> None:
         for value in self._acquired_values.values():
             value.drop(self)
 
-    def drop_value(self, value: Any) -> None:
+    def drop(self, value: Any) -> None:
         value_id = id(value)
         self._acquired_values[value_id].drop(self)
 
@@ -307,8 +307,8 @@ class Module:
             task.cancel(raise_exception=False)
 
     async def _drop_and_wait_values(self):
-        self.drop_all_values()
-        await self.all_values_freed()
+        self.drop_all()
+        await self.all_freed()
         self._stopped.set()
         log.debug("Module stopped", path=self.path)
 
