@@ -41,7 +41,7 @@ async def test_task():
                 self.put(self.value0)
 
         async def stop(self):
-            await self.value_freed(self.value0)
+            await self.freed(self.value0)
             self.tg1.cancel_scope.cancel()
             self.tg2.cancel_scope.cancel()
             outputs.append("stopped0")
@@ -57,7 +57,7 @@ async def test_task():
         async def stop(self):
             self.tg.cancel_scope.cancel()
             outputs.append("stopped1")
-            self.drop_value(self.value0)
+            self.drop(self.value0)
 
     class Module0(Module):
         def __init__(self, name):
