@@ -2,6 +2,23 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.1.0
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.0.21...14bb99d3c8129cc9adc32ee8ff9b1c6e4fb0d512))
+
+### Merged PRs
+
+- Remove "value" from API [#99](https://github.com/jupyter-server/fps/pull/99) ([@davidbrochart](https://github.com/davidbrochart))
+- Merge FastAIO [#98](https://github.com/jupyter-server/fps/pull/98) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2022-11-23&to=2025-02-05&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2022-11-23..2025-02-05&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Apre-commit-ci+updated%3A2022-11-23..2025-02-05&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.0.21
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.0.20...c7e394d1ee94837c4118d24a0c86f9499ae90e3d))
@@ -15,8 +32,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2022-09-19&to=2022-11-23&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2022-09-19..2022-11-23&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Apre-commit-ci+updated%3A2022-09-19..2022-11-23&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.0.20
 
