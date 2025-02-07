@@ -2,6 +2,22 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.1.1
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.1.0...31fcee05d8ac894e971aa1b083c0831eb6679b97))
+
+### Merged PRs
+
+- Add documentation [#100](https://github.com/jupyter-server/fps/pull/100) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-02-05&to=2025-02-07&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-02-05..2025-02-07&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.1.0
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.0.21...14bb99d3c8129cc9adc32ee8ff9b1c6e4fb0d512))
@@ -16,8 +32,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2022-11-23&to=2025-02-05&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2022-11-23..2025-02-05&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Apre-commit-ci+updated%3A2022-11-23..2025-02-05&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.0.21
 
