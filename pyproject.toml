@@ -47,6 +47,11 @@ test = [
     "coverage[toml] >=7,<8",
     "httpx",
 ]
+docs = [
+    "mkdocs",
+    "mkdocs-material",
+    "mkdocstrings[python]",
+]
 
 [project.urls]
 Source = "https://github.com/jupyter-server/fps"

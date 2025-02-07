@@ -12,10 +12,9 @@ pytestmark = pytest.mark.anyio
 async def test_web(unused_tcp_port):
     class Submodule0(Module):
         async def prepare(self):
-            self.app = await self.get(FastAPI)
+            app = await self.get(FastAPI)
 
-        async def start(self):
-            @self.app.get("/")
+            @app.get("/")
             def read_root():
                 return {"Hello": "World"}
 

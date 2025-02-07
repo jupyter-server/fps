@@ -88,6 +88,9 @@ class Module:
     def modules(self) -> dict[str, Module]:
         return self._modules
 
+    def exit_app(self):
+        self._exit.set()
+
     def add_module(
         self,
         module_type: type["Module"] | str,
@@ -398,7 +401,12 @@ def _initialize(
         if "type" not in info:
             raise RuntimeError(f"Module not found: {name}")
         module_type = import_from_string(info["type"])
-        submodule_instance: Module = module_type(name, **config)
+        try:
+            submodule_instance: Module = module_type(name, **config)
+        except Exception as e:
+            raise RuntimeError(
+                f"Cannot instantiate module '{parent_module.path}.{name}': {e}"
+            )
         submodule_instance._path = parent_module._path + [parent_module._name]
         submodule_instance.parent = parent_module
         parent_module._modules[name] = submodule_instance

@@ -1,5 +1,13 @@
+import json
+
+import fps
 from click.testing import CliRunner
 from fps import Module, get_config, main
+
+
+class UselessModule(Module):
+    async def start(self):
+        self.exit_app()
 
 
 def test_wrong_cli_1():
@@ -50,7 +58,8 @@ def test_wrong_cli_4():
 
 def test_cli():
     runner = CliRunner()
-    runner.invoke(
+    fps._cli.TEST = True
+    result = runner.invoke(
         main,
         [
             "fps_module",
@@ -66,7 +75,10 @@ def test_cli():
             "module2.module3.param3=123",
         ],
     )
-    assert get_config() == {
+    assert result.exit_code == 0
+    config = get_config()
+    fps._cli.TEST = False
+    assert config == {
         "root_module": {
             "type": Module,
             "config": {"param": "-1"},
@@ -80,3 +92,120 @@ def test_cli():
             },
         }
     }
+
+
+def test_cli_with_config_file(tmp_path):
+    config_dict = {
+        "root_module": {
+            "type": "fps_module",
+            "config": {"param": 3},
+            "modules": {
+                "module0": {
+                    "type": "fps_module",
+                    "config": {
+                        "param0": 0,
+                        "param1": 1,
+                    },
+                },
+            },
+        },
+    }
+    with (tmp_path / "config.json").open("w") as f:
+        json.dump(config_dict, f)
+
+    runner = CliRunner()
+    fps._cli.TEST = True
+    result = runner.invoke(
+        main,
+        [
+            "--config",
+            str(tmp_path / "config.json"),
+            "--set",
+            "module0.param1=foo",
+            "--set",
+            "param=bar",
+        ],
+    )
+    assert result.exit_code == 0
+    config = get_config()
+    fps._cli.TEST = False
+    assert config == {
+        "root_module": {
+            "type": "fps_module",
+            "config": {"param": "bar"},
+            "modules": {
+                "module0": {
+                    "type": "fps_module",
+                    "config": {
+                        "param0": 0,
+                        "param1": "foo",
+                    },
+                },
+            },
+        }
+    }
+
+
+def test_cli_with_config_file_and_module(tmp_path):
+    config_dict = {
+        "root_module": {
+            "type": "fps_module",
+            "config": {"param": 3},
+            "modules": {
+                "module0": {
+                    "type": "fps_module",
+                    "config": {
+                        "param0": 0,
+                        "param1": 1,
+                    },
+                },
+            },
+        },
+    }
+    with (tmp_path / "config.json").open("w") as f:
+        json.dump(config_dict, f)
+
+    runner = CliRunner()
+    fps._cli.TEST = True
+    result = runner.invoke(
+        main,
+        [
+            "root_module",
+            "--config",
+            str(tmp_path / "config.json"),
+            "--set",
+            "module0.param1=foo",
+            "--set",
+            "param=bar",
+        ],
+    )
+    assert result.exit_code == 0
+    config = get_config()
+    fps._cli.TEST = False
+    assert config == {
+        "root_module": {
+            "type": "fps_module",
+            "config": {"param": "bar"},
+            "modules": {
+                "module0": {
+                    "type": "fps_module",
+                    "config": {
+                        "param0": 0,
+                        "param1": "foo",
+                    },
+                },
+            },
+        }
+    }
+
+
+def test_cli_run_module():
+    fps._cli.TEST = False
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            "test_cli:UselessModule",
+        ],
+    )
+    assert result.exit_code == 0
