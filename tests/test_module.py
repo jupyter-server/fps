@@ -1,8 +1,25 @@
 import pytest
 
-from fps import Module
+from fps import Module, initialize
 
 pytestmark = pytest.mark.anyio
+
+
+def test_buggy_module():
+    class BuggyModule(Module):
+        def __init__(self, name):
+            raise RuntimeError("foo")
+
+    class Module0(Module):
+        def __init__(self, name):
+            super().__init__(name)
+            self.add_module(BuggyModule, "buggy_module")
+
+    with pytest.raises(RuntimeError) as excinfo:
+        module0 = Module0("module0")
+        initialize(module0)
+
+    assert str(excinfo.value) == "Cannot instantiate module 'module0.buggy_module': foo"
 
 
 async def test_module():
