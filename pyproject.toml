@@ -27,7 +27,7 @@ classifiers = [
 requires-python = ">= 3.9"
 dependencies = [
     "anyio",
-    "anyioutils >=0.4.9",
+    "anyioutils >=0.6.3",
     "click >=8.1.8,<9",
     "structlog",
     "exceptiongroup; python_version<'3.11'",
