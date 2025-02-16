@@ -5,7 +5,7 @@ import sys
 
 from contextlib import AsyncExitStack
 from inspect import isawaitable
-from typing import TYPE_CHECKING, TypeVar, Any, Callable, Iterable
+from typing import TYPE_CHECKING, TypeVar, Any, Callable, Iterable, cast
 
 import anyio
 import structlog
@@ -161,6 +161,8 @@ class Module:
             for task in done:
                 break
             value = await task.wait()
+            if TYPE_CHECKING:
+                value = cast(Value, value)  # pragma: no cover
         value_id = id(value._value)
         self._acquired_values[value_id] = value
         log.debug("Module got value", path=self.path, value_type=value_type)

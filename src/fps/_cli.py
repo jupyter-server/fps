@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import sys
 import click
-from typing import TextIO, cast
+from typing import TextIO
 
 from ._config import get_root_module
 from ._importer import import_from_string
@@ -21,7 +21,7 @@ TEST = False
     "--set", "set_", multiple=True, help="The assignment to the module parameter."
 )
 @click.argument("module", default="")
-def main(module: str, config: str | None, set_: list[str], _test: bool = False):
+def main(module: str, config: TextIO | None, set_: list[str]):
     global CONFIG
     if config is None:
         module_type = import_from_string(module)
@@ -32,8 +32,7 @@ def main(module: str, config: str | None, set_: list[str], _test: bool = False):
             }
         }
     else:
-        config_textio = cast(TextIO, config)
-        config_dict = json.loads(config_textio.read())
+        config_dict = json.loads(config.read())
         if module:
             config_dict = {module: config_dict[module]}
             root_module_name = module
