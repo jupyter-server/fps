@@ -2,6 +2,22 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.1.4
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.1.3...68a4b47acb16fd8570d8c086a84c737399cef086))
+
+### Merged PRs
+
+- Stop application when background tasks fail [#105](https://github.com/jupyter-server/fps/pull/105) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-02-26&to=2025-02-26&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-02-26..2025-02-26&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.1.3
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.1.2...f86c6487fd3512cc6fb8883f3a7049aed857157e))
@@ -15,8 +31,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-02-16&to=2025-02-26&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-02-16..2025-02-26&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.1.2
 
