@@ -47,6 +47,7 @@ class Module:
         self._prepared = Event()
         self._started = Event()
         self._stopped = Event()
+        self._is_stopping = False
         self._name = name
         self._path: list[str] = []
         self._uninitialized_modules: dict[str, Any] = {}
@@ -157,7 +158,7 @@ class Module:
                 tasks, self._task_group, return_when=FIRST_COMPLETED
             )
             for task in pending:
-                task.cancel(raise_exception=False)
+                task.cancel()
             for task in done:
                 break
             value = await task.wait()
@@ -268,6 +269,32 @@ class Module:
             await module._all_stopped()
         await self._stopped.wait()
 
+    def done(self) -> None:
+        if self._phase == "preparing":
+            self._prepared.set()
+            log.debug("Module prepared", path=self.path)
+        elif self._phase == "starting":
+            self._started.set()
+            log.debug("Module started", path=self.path)
+        else:
+            self._is_stopping = True
+            self._task_group.start_soon(self._finish)
+
+    async def _finish(self):
+        tasks = (
+            create_task(self._drop_and_wait_values(), self._task_group),
+            create_task(self._exit.wait(), self._task_group),
+        )
+        done, pending = await wait(tasks, self._task_group, return_when=FIRST_COMPLETED)
+        for task in pending:
+            task.cancel()
+
+    async def _drop_and_wait_values(self):
+        self.drop_all()
+        await self.all_freed()
+        self._stopped.set()
+        log.debug("Module stopped", path=self.path)
+
     async def _prepare(self) -> None:
         log.debug("Preparing module", path=self.path)
         try:
@@ -283,39 +310,16 @@ class Module:
         except ExceptionGroup as exc:
             self._exceptions.append(*exc.exceptions)
             self._prepared.set()
-            log.debug("Module failed while preparing", path=self.path, exc_info=exc)
+            self._exit.set()
+            log.critical("Module failed while preparing", path=self.path)
 
     async def _prepare_and_done(self) -> None:
         await self.prepare()
-        self.done()
+        if not self._prepared.is_set():
+            self.done()
 
     async def prepare(self) -> None:
         pass
-
-    def done(self) -> None:
-        if self._phase == "preparing":
-            self._prepared.set()
-            log.debug("Module prepared", path=self.path)
-        elif self._phase == "starting":
-            self._started.set()
-            log.debug("Module started", path=self.path)
-        else:
-            self._task_group.start_soon(self._finish)
-
-    async def _finish(self):
-        tasks = (
-            create_task(self._drop_and_wait_values(), self._task_group),
-            create_task(self._exit.wait(), self._task_group),
-        )
-        done, pending = await wait(tasks, self._task_group, return_when=FIRST_COMPLETED)
-        for task in pending:
-            task.cancel(raise_exception=False)
-
-    async def _drop_and_wait_values(self):
-        self.drop_all()
-        await self.all_freed()
-        self._stopped.set()
-        log.debug("Module stopped", path=self.path)
 
     async def _start(self) -> None:
         log.debug("Starting module", path=self.path)
@@ -329,10 +333,13 @@ class Module:
         except ExceptionGroup as exc:
             self._exceptions.append(*exc.exceptions)
             self._started.set()
+            self._exit.set()
+            log.critical("Module failed while starting", path=self.path)
 
     async def _start_and_done(self) -> None:
         await self.start()
-        self.done()
+        if not self._started.is_set():
+            self.done()
 
     async def start(self) -> None:
         pass
@@ -353,10 +360,13 @@ class Module:
         except ExceptionGroup as exc:
             self._exceptions.append(*exc.exceptions)
             self._stopped.set()
+            self._exit.set()
+            log.critical("Module failed while stoping", path=self.path)
 
     async def _stop_and_done(self) -> None:
         await self.stop()
-        self.done()
+        if not self._is_stopping:
+            self.done()
 
     async def stop(self) -> None:
         pass
