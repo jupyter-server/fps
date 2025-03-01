@@ -35,7 +35,7 @@ class FastAPIModule(Module):
         config.bind = [f"{self.host}:{self.port}"]
         config.loglevel = "WARN"
         async with create_task_group() as tg:
-            self.server_task = await start_task(
+            self.server_task = start_task(
                 partial(
                     serve,
                     self.app,  # type: ignore[arg-type]
