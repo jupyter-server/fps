@@ -379,3 +379,81 @@ def test_merge_config():
             },
         }
     }
+
+
+def test_dump_config():
+    class Submodule0(Module):
+        def __init__(self, name, param0="param0_0_0", param1="param0_0_1"):
+            super().__init__(name)
+
+    class Submodule1(Module):
+        def __init__(self, name, param0="param0_1_0", param1="param0_1_1"):
+            super().__init__(name)
+            self.add_module(Submodule1_0, "submodule1_0")
+
+    class Submodule1_0(Module):
+        def __init__(self, name, param0="param0_1_0_0", param1="param0_1_0_1"):
+            super().__init__(name)
+
+    class Module0(Module):
+        def __init__(self, name, param0="param0", param1="param1"):
+            super().__init__(name)
+            self.add_module(Submodule0, "submodule0", param1="foo")
+            self.add_module(Submodule1, "submodule1")
+
+    config = {
+        "module0": {
+            "type": Module0,
+            "config": {"param1": "ooo"},
+            "modules": {
+                "submodule1": {
+                    "config": {
+                        "param1": "bar",
+                    },
+                    "modules": {
+                        "submodule1_0": {
+                            "config": {
+                                "param0": "baz",
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    }
+
+    module0 = get_root_module(config)
+    actual_config = initialize(module0)
+
+    assert actual_config == {
+        "module0": {
+            "config": {
+                "param0": "param0",
+                "param1": "ooo",
+            },
+            "modules": {
+                "submodule0": {
+                    "config": {
+                        "param0": "param0_0_0",
+                        "param1": "foo",
+                    },
+                    "modules": {},
+                },
+                "submodule1": {
+                    "config": {
+                        "param0": "param0_1_0",
+                        "param1": "bar",
+                    },
+                    "modules": {
+                        "submodule1_0": {
+                            "config": {
+                                "param0": "baz",
+                                "param1": "param0_1_0_1",
+                            },
+                            "modules": {},
+                        }
+                    },
+                },
+            },
+        }
+    }

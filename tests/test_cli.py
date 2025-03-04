@@ -3,6 +3,18 @@ import json
 import fps
 from click.testing import CliRunner
 from fps import Module, get_config, main
+from structlog.testing import capture_logs
+
+
+class MyModule(Module):
+    def __init__(self, name, param0="param0", param1="param1", add_modules=True):
+        super().__init__(name)
+        if add_modules:
+            self.add_module(MyModule, "module0", add_modules=False)
+            self.add_module(MyModule, "module1", add_modules=False)
+
+    async def start(self):
+        self.exit_app()
 
 
 class UselessModule(Module):
@@ -92,6 +104,46 @@ def test_cli():
             },
         }
     }
+
+
+def test_cli_show_config():
+    runner = CliRunner()
+    fps._cli.TEST = False
+
+    with capture_logs() as cap_logs:
+        result = runner.invoke(
+            main,
+            [
+                "test_cli:MyModule",
+                "--show-config",
+                "--set",
+                "param0=-1",
+                "--set",
+                "module0.param0=foo",
+                "--set",
+                "module1.param1=bar",
+            ],
+        )
+
+    assert result.exit_code == 0
+    config = []
+    for log in cap_logs:
+        if log["event"] == "Configuration":
+            del log["event"]
+            del log["log_level"]
+            config.append(log)
+
+    assert config == [
+        {"root_module.param0": "-1"},
+        {"root_module.param1": "param1"},
+        {"root_module.add_modules": "True"},
+        {"root_module.module0.param0": "foo"},
+        {"root_module.module0.param1": "param1"},
+        {"root_module.module0.add_modules": "False"},
+        {"root_module.module1.param0": "param0"},
+        {"root_module.module1.param1": "bar"},
+        {"root_module.module1.add_modules": "False"},
+    ]
 
 
 def test_cli_with_config_file(tmp_path):

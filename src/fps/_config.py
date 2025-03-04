@@ -12,6 +12,7 @@ def get_root_module(config: dict[str, Any]) -> Module:
         module_config = module_info.get("config", {})
         module_type = import_from_string(module_info["type"])
         root_module = module_type(module_name, **module_config)
+        root_module._config = module_config
         submodules = module_info.get("modules", {})
         for submodule_name, submodule_info in submodules.items():
             submodule_config = root_module._uninitialized_modules.setdefault(
@@ -44,3 +45,20 @@ def merge_config(
         else:
             config[key] = val
     return config
+
+
+def dump_config(config: dict[str, Any]) -> str:
+    config_lines: list[str] = []
+    _dump_config(config_lines, config, "")
+    return "\n".join(config_lines)
+
+
+def _dump_config(config_lines: list[str], config: dict[str, Any], path: str) -> None:
+    if path:
+        path += "."
+    for name, info in config.items():
+        _config = info.get("config", {})
+        for param, value in _config.items():
+            config_lines.append(f"{path}{name}.{param}={value}")
+        for module_name, module_info in info.get("modules", {}).items():
+            _dump_config(config_lines, {module_name: module_info}, f"{path}{name}")
