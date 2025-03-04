@@ -4,7 +4,7 @@ import logging
 import sys
 
 from contextlib import AsyncExitStack
-from inspect import isawaitable
+from inspect import isawaitable, signature, _empty
 from typing import TYPE_CHECKING, TypeVar, Any, Callable, Iterable, cast
 
 import anyio
@@ -55,6 +55,7 @@ class Module:
         self._added_values: dict[Any, Value] = {}
         self._acquired_values: dict[Any, Value] = {}
         self._context_manager_exits: list[Callable] = []
+        self._config: dict[str, Any] = {}
 
     @property
     def parent(self) -> Module | None:
@@ -64,6 +65,10 @@ class Module:
     def parent(self, value: Module) -> None:
         self._parent = value
         self._exit = value._exit
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     @property
     def path(self) -> str:
@@ -382,24 +387,31 @@ class Module:
             pass
 
 
-def initialize(root_module: Module) -> None:
+def initialize(root_module: Module) -> dict[str, Any] | None:
     if root_module._initialized:
-        return
+        return None
 
     root_module._exit = Event()
+    _config = get_kwargs_with_default(type(root_module).__init__)
+    _config.update(root_module._config)
+    config = {root_module.name: {"modules": {}, "config": _config}}
     _initialize(
         root_module._uninitialized_modules,
         root_module,
         root_module._uninitialized_modules,
+        config[root_module.name]["modules"],
     )
     root_module._uninitialized_modules = {}
     root_module._initialized = True
+    root_module._config = {}
+    return config
 
 
 def _initialize(
     submodules: dict[str, Any],
     parent_module: Module,
     root_module_modules: dict[str, Any],
+    config: dict[str, Any],
 ) -> None:
     for name, info in root_module_modules.items():
         if name in submodules:
@@ -408,13 +420,16 @@ def _initialize(
         else:
             submodules[name] = info
     for name, info in submodules.items():
-        config = info.get("config", {})
-        config.update(root_module_modules.get(name, {}).get("config", {}))
+        submodule_config = info.get("config", {})
+        submodule_config.update(root_module_modules.get(name, {}).get("config", {}))
         if "type" not in info:
             raise RuntimeError(f"Module not found: {name}")
         module_type = import_from_string(info["type"])
+        _config = get_kwargs_with_default(module_type.__init__)
+        config[name] = {"config": _config, "modules": {}}
+        _config.update(submodule_config)
         try:
-            submodule_instance: Module = module_type(name, **config)
+            submodule_instance: Module = module_type(name, **submodule_config)
         except Exception as e:
             raise RuntimeError(
                 f"Cannot instantiate module '{parent_module.path}.{name}': {e}"
@@ -426,5 +441,18 @@ def _initialize(
             submodule_instance._uninitialized_modules,
             submodule_instance,
             root_module_modules.get(name, {}).get("modules", {}),
+            config[name]["modules"],
         )
         submodule_instance._uninitialized_modules = {}
+
+
+def get_kwargs_with_default(function: Callable[..., Any]) -> dict[str, Any]:
+    if function is Module.__init__:
+        return {}
+
+    sig = signature(function)
+    return {
+        param.name: param.default
+        for param in sig.parameters.values()
+        if param.default != _empty
+    }
