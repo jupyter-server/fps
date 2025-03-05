@@ -56,6 +56,7 @@ class Module:
         self._acquired_values: dict[Any, Value] = {}
         self._context_manager_exits: list[Callable] = []
         self._config: dict[str, Any] = {}
+        self.config: Any = None
 
     @property
     def parent(self) -> Module | None:
@@ -81,6 +82,16 @@ class Module:
     @property
     def exceptions(self) -> list[Exception]:
         return self._exceptions
+
+    def get_path(self, root: bool = True) -> str:
+        path = self.path
+        if not root:
+            idx = path.find(".")
+            if idx == -1:
+                path = ""
+            else:
+                path = path[idx + 1 :]
+        return path
 
     def _check_init(self):
         try:

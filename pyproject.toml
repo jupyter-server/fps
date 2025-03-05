@@ -46,6 +46,7 @@ test = [
     "ruff",
     "coverage[toml] >=7,<8",
     "httpx",
+    "pydantic",
 ]
 docs = [
     "mkdocs",

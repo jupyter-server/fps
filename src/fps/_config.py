@@ -62,3 +62,24 @@ def _dump_config(config_lines: list[str], config: dict[str, Any], path: str) -> 
             config_lines.append(f"{path}{name}.{param}={value}")
         for module_name, module_info in info.get("modules", {}).items():
             _dump_config(config_lines, {module_name: module_info}, f"{path}{name}")
+
+
+def get_config_description(root_module: Module) -> str:
+    description_lines: list[str] = []
+    _get_config_description(description_lines, root_module)
+    return "\n".join(description_lines)
+
+
+def _get_config_description(description_lines: list[str], module: Module) -> None:
+    path = module.get_path(root=False)
+    if path:
+        path += "."
+    if module.config is not None:
+        for key, value in module.config.model_fields.items():
+            title = "" if value.title is None else f" {value.title}"
+            description_lines.append(f"{path}{key}:{title}")
+            description_lines.append(f"    Default: {value.default}")
+            description_lines.append(f"    Type: {value.annotation}")
+            description_lines.append(f"    Description: {value.description}")
+    for submodule in module.modules.values():
+        _get_config_description(description_lines, submodule)
