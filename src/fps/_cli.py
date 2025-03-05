@@ -6,7 +6,7 @@ import click
 import structlog
 from typing import TextIO
 
-from ._config import dump_config, get_root_module
+from ._config import dump_config, get_config_description, get_root_module
 from ._module import initialize
 from ._importer import import_from_string
 
@@ -25,13 +25,26 @@ TEST = False
     is_flag=True,
     show_default=True,
     default=False,
-    help="Show the configuration.",
+    help="Show the actual configuration.",
+)
+@click.option(
+    "--help-all",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Show the configuration description.",
 )
 @click.option(
     "--set", "set_", multiple=True, help="The assignment to the module parameter."
 )
 @click.argument("module", default="")
-def main(module: str, config: TextIO | None, show_config: bool, set_: list[str]):
+def main(
+    module: str,
+    config: TextIO | None,
+    show_config: bool,
+    help_all: bool,
+    set_: list[str],
+):
     global CONFIG
     if config is None:
         module_type = import_from_string(module)
@@ -67,8 +80,11 @@ def main(module: str, config: TextIO | None, show_config: bool, set_: list[str])
         CONFIG = config_dict
         return
     root_module = get_root_module(config_dict)
+    actual_config = initialize(root_module)
+    if help_all:
+        click.echo(get_config_description(root_module))
+        return
     if show_config:
-        actual_config = initialize(root_module)
         assert actual_config is not None
         config_str = dump_config(actual_config)
         for line in config_str.splitlines():

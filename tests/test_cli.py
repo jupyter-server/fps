@@ -3,12 +3,23 @@ import json
 import fps
 from click.testing import CliRunner
 from fps import Module, get_config, main
+from pydantic import BaseModel, Field
 from structlog.testing import capture_logs
+
+
+class MyConfig(BaseModel):
+    param0: str = Field(
+        default="foo", title="a parameter", description="the first parameter"
+    )
+    param1: str = Field(
+        default="bar", title="another parameter", description="the second parameter"
+    )
 
 
 class MyModule(Module):
     def __init__(self, name, param0="param0", param1="param1", add_modules=True):
         super().__init__(name)
+        self.config = MyConfig(param0=param0, param1=param1)
         if add_modules:
             self.add_module(MyModule, "module0", add_modules=False)
             self.add_module(MyModule, "module1", add_modules=False)
@@ -144,6 +155,50 @@ def test_cli_show_config():
         {"root_module.module1.param1": "bar"},
         {"root_module.module1.add_modules": "False"},
     ]
+
+
+def test_cli_help_all():
+    runner = CliRunner()
+    fps._cli.TEST = False
+
+    result = runner.invoke(
+        main,
+        [
+            "test_cli:MyModule",
+            "--help-all",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert (
+        result.output
+        == """\
+param0: a parameter
+    Default: foo
+    Type: <class 'str'>
+    Description: the first parameter
+param1: another parameter
+    Default: bar
+    Type: <class 'str'>
+    Description: the second parameter
+module0.param0: a parameter
+    Default: foo
+    Type: <class 'str'>
+    Description: the first parameter
+module0.param1: another parameter
+    Default: bar
+    Type: <class 'str'>
+    Description: the second parameter
+module1.param0: a parameter
+    Default: foo
+    Type: <class 'str'>
+    Description: the first parameter
+module1.param1: another parameter
+    Default: bar
+    Type: <class 'str'>
+    Description: the second parameter
+"""
+    )
 
 
 def test_cli_with_config_file(tmp_path):
