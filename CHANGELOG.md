@@ -2,6 +2,27 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.1.5
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.1.4...7d84a4fbd7495676227d2e97e7418c348bec4662))
+
+### Merged PRs
+
+- Require anycorn >=0.18.1 [#111](https://github.com/jupyter-server/fps/pull/111) ([@davidbrochart](https://github.com/davidbrochart))
+- Fix KeyboardInterrupt handling on Trio [#110](https://github.com/jupyter-server/fps/pull/110) ([@davidbrochart](https://github.com/davidbrochart))
+- Support running on Trio [#109](https://github.com/jupyter-server/fps/pull/109) ([@davidbrochart](https://github.com/davidbrochart))
+- Add --help-all CLI option [#108](https://github.com/jupyter-server/fps/pull/108) ([@davidbrochart](https://github.com/davidbrochart))
+- Add --show-config CLI option [#107](https://github.com/jupyter-server/fps/pull/107) ([@davidbrochart](https://github.com/davidbrochart))
+- Bump anyioutils v0.7.0 [#106](https://github.com/jupyter-server/fps/pull/106) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-02-26&to=2025-03-06&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-02-26..2025-03-06&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.1.4
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.1.3...68a4b47acb16fd8570d8c086a84c737399cef086))
@@ -15,8 +36,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-02-26&to=2025-02-26&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-02-26..2025-02-26&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.1.3
 
