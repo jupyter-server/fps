@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from ._container import Value  # pragma: no cover
 
 if sys.version_info < (3, 11):
-    from exceptiongroup import ExceptionGroup  # pragma: no cover
+    from exceptiongroup import BaseExceptionGroup, ExceptionGroup  # pragma: no cover
 
 log = structlog.get_logger()
 structlog.stdlib.recreate_defaults(log_level=logging.INFO)
@@ -394,8 +394,15 @@ class Module:
     def run(self, backend: str = "asyncio") -> None:  # pragma: no cover
         try:
             anyio.run(self._main, backend=backend)
-        except KeyboardInterrupt:
-            pass
+        except BaseException as exc:
+            if isinstance(exc, KeyboardInterrupt):
+                # on asyncio
+                return
+            if isinstance(exc, BaseExceptionGroup):
+                if isinstance(exc.exceptions[0], KeyboardInterrupt):
+                    # on trio
+                    return
+            raise
 
 
 def initialize(root_module: Module) -> dict[str, Any] | None:
