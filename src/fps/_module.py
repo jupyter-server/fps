@@ -34,9 +34,9 @@ class Module:
     def __init__(
         self,
         name: str,
-        prepare_timeout=1,
-        start_timeout=1,
-        stop_timeout=1,
+        prepare_timeout: float = 1,
+        start_timeout: float = 1,
+        stop_timeout: float = 1,
     ):
         self._initialized = False
         self._prepare_timeout = prepare_timeout
@@ -387,13 +387,13 @@ class Module:
     async def stop(self) -> None:
         pass
 
-    async def _main(self):  # pragma: no cover
+    async def _main(self) -> None:  # pragma: no cover
         async with self:
             await self._exit.wait()
 
-    def run(self):  # pragma: no cover
+    def run(self, backend: str = "asyncio") -> None:  # pragma: no cover
         try:
-            anyio.run(self._main)
+            anyio.run(self._main, backend=backend)
         except KeyboardInterrupt:
             pass
 
