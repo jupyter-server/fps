@@ -37,6 +37,12 @@ TEST = False
 @click.option(
     "--set", "set_", multiple=True, help="The assignment to the module parameter."
 )
+@click.option(
+    "--backend",
+    show_default=True,
+    default="asyncio",
+    help="The name of the event loop to use (asyncio or trio).",
+)
 @click.argument("module", default="")
 def main(
     module: str,
@@ -44,6 +50,7 @@ def main(
     show_config: bool,
     help_all: bool,
     set_: list[str],
+    backend: str,
 ):
     global CONFIG
     if config is None:
@@ -91,7 +98,7 @@ def main(
             param_path, param_value = line.split("=")
             kwargs = {param_path: param_value}
             log.info("Configuration", **kwargs)
-    root_module.run()
+    root_module.run(backend=backend)
 
 
 def get_config():
