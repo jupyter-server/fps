@@ -46,11 +46,11 @@ TEST = False
 @click.argument("module", default="")
 def main(
     module: str,
-    config: TextIO | None,
-    show_config: bool,
-    help_all: bool,
-    set_: list[str],
-    backend: str,
+    config: TextIO | None = None,
+    show_config: bool = False,
+    help_all: bool = False,
+    set_: list[str] | None = None,
+    backend: str = "asyncio",
 ):
     global CONFIG
     if config is None:
@@ -69,7 +69,7 @@ def main(
         else:
             for root_module_name in config_dict:
                 break
-    for _set in set_:
+    for _set in set_ or []:
         if "=" not in _set:
             raise click.ClickException(
                 f"No '=' while setting a module parameter: {_set}"
