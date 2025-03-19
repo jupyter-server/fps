@@ -224,7 +224,7 @@ class Module:
             self._get_all_stop_timeout()
         self._task_group.cancel_scope.cancel()
         try:
-            await self._exit_stack.__aexit__(exc_type, exc_value, exc_tb)
+            await self._exit_stack.aclose()
         except anyio.get_cancelled_exc_class():  # pragma: nocover
             pass
         exceptions = []

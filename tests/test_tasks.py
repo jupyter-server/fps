@@ -12,7 +12,7 @@ if sys.version_info < (3, 11):
 pytestmark = pytest.mark.anyio
 
 
-async def test_task():
+async def test_task1():
     outputs = []
 
     class Value0:
@@ -79,6 +79,90 @@ async def test_task():
         "started1",
         "stopped1",
         "stopped0",
+    ]
+
+
+async def test_task2():
+    outputs = []
+    dt = 0.02
+
+    async def counter(name, number, delay):
+        await sleep(delay)
+        for i in range(number):
+            outputs.append(f"{name} {i}")
+            await sleep(dt * 10)
+
+    class Submodule0(Module):
+        def __init__(self, name):
+            super().__init__(name)
+            self.add_module(Submodule0_0, "submodule0_0")
+
+        async def prepare(self):
+            async with create_task_group() as tg:
+                tg.start_soon(counter, f"{self.name} prepare", 2, dt * 4)
+                self.done()
+
+        async def start(self):
+            async with create_task_group() as tg:
+                tg.start_soon(counter, f"{self.name} start", 2, dt * 6)
+                self.done()
+
+        async def stop(self):
+            async with create_task_group() as tg:
+                tg.start_soon(counter, f"{self.name} stop", 2, dt * 4)
+
+    class Submodule0_0(Module):
+        async def prepare(self):
+            async with create_task_group() as tg:
+                tg.start_soon(counter, f"{self.name} prepare", 3, 0)
+                self.done()
+
+        async def start(self):
+            async with create_task_group() as tg:
+                tg.start_soon(counter, f"{self.name} start", 3, dt * 2)
+                self.done()
+
+        async def stop(self):
+            async with create_task_group() as tg:
+                tg.start_soon(counter, f"{self.name} stop", 3, 0)
+
+    class Submodule1(Module):
+        async def start(self):
+            async with create_task_group() as tg:
+                tg.start_soon(counter, f"{self.name} start", 1, dt * 8)
+                self.done()
+
+        async def stop(self):
+            async with create_task_group() as tg:
+                tg.start_soon(counter, f"{self.name} stop", 1, dt * 8)
+
+    class Module0(Module):
+        def __init__(self, name):
+            super().__init__(name)
+            self.add_module(Submodule0, "submodule0")
+            self.add_module(Submodule1, "submodule1")
+
+    async with Module0("module0"):
+        await sleep(dt * 24)
+
+    assert outputs == [
+        "submodule0_0 prepare 0",
+        "submodule0_0 start 0",
+        "submodule0 prepare 0",
+        "submodule0 start 0",
+        "submodule1 start 0",
+        "submodule0_0 prepare 1",
+        "submodule0_0 start 1",
+        "submodule0 prepare 1",
+        "submodule0 start 1",
+        "submodule0_0 prepare 2",
+        "submodule0_0 start 2",
+        "submodule0_0 stop 0",
+        "submodule0 stop 0",
+        "submodule1 stop 0",
+        "submodule0_0 stop 1",
+        "submodule0 stop 1",
+        "submodule0_0 stop 2",
     ]
 
 
