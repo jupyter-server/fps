@@ -2,6 +2,22 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.1.6
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.1.5...1fa4f5bef6cd23682e882f0bf3c2d5654be12108))
+
+### Merged PRs
+
+- missing default values in cli.main [#113](https://github.com/jupyter-server/fps/pull/113) ([@minrk](https://github.com/minrk))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-03-06&to=2025-03-19&type=c))
+
+[@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Aminrk+updated%3A2025-03-06..2025-03-19&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.1.5
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.1.4...7d84a4fbd7495676227d2e97e7418c348bec4662))
@@ -20,8 +36,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-02-26&to=2025-03-06&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-02-26..2025-03-06&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.1.4
 
