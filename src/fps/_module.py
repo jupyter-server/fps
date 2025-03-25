@@ -5,18 +5,16 @@ import sys
 
 from contextlib import AsyncExitStack
 from inspect import isawaitable, signature, _empty
-from typing import TYPE_CHECKING, TypeVar, Any, Callable, Iterable, cast
+from typing import TypeVar, Any, Callable, Iterable, cast
 
 import anyio
 import structlog
 from anyio import Event, create_task_group, fail_after, move_on_after
 from anyioutils import create_task, wait, FIRST_COMPLETED
 
-from ._container import Container
+from ._context import Context, SharedValue, Value
 from ._importer import import_from_string
 
-if TYPE_CHECKING:
-    from ._container import Value  # pragma: no cover
 
 if sys.version_info < (3, 11):
     from exceptiongroup import BaseExceptionGroup, ExceptionGroup  # pragma: no cover
@@ -43,7 +41,7 @@ class Module:
         self._start_timeout = start_timeout
         self._stop_timeout = stop_timeout
         self._parent: Module | None = None
-        self._container = Container()
+        self._context = Context()
         self._prepared = Event()
         self._started = Event()
         self._stopped = Event()
@@ -52,8 +50,8 @@ class Module:
         self._path: list[str] = []
         self._uninitialized_modules: dict[str, Any] = {}
         self._modules: dict[str, Module] = {}
-        self._added_values: dict[Any, Value] = {}
-        self._acquired_values: dict[Any, Value] = {}
+        self._published_values: dict[int, SharedValue] = {}
+        self._acquired_values: dict[int, Value] = {}
         self._context_manager_exits: list[Callable] = []
         self._config: dict[str, Any] = {}
         self.config: Any = None
@@ -127,19 +125,19 @@ class Module:
 
     async def freed(self, value: Any) -> None:
         value_id = id(value)
-        await self._added_values[value_id].wait_no_borrower()
+        await self._published_values[value_id].freed()
 
     async def all_freed(self) -> None:
-        for value in self._added_values.values():
-            await value.wait_no_borrower()
+        for value in self._published_values.values():
+            await value.freed()
 
     def drop_all(self) -> None:
         for value in self._acquired_values.values():
-            value.drop(self)
+            value.drop()
 
     def drop(self, value: Any) -> None:
         value_id = id(value)
-        self._acquired_values[value_id].drop(self)
+        self._acquired_values[value_id].drop()
 
     def put(
         self,
@@ -148,26 +146,21 @@ class Module:
         exclusive: bool = False,
     ) -> None:
         value_id = id(value)
-        value_types = self._container.get_value_types(value, types)
-        self._added_values[value_id] = self._container.put(
-            value, self, value_types, exclusive
-        )
+        self._published_values[value_id] = self._context.put(value, types, exclusive)
         if self.parent is not None:
-            self._added_values[value_id] = self.parent._container.put(
-                value, self, value_types, exclusive
+            self._published_values[value_id] = self.parent._context.put(
+                value, types, exclusive
             )
-        log.debug("Module added value", path=self.path, value_types=value_types)
+        log.debug("Module added value", path=self.path, types=types)
 
     async def get(
         self, value_type: type[T_Value], timeout: float = float("inf")
     ) -> T_Value:
         log.debug("Module getting value", path=self.path, value_type=value_type)
-        tasks = [create_task(self._container.get(value_type, self), self._task_group)]
+        tasks = [create_task(self._context.get(value_type), self._task_group)]
         if self.parent is not None:
             tasks.append(
-                create_task(
-                    self.parent._container.get(value_type, self), self._task_group
-                )
+                create_task(self.parent._context.get(value_type), self._task_group)
             )
         with fail_after(timeout):
             done, pending = await wait(
@@ -178,12 +171,11 @@ class Module:
             for task in done:
                 break
             value = await task.wait()
-            if TYPE_CHECKING:
-                value = cast(Value, value)  # pragma: no cover
-        value_id = id(value._value)
+            value = cast(Value, value)
+        value_id = id(value.unwrap())
         self._acquired_values[value_id] = value
         log.debug("Module got value", path=self.path, value_type=value_type)
-        return value._value
+        return value.unwrap()
 
     async def __aenter__(self) -> Module:
         self._check_init()
