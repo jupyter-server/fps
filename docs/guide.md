@@ -247,3 +247,58 @@ class MyModule(Module):
             tg.start_soon(sleep, float("inf"))
             self.done()
 ```
+
+## Contexts
+
+FPS offers a `Context` class that allows to share objects independantly of modules. For instance, say you want to share a file object. Here is how you would do:
+
+```py
+from io import TextIOWrapper
+from anyio import run
+from fps import Context
+
+async def main():
+    async with Context() as context:
+        file = open("log.txt", "w")
+        print("File opened")
+
+        def teardown_callback():
+            file.close()
+            print("File closed")
+
+        shared_file = context.put(file, teardown_callback=teardown_callback)
+        print("File object published")
+        acquired_file = await context.get(TextIOWrapper)
+        print("File object acquired")
+        assert acquired_file.unwrap() is file
+
+        print("Writing to file")
+        acquired_file.unwrap().write("Hello, World!\n")
+        acquired_file.drop()
+        print("File object dropped")
+        await shared_file.freed()
+
+run(main)
+```
+
+Running this code will print:
+
+```
+File opened
+File object published
+File object acquired
+Writing to file
+File object dropped
+File closed
+```
+
+Let's see what happened:
+- We created an object that we want to share, here `file`. This file has to be closed eventually.
+- We published it in the `context`, with `context.put(file, teardown_callback=teardown_callback)`. The `teardown_callback` will be called when the context is closed. We got a `shared_file` handle that we can use to check if the object is still in use (see below).
+- We acquired the file object with `await context.get(TextIOWrapper)`, and we got an `acquired_file` handle that we can use to drop the object when we are done using it. Note that acquiring an object is usually done in some other part of the program, where only the `context` is available.
+- We write to the file using `acquired_file.unwrap().write("Hello, World!\n")`. Note that we call `unwrap()` to get the actual object, since our handle is a wrapper around the object.
+- We drop the file object with `acquired_file.drop()`, notifying the `shared_file` that we are done using it and that from our point of view it is safe to close it.
+- The publisher can check that the published file is not used anymore with `await shared_file.freed()`.
+- When the `context` is closed, it waits for every published object to be freed and then it proceeds with their teardown, if any.
+
+Contexts ensure that objects are shared safely by their "owner" and that they are torn down when they are not being used anymore, by keeping references of "borrowers". Borrowers must collaborate by explicitly dropping objects when they are done using them. Owners can explicitly check that their objects are free to be disposed, althoug this is optional.
