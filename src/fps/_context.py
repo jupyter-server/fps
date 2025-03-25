@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Awaitable
-from inspect import isawaitable
+from functools import lru_cache
+from inspect import isawaitable, signature
 from typing import Any, Generic, Iterable, TypeVar
 
 from anyio import Event, create_task_group, fail_after
@@ -30,7 +31,7 @@ class SharedValue(Generic[T]):
         self._borrowers: set[Value] = set()
         self._dropped = Event()
         self._teardown_callback: (
-            tuple[Callable[..., Any] | Callable[..., Awaitable[Any]], bool] | None
+            Callable[..., Any] | Callable[..., Awaitable[Any]] | None
         ) = None
 
     def _drop(self, borrower: Value) -> None:
@@ -42,10 +43,8 @@ class SharedValue(Generic[T]):
     def set_teardown_callback(
         self,
         callback: Callable[..., Any] | Callable[..., Awaitable[Any]],
-        *,
-        pass_exception: bool = False,
     ):
-        self._teardown_callback = callback, pass_exception
+        self._teardown_callback = callback
 
     async def freed(self, timeout: float = float("inf")):
         with fail_after(timeout):
@@ -87,6 +86,9 @@ class Context:
         value: T,
         types: Iterable | Any | None = None,
         exclusive: bool = False,
+        teardown_callback: Callable[..., Any]
+        | Callable[..., Awaitable[Any]]
+        | None = None,
     ) -> SharedValue[T]:
         self._check_closed()
         _shared_value = SharedValue(value, exclusive)
@@ -98,6 +100,8 @@ class Context:
             self._context[value_type_id] = _shared_value
             self._value_added.set()
             self._value_added = Event()
+        if teardown_callback is not None:
+            _shared_value.set_teardown_callback(teardown_callback)
         return _shared_value
 
     async def get(self, value_type: type[T]) -> Value[T]:
@@ -132,11 +136,18 @@ class Context:
         self, shared_value: SharedValue, exception: BaseException | None
     ) -> None:
         await shared_value.freed()
-        if shared_value._teardown_callback is None:
+        callback = shared_value._teardown_callback
+        if callback is None:
             return
 
-        callback, pass_exception = shared_value._teardown_callback
-        args = (exception,) if pass_exception else ()
-        res = callback(*args)
+        param_nb = count_parameters(callback)
+        params = (exception,)
+        res = callback(*params[:param_nb])
         if isawaitable(res):
             await res
+
+
+@lru_cache(maxsize=1024)
+def count_parameters(func: Callable) -> int:
+    """Count the number of parameters in a callable"""
+    return len(signature(func).parameters)

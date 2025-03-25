@@ -66,12 +66,11 @@ async def test_teardown_callback():
     with pytest.raises(RuntimeError) as excinfo:
         async with Context() as context:
             value = ["start"]
-            shared_value = context.put(value)
 
             async def callback(exception):
                 value.append(exception)
 
-            shared_value.set_teardown_callback(callback, pass_exception=True)
+            context.put(value, teardown_callback=callback)
             error = RuntimeError()
             raise error
 
