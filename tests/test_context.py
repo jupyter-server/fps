@@ -60,3 +60,20 @@ async def test_context_cm():
         context.put("foo")
         value = await context.get(str)
         value.drop()
+
+
+async def test_teardown_callback():
+    with pytest.raises(RuntimeError) as excinfo:
+        async with Context() as context:
+            value = ["start"]
+            shared_value = context.put(value)
+
+            async def callback(exception):
+                value.append(exception)
+
+            shared_value.set_teardown_callback(callback, pass_exception=True)
+            error = RuntimeError()
+            raise error
+
+    assert excinfo.value == error
+    assert value == ["start", error]
