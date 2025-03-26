@@ -2,6 +2,29 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.2.0
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.1.6...f16bd46ed2815b4d618c10b76908581d073ab2b4))
+
+### Merged PRs
+
+- Revert "Update to latest Jupyter Release Actions" [#121](https://github.com/jupyter-server/fps/pull/121) ([@Zsailer](https://github.com/Zsailer))
+- Update to latest Jupyter Release Actions [#120](https://github.com/jupyter-server/fps/pull/120) ([@Zsailer](https://github.com/Zsailer))
+- Add context documentation [#119](https://github.com/jupyter-server/fps/pull/119) ([@davidbrochart](https://github.com/davidbrochart))
+- Convert repo to use releaser from repo [#118](https://github.com/jupyter-server/fps/pull/118) ([@davidbrochart](https://github.com/davidbrochart))
+- Add optional `teardown_callback` parameter to `Context.put()` [#117](https://github.com/jupyter-server/fps/pull/117) ([@davidbrochart](https://github.com/davidbrochart))
+- Add Context [#116](https://github.com/jupyter-server/fps/pull/116) ([@davidbrochart](https://github.com/davidbrochart))
+- Add concurrency test for tasks [#115](https://github.com/jupyter-server/fps/pull/115) ([@davidbrochart](https://github.com/davidbrochart))
+- Add .gitignore [#114](https://github.com/jupyter-server/fps/pull/114) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-03-19&to=2025-03-26&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-03-19..2025-03-26&type=Issues) | [@pre-commit-ci](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Apre-commit-ci+updated%3A2025-03-19..2025-03-26&type=Issues) | [@Zsailer](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3AZsailer+updated%3A2025-03-19..2025-03-26&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.1.6
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.1.5...1fa4f5bef6cd23682e882f0bf3c2d5654be12108))
@@ -15,8 +38,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-03-06&to=2025-03-19&type=c))
 
 [@minrk](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Aminrk+updated%3A2025-03-06..2025-03-19&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.1.5
 
