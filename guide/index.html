@@ -16,7 +16,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
     
     
       
@@ -24,7 +24,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.d7758b05.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.4af4bdda.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -383,6 +383,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#contexts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Contexts
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -455,6 +464,15 @@
   <a href="#a-note-on-concurrency" class="md-nav__link">
     <span class="md-ellipsis">
       A note on concurrency
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contexts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Contexts
     </span>
   </a>
   
@@ -672,6 +690,52 @@ Got: True
             <span class="n">tg</span><span class="o">.</span><span class="n">start_soon</span><span class="p">(</span><span class="n">sleep</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">done</span><span class="p">()</span>
 </code></pre></div>
+<h2 id="contexts">Contexts</h2>
+<p>FPS offers a <code>Context</code> class that allows to share objects independantly of modules. For instance, say you want to share a file object. Here is how you would do:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">io</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextIOWrapper</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyio</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fps</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="k">async</span> <span class="k">with</span> <span class="n">Context</span><span class="p">()</span> <span class="k">as</span> <span class="n">context</span><span class="p">:</span>
+        <span class="n">file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;log.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;File opened&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">teardown_callback</span><span class="p">():</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;File closed&quot;</span><span class="p">)</span>
+
+        <span class="n">shared_file</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">teardown_callback</span><span class="o">=</span><span class="n">teardown_callback</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;File object published&quot;</span><span class="p">)</span>
+        <span class="n">acquired_file</span> <span class="o">=</span> <span class="k">await</span> <span class="n">context</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">TextIOWrapper</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;File object acquired&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">acquired_file</span><span class="o">.</span><span class="n">unwrap</span><span class="p">()</span> <span class="ow">is</span> <span class="n">file</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Writing to file&quot;</span><span class="p">)</span>
+        <span class="n">acquired_file</span><span class="o">.</span><span class="n">unwrap</span><span class="p">()</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Hello, World!</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">acquired_file</span><span class="o">.</span><span class="n">drop</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;File object dropped&quot;</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">shared_file</span><span class="o">.</span><span class="n">freed</span><span class="p">()</span>
+
+<span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">)</span>
+</code></pre></div>
+<p>Running this code will print:</p>
+<div class="highlight"><pre><span></span><code>File opened
+File object published
+File object acquired
+Writing to file
+File object dropped
+File closed
+</code></pre></div>
+<p>Let's see what happened:
+- We created an object that we want to share, here <code>file</code>. This file has to be closed eventually.
+- We published it in the <code>context</code>, with <code>context.put(file, teardown_callback=teardown_callback)</code>. The <code>teardown_callback</code> will be called when the context is closed. We got a <code>shared_file</code> handle that we can use to check if the object is still in use (see below).
+- We acquired the file object with <code>await context.get(TextIOWrapper)</code>, and we got an <code>acquired_file</code> handle that we can use to drop the object when we are done using it. Note that acquiring an object is usually done in some other part of the program, where only the <code>context</code> is available.
+- We write to the file using <code>acquired_file.unwrap().write("Hello, World!\n")</code>. Note that we call <code>unwrap()</code> to get the actual object, since our handle is a wrapper around the object.
+- We drop the file object with <code>acquired_file.drop()</code>, notifying the <code>shared_file</code> that we are done using it and that from our point of view it is safe to close it.
+- The publisher can check that the published file is not used anymore with <code>await shared_file.freed()</code>.
+- When the <code>context</code> is closed, it waits for every published object to be freed and then it proceeds with their teardown, if any.</p>
+<p>Contexts ensure that objects are shared safely by their "owner" and that they are torn down when they are not being used anymore, by keeping references of "borrowers". Borrowers must collaborate by explicitly dropping objects when they are done using them. Owners can explicitly check that their objects are free to be disposed, althoug this is optional.</p>
 
 
 
@@ -727,7 +791,7 @@ Got: True
     <script id="__config" type="application/json">{"base": "..", "features": ["navigation.instant", "navigation.top", "navigation.sections", "search.suggest", "search.highlight", "content.code.annotate", "content.code.copy"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.f1b6f286.min.js"></script>
+      <script src="../assets/javascripts/bundle.c8b220af.min.js"></script>
       
     
   </body>
