@@ -1,7 +1,7 @@
 import pytest
 
 from anyio import fail_after
-from fps import Context
+from fps import Context, SharedValue
 
 pytestmark = pytest.mark.anyio
 
@@ -76,3 +76,11 @@ async def test_teardown_callback():
 
     assert excinfo.value == error
     assert value == ["start", error]
+
+
+async def test_shared_value():
+    async with SharedValue("foo") as shared_value:
+        acquired_value = await shared_value.get()
+        value = acquired_value.unwrap()
+        acquired_value.drop()
+    assert value == "foo"

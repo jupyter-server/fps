@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Awaitable
-from functools import lru_cache
+from functools import lru_cache, partial
 from inspect import isawaitable, signature
 from typing import Any, Generic, Iterable, TypeVar
 
@@ -25,9 +25,12 @@ class Value(Generic[T]):
 
 
 class SharedValue(Generic[T]):
-    def __init__(self, value: T, exclusive: bool):
+    def __init__(
+        self, value: T, exclusive: bool = False, close_timeout: float | None = None
+    ) -> None:
         self._value = value
         self._exclusive = exclusive
+        self._close_timeout = close_timeout
         self._borrowers: set[Value] = set()
         self._dropped = Event()
         self._teardown_callback: (
@@ -39,6 +42,23 @@ class SharedValue(Generic[T]):
             self._borrowers.remove(borrower)
             self._dropped.set()
             self._dropped = Event()
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, exc_tb):
+        await self.aclose(exception=exc_value)
+
+    async def get(self) -> Value:
+        value = Value(self)
+        if self._exclusive:
+            while True:
+                if not self._borrowers:
+                    self._borrowers.add(value)
+                    return value
+                await self.freed()
+        self._borrowers.add(value)
+        return value
 
     def set_teardown_callback(
         self,
@@ -53,10 +73,30 @@ class SharedValue(Generic[T]):
                     return
                 await self._dropped.wait()
 
+    async def aclose(
+        self, *, timeout: float | None = None, exception: BaseException | None = None
+    ) -> None:
+        if timeout is None:
+            timeout = self._close_timeout
+        if timeout is None:
+            timeout = float("inf")
+        with fail_after(timeout):
+            await self.freed()
+            callback = self._teardown_callback
+            if callback is None:
+                return
+
+            param_nb = count_parameters(callback)
+            params = (exception,)
+            res = callback(*params[:param_nb])
+            if isawaitable(res):
+                await res
+
 
 class Context:
-    def __init__(self):
-        self._context = {}
+    def __init__(self, *, close_timeout: float | None = None):
+        self._close_timeout = close_timeout
+        self._context: dict[int, SharedValue] = {}
         self._value_added = Event()
         self._closed = False
 
@@ -91,7 +131,7 @@ class Context:
         | None = None,
     ) -> SharedValue[T]:
         self._check_closed()
-        _shared_value = SharedValue(value, exclusive)
+        _shared_value = SharedValue(value, exclusive=exclusive)
         _types = self._get_value_types(value, types)
         for value_type in _types:
             value_type_id = id(value_type)
@@ -110,41 +150,21 @@ class Context:
         while True:
             if value_type_id in self._context:
                 shared_value = self._context[value_type_id]
-                value = Value(shared_value)
-                if shared_value._exclusive:
-                    while True:
-                        if not shared_value._borrowers:
-                            shared_value._borrowers.add(value)
-                            return value
-                        await shared_value.freed()
-                shared_value._borrowers.add(value)
-                return value
+                return await shared_value.get()
             await self._value_added.wait()
 
     async def aclose(
-        self, *, timeout: float = float("inf"), exception: BaseException | None = None
+        self, *, timeout: float | None = None, exception: BaseException | None = None
     ) -> None:
+        if timeout is None:
+            timeout = self._close_timeout
+        if timeout is None:
+            timeout = float("inf")
         with fail_after(timeout):
             async with create_task_group() as tg:
                 for shared_value in self._context.values():
-                    tg.start_soon(
-                        self._wait_freed_and_torn_down, shared_value, exception
-                    )
+                    tg.start_soon(partial(shared_value.aclose, exception=exception))
         self._closed = True
-
-    async def _wait_freed_and_torn_down(
-        self, shared_value: SharedValue, exception: BaseException | None
-    ) -> None:
-        await shared_value.freed()
-        callback = shared_value._teardown_callback
-        if callback is None:
-            return
-
-        param_nb = count_parameters(callback)
-        params = (exception,)
-        res = callback(*params[:param_nb])
-        if isawaitable(res):
-            await res
 
 
 @lru_cache(maxsize=1024)
