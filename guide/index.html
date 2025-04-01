@@ -392,6 +392,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#signals" class="md-nav__link">
+    <span class="md-ellipsis">
+      Signals
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -473,6 +482,15 @@
   <a href="#contexts" class="md-nav__link">
     <span class="md-ellipsis">
       Contexts
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#signals" class="md-nav__link">
+    <span class="md-ellipsis">
+      Signals
     </span>
   </a>
   
@@ -736,6 +754,60 @@ File closed
 - The publisher can check that the published file is not used anymore with <code>await shared_file.freed()</code>.
 - When the <code>context</code> is closed, it waits for every published object to be freed and then it proceeds with their teardown, if any.</p>
 <p>Contexts ensure that objects are shared safely by their "owner" and that they are torn down when they are not being used anymore, by keeping references of "borrowers". Borrowers must collaborate by explicitly dropping objects when they are done using them. Owners can explicitly check that their objects are free to be disposed, althoug this is optional.</p>
+<h2 id="signals">Signals</h2>
+<p>FPS offers a <code>Signal</code> class which allows one part of the code to send values that can be received in another part. One can listen to a signal by connecting a callback to it or simply by iterating values from it.</p>
+<p>The following code uses a callback:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyio</span><span class="w"> </span><span class="kn">import</span> <span class="n">run</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fps</span><span class="w"> </span><span class="kn">import</span> <span class="n">Signal</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">signal</span> <span class="o">=</span> <span class="n">Signal</span><span class="p">()</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">callback</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Received:&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="n">signal</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
+
+    <span class="k">await</span> <span class="n">signal</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="s2">&quot;Hello&quot;</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">signal</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="s2">&quot;World!&quot;</span><span class="p">)</span>
+
+<span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">)</span> 
+
+<span class="c1"># prints:</span>
+<span class="c1"># Received: Hello</span>
+<span class="c1"># Received: World!</span>
+</code></pre></div>
+<p>And the following code uses an iterator:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">anyio</span><span class="w"> </span><span class="kn">import</span> <span class="n">TASK_STATUS_IGNORED</span><span class="p">,</span> <span class="n">create_task_group</span><span class="p">,</span> <span class="n">run</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">anyio.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">TaskStatus</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fps</span><span class="w"> </span><span class="kn">import</span> <span class="n">Signal</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">signal</span> <span class="o">=</span> <span class="n">Signal</span><span class="p">()</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">iterate_signal</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">task_status</span><span class="p">:</span> <span class="n">TaskStatus</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">TASK_STATUS_IGNORED</span><span class="p">):</span>
+        <span class="k">async</span> <span class="k">with</span> <span class="n">signal</span><span class="o">.</span><span class="n">iterate</span><span class="p">()</span> <span class="k">as</span> <span class="n">iterator</span><span class="p">:</span>
+            <span class="n">task_status</span><span class="o">.</span><span class="n">started</span><span class="p">()</span>
+            <span class="k">async</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">iterator</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span><span class="p">:</span>
+                    <span class="k">return</span>
+
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Received:&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+
+    <span class="k">async</span> <span class="k">with</span> <span class="n">create_task_group</span><span class="p">()</span> <span class="k">as</span> <span class="n">tg</span><span class="p">:</span>
+        <span class="k">await</span> <span class="n">tg</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="n">iterate_signal</span><span class="p">)</span>
+
+        <span class="k">await</span> <span class="n">signal</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="s2">&quot;Hello&quot;</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">signal</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="s2">&quot;World!&quot;</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">signal</span><span class="o">.</span><span class="n">emit</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+<span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">)</span>
+
+<span class="c1"># prints:</span>
+<span class="c1"># Received: Hello</span>
+<span class="c1"># Received: World!</span>
+</code></pre></div>
 
 
 
