@@ -2,6 +2,24 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.2.2
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.2.1...78d1d789a9330a75eadb5a75d9e059d2d01a4538))
+
+### Merged PRs
+
+- Add Signal documentation [#125](https://github.com/jupyter-server/fps/pull/125) ([@davidbrochart](https://github.com/davidbrochart))
+- Add Signal iterator [#124](https://github.com/jupyter-server/fps/pull/124) ([@davidbrochart](https://github.com/davidbrochart))
+- Add Signal [#123](https://github.com/jupyter-server/fps/pull/123) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-03-31&to=2025-04-01&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-03-31..2025-04-01&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.2.1
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.2.0...77c09d4d8248dba75841a2d5317bb69f3872d31b))
@@ -15,8 +33,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-03-26&to=2025-03-31&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-03-26..2025-03-31&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.2.0
 
