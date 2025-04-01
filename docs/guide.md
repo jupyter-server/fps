@@ -302,3 +302,65 @@ Let's see what happened:
 - When the `context` is closed, it waits for every published object to be freed and then it proceeds with their teardown, if any.
 
 Contexts ensure that objects are shared safely by their "owner" and that they are torn down when they are not being used anymore, by keeping references of "borrowers". Borrowers must collaborate by explicitly dropping objects when they are done using them. Owners can explicitly check that their objects are free to be disposed, althoug this is optional.
+
+## Signals
+
+FPS offers a `Signal` class which allows one part of the code to send values that can be received in another part. One can listen to a signal by connecting a callback to it or simply by iterating values from it.
+
+The following code uses a callback:
+
+```py
+from anyio import run
+from fps import Signal
+
+async def main():
+    signal = Signal()
+
+    async def callback(value):
+        print("Received:", value)
+
+    signal.connect(callback)
+
+    await signal.emit("Hello")
+    await signal.emit("World!")
+
+run(main) 
+
+# prints:
+# Received: Hello
+# Received: World!
+```
+
+And the following code uses an iterator:
+
+```py
+from anyio import TASK_STATUS_IGNORED, create_task_group, run
+from anyio.abc import TaskStatus
+from fps import Signal
+
+async def main():
+    signal = Signal()
+
+    async def iterate_signal(*, task_status: TaskStatus[None] = TASK_STATUS_IGNORED):
+        async with signal.iterate() as iterator:
+            task_status.started()
+            async for value in iterator:
+                if not value:
+                    return
+
+                print("Received:", value)
+
+
+    async with create_task_group() as tg:
+        await tg.start(iterate_signal)
+
+        await signal.emit("Hello")
+        await signal.emit("World!")
+        await signal.emit("")
+
+run(main)
+
+# prints:
+# Received: Hello
+# Received: World!
+```
