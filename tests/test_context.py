@@ -62,7 +62,7 @@ async def test_context_cm():
         value.drop()
 
 
-async def test_teardown_callback():
+async def test_value_teardown_callback():
     with pytest.raises(RuntimeError) as excinfo:
         async with Context() as context:
             value = ["start"]
@@ -135,3 +135,19 @@ async def test_shared_value_manage(manage: bool, async_: bool):
     assert foo.exited == (manage and not async_)
     assert foo.aentered == (manage and async_)
     assert foo.aexited == (manage and async_)
+
+
+async def test_context_teardown_callback():
+    called = []
+
+    async def cb0():
+        called.append("cb0")
+
+    def cb1():
+        called.append("cb1")
+
+    async with Context() as context:
+        context.add_teardown_callback(cb0)
+        context.add_teardown_callback(cb1)
+
+    assert called == ["cb1", "cb0"]

@@ -225,6 +225,9 @@ class Context:
         self._context: dict[int, SharedValue] = {}
         self._value_added = Event()
         self._closed = False
+        self._teardown_callbacks: list[
+            Callable[..., Any] | Callable[..., Awaitable[Any]]
+        ] = []
 
     async def __aenter__(self):
         return self
@@ -246,6 +249,19 @@ class Context:
     def _check_closed(self):
         if self._closed:
             raise RuntimeError("Context is closed")
+
+    def add_teardown_callback(
+        self,
+        teardown_callback: Callable[..., Any] | Callable[..., Awaitable[Any]],
+    ) -> None:
+        """
+        Register a callback that will be called at context teardown. The callbacks
+        will be called in the inverse order than they were added.
+
+        Args:
+            teardown_callback: The callback to add.
+        """
+        self._teardown_callbacks.append(teardown_callback)
 
     def put(
         self,
@@ -351,6 +367,8 @@ class Context:
                             _exc_tb=_exc_tb,
                         )
                     )
+                for callback in self._teardown_callbacks[::-1]:
+                    await call(callback, _exc_value)
         self._closed = True
 
 
@@ -358,3 +376,14 @@ class Context:
 def count_parameters(func: Callable) -> int:
     """Count the number of parameters in a callable"""
     return len(signature(func).parameters)
+
+
+async def call(
+    callback: Callable[..., Any] | Callable[..., Awaitable[Any]],
+    exc_value: BaseException | None,
+) -> None:
+    param_nb = count_parameters(callback)
+    params = (exc_value,)
+    res = callback(*params[:param_nb])
+    if isawaitable(res):
+        await res

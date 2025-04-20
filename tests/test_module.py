@@ -100,3 +100,23 @@ async def test_module_not_initialized():
         str(excinfo.value)
         == "You must call super().__init__() in the __init__ method of your module"
     )
+
+
+async def test_module_teardown_callback():
+    called = []
+
+    async def cb0():
+        called.append("cb0")
+
+    def cb1():
+        called.append("cb1")
+
+    class Module0(Module):
+        async def start(self):
+            self.add_teardown_callback(cb0)
+            self.add_teardown_callback(cb1)
+
+    async with Module0(name="module0"):
+        pass
+
+    assert called == ["cb1", "cb0"]

@@ -141,6 +141,19 @@ class Module:
         value_id = id(value)
         self._acquired_values[value_id].drop()
 
+    def add_teardown_callback(
+        self,
+        teardown_callback: Callable[..., Any] | Callable[..., Awaitable[Any]],
+    ) -> None:
+        """
+        Register a callback that will be called when stopping the module. The callbacks
+        will be called in the inverse order than they were added.
+
+        Args:
+            teardown_callback: The callback to add.
+        """
+        self._context.add_teardown_callback(teardown_callback)
+
     def put(
         self,
         value: T_Value,
