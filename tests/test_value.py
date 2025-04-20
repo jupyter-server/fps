@@ -206,7 +206,7 @@ async def test_put_exclusive_value():
 
     class Submodule0(Module):
         async def start(self):
-            self.put(0, exclusive=True)
+            self.put(0, max_borrowers=1)
 
     class Submodule1(Module):
         async def start(self):

@@ -31,6 +31,7 @@ nav:
 - Overview: index.md
 - install.md
 - guide.md
+- api_reference.md
 
 markdown_extensions:
   - admonition

@@ -78,9 +78,60 @@ async def test_teardown_callback():
     assert value == ["start", error]
 
 
-async def test_shared_value():
+async def test_shared_value_cm():
     async with SharedValue("foo") as shared_value:
         acquired_value = await shared_value.get()
         value = acquired_value.unwrap()
         acquired_value.drop()
     assert value == "foo"
+
+
+async def test_shared_value_timeout():
+    shared_value = SharedValue("foo")
+    acquired_value = await shared_value.get()
+    value = acquired_value.unwrap()
+    assert value == "foo"
+
+    with pytest.raises(TimeoutError):
+        await shared_value.aclose(timeout=0.1)
+
+
+@pytest.mark.parametrize("manage", (False, True))
+@pytest.mark.parametrize("async_", (False, True))
+async def test_shared_value_manage(manage: bool, async_: bool):
+    class Foo:
+        def __init__(self):
+            self.entered = False
+            self.exited = False
+            self.aentered = False
+            self.aexited = False
+
+        if async_:
+
+            async def __aenter__(self):
+                self.aentered = True
+                return self
+
+            async def __aexit__(self, exc_type, exc_value, exc_tb):
+                self.aexited = True
+        else:
+
+            def __enter__(self):
+                self.entered = True
+                return self
+
+            def __exit__(self, exc_type, exc_value, exc_tb):
+                self.exited = True
+
+    foo = Foo()
+
+    async with SharedValue(foo, manage=manage) as shared_value:
+        acquired_value = await shared_value.get()
+        value = acquired_value.unwrap()
+        acquired_value.drop()
+
+    assert value == foo
+    assert foo.entered == (manage and not async_)
+    assert foo.exited == (manage and not async_)
+    assert foo.aentered == (manage and async_)
+    assert foo.aexited == (manage and async_)
