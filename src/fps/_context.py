@@ -197,13 +197,8 @@ class SharedValue(Generic[T]):
             self._exit_stack.__exit__(_exc_type, _exc_value, _exc_tb)
             self._exit_stack = None
 
-        callback = self._teardown_callback
-        if callback is not None:
-            param_nb = count_parameters(callback)
-            params = (_exc_value,)
-            res = callback(*params[:param_nb])
-            if isawaitable(res):
-                await res
+        if self._teardown_callback is not None:
+            await call(self._teardown_callback, _exc_value)
 
         if scope.cancelled_caught:
             raise TimeoutError
