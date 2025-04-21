@@ -3,9 +3,10 @@ from __future__ import annotations
 import logging
 import sys
 
+from collections.abc import Callable, Awaitable
 from contextlib import AsyncExitStack
 from inspect import isawaitable, signature, _empty
-from typing import TypeVar, Any, Callable, Iterable, cast
+from typing import TypeVar, Any, Iterable, cast
 
 import anyio
 import structlog
@@ -64,6 +65,7 @@ class Module:
     def parent(self, value: Module) -> None:
         self._parent = value
         self._exit = value._exit
+        self._path = value._path + [value._name]
 
     @property
     def name(self) -> str:
@@ -139,17 +141,46 @@ class Module:
         value_id = id(value)
         self._acquired_values[value_id].drop()
 
+    def add_teardown_callback(
+        self,
+        teardown_callback: Callable[..., Any] | Callable[..., Awaitable[Any]],
+    ) -> None:
+        """
+        Register a callback that will be called when stopping the module. The callbacks
+        will be called in the inverse order than they were added.
+
+        Args:
+            teardown_callback: The callback to add.
+        """
+        self._context.add_teardown_callback(teardown_callback)
+
     def put(
         self,
         value: T_Value,
         types: Iterable | Any | None = None,
-        exclusive: bool = False,
+        max_borrowers: float = float("inf"),
+        teardown_callback: Callable[..., Any]
+        | Callable[..., Awaitable[Any]]
+        | None = None,
+        manage: bool = False,
     ) -> None:
         value_id = id(value)
-        self._published_values[value_id] = self._context.put(value, types, exclusive)
+        shared_value = self._context.put(
+            value,
+            types,
+            max_borrowers=max_borrowers,
+            manage=manage,
+            teardown_callback=teardown_callback,
+        )
+        self._published_values[value_id] = shared_value
         if self.parent is not None:
-            self._published_values[value_id] = self.parent._context.put(
-                value, types, exclusive
+            self.parent._context.put(
+                value,
+                types,
+                max_borrowers=max_borrowers,
+                manage=manage,
+                teardown_callback=teardown_callback,
+                shared_value=shared_value,
             )
         log.debug("Module added value", path=self.path, types=types)
 
@@ -299,7 +330,7 @@ class Module:
 
     async def _drop_and_wait_values(self):
         self.drop_all()
-        await self.all_freed()
+        await self._context.aclose()
         self._stopped.set()
         log.debug("Module stopped", path=self.path)
 
@@ -444,7 +475,6 @@ def _initialize(
             raise RuntimeError(
                 f"Cannot instantiate module '{parent_module.path}.{name}': {e}"
             )
-        submodule_instance._path = parent_module._path + [parent_module._name]
         submodule_instance.parent = parent_module
         parent_module._modules[name] = submodule_instance
         _initialize(
