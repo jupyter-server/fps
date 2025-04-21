@@ -2,6 +2,30 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.3.0
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.2.2...b587c686df102b7e85a4eedaefe6e5b467cbe5f0))
+
+### Merged PRs
+
+- [#126](https://github.com/jupyter-server/fps/pull/126) ([@davidbrochart](https://github.com/davidbrochart)), [#127](https://github.com/jupyter-server/fps/pull/127) ([@davidbrochart](https://github.com/davidbrochart)).
+- Add API documentation.
+- Change `exclusive` argument of `SharedValue()`, `Context.put()` and `Module.put()` to `max_boworrers`.
+- Add `manage` argument of `SharedValue()` and `Context.put()` to use its context manager for setup/teardown.
+- Add `add_teardown_callback()` method to `Context` and `Module` to register a teardown callback.
+- Add `shared_value` argument of `Context.put()` to share a value in multiple contexts.
+- Add `timeout` argument of `SharedValue.get()` and `Context.get()`.
+- Add `teardown_callback` argument of `SharedValue()` and `Module.put()`.
+- Remove `SharedValue.set_teardown_callback()`.
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-04-01&to=2025-04-21&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-04-01..2025-04-21&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.2.2
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.2.1...78d1d789a9330a75eadb5a75d9e059d2d01a4538))
@@ -17,8 +41,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-03-31&to=2025-04-01&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-03-31..2025-04-01&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.2.1
 
