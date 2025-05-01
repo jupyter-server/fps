@@ -6,5 +6,6 @@
       unwrap_annotated: true
       members:
       - Context
+      - Module
       - SharedValue
       - Value

@@ -27,6 +27,26 @@ T_Value = TypeVar("T_Value")
 
 
 class Module:
+    """
+    A module allows to:
+
+    - run services,
+    - share those services with other modules,
+    - request services from other modules.
+
+    The services are represented by values that can be published by producers
+    and borrowed by consumers. Consumers notify producers that their services
+    are not used anymore by dropping the corresponding borrowed values. Producers
+    are responsible for tearing down their services when stopping the application.
+
+    Modules can be configured through their [`__init__`][fps.Module.__init__] method's
+    keyword arguments. Modules have three phases:
+
+    - [`prepare`][fps.Module.prepare]: called before the "start" phase.
+    - [`start`][fps.Module.start]: called before running the application.
+    - [`stop`][fps.Module.stop]: called when shutting down the application.
+    """
+
     _exit: Event
     _exceptions: list[Exception]
 
@@ -37,6 +57,13 @@ class Module:
         start_timeout: float = 1,
         stop_timeout: float = 1,
     ):
+        """
+        Args:
+            name: The name to give to the module.
+            prepare_timeout: The time to wait (in seconds) for the "prepare" phase to complete.
+            start_timeout: The time to wait (in seconds) for the "start" phase to complete.
+            stop_timeout: The time to wait (in seconds) for the "stop" phase to complete.
+        """
         self._initialized = False
         self._prepare_timeout = prepare_timeout
         self._start_timeout = start_timeout
@@ -59,24 +86,44 @@ class Module:
 
     @property
     def parent(self) -> Module | None:
+        """
+        Returns:
+            The module's parent, unless this is the root module which has no parent.
+        """
         return self._parent
 
     @parent.setter
     def parent(self, value: Module) -> None:
+        """
+        Args:
+            value: The module's parent.
+        """
         self._parent = value
         self._exit = value._exit
         self._path = value._path + [value._name]
 
     @property
     def name(self) -> str:
+        """
+        Returns:
+            The module's name.
+        """
         return self._name
 
     @property
     def path(self) -> str:
+        """
+        Returns:
+            The module's path, as a period-separated sequence of module names.
+        """
         return ".".join(self._path + [self._name])
 
     @property
     def started(self) -> Event:
+        """
+        Returns:
+            An `Event` that is set when the module has started.
+        """
         return self._started
 
     @property
@@ -103,9 +150,16 @@ class Module:
 
     @property
     def modules(self) -> dict[str, Module]:
+        """
+        Returns:
+            The modules added by the current module, as a `dict` of module name to module instance.
+        """
         return self._modules
 
     def exit_app(self):
+        """
+        Force the application to exit. This can be called from any module.
+        """
         self._exit.set()
 
     def add_module(
@@ -114,6 +168,14 @@ class Module:
         name: str,
         **config,
     ) -> None:
+        """
+        Add a module as a child of the current module.
+
+        Args:
+            module_type: A [Module][fps.Module] type or a string pointing to a module type.
+            name: The name to give to the module.
+            config: The module configuration.
+        """
         self._check_init()
         if name in self._uninitialized_modules:
             raise RuntimeError(f"Module name already exists: {name}")
@@ -126,18 +188,38 @@ class Module:
         log.debug("Module added", path=self.path, name=name, module_type=module_type)
 
     async def freed(self, value: Any) -> None:
+        """
+        Wait for a published value to be free, meaning that all borrowers have dropped
+        the value.
+
+        Args:
+            value: The value to be freed.
+        """
         value_id = id(value)
         await self._published_values[value_id].freed()
 
     async def all_freed(self) -> None:
+        """
+        Wait for all published values to be freed, meaning that all borrowers have
+        dropped their values.
+        """
         for value in self._published_values.values():
             await value.freed()
 
     def drop_all(self) -> None:
+        """
+        Drop all borrowed values.
+        """
         for value in self._acquired_values.values():
             value.drop()
 
     def drop(self, value: Any) -> None:
+        """
+        Drop a borrowed value, meaning that this module doesn't use it anymore.
+
+        Args:
+            value: The value to drop.
+        """
         value_id = id(value)
         self._acquired_values[value_id].drop()
 
@@ -164,6 +246,17 @@ class Module:
         | None = None,
         manage: bool = False,
     ) -> None:
+        """
+        Publish a value in the current module context and its parent's (if any).
+
+        Args:
+            value: The value to publish.
+            types: The type(s) to publish the value as. If not provided, the type is inferred
+                from the value.
+            max_borrowers: The maximum number of simultaneous borrowers of the published value.
+            teardown_callback: A callback to call when the value is torn down.
+            manage: Whether to use the (async) context manager of the value for its setup/teardown.
+        """
         value_id = id(value)
         shared_value = self._context.put(
             value,
@@ -187,6 +280,16 @@ class Module:
     async def get(
         self, value_type: type[T_Value], timeout: float = float("inf")
     ) -> T_Value:
+        """
+        Borrow a value from the current module's context or its parent's (if any).
+
+        Args:
+            value_type: The type of the value to borrow.
+            timeout: The time to wait for the value to be published.
+
+        Returns:
+            The borrowed value.
+        """
         log.debug("Module getting value", path=self.path, value_type=value_type)
         tasks = [create_task(self._context.get(value_type), self._task_group)]
         if self.parent is not None:
@@ -309,6 +412,21 @@ class Module:
         await self._stopped.wait()
 
     def done(self) -> None:
+        """
+        Notify that the current phase is done. This is especially useful when launching
+        background tasks, as otherwise the current phase would not complete:
+        ```py
+        from anyio import create_task_group
+        from fps import Module
+
+        class MyModule(Module):
+            async def start(self):
+                async with create_task_group() as tg:
+                    tg.start_toon(my_async_func)
+                    tg.start_toon(other_async_func)
+                    self.done()
+        ```
+        """
         if self._phase == "preparing":
             self._prepared.set()
             log.debug("Module prepared", path=self.path)
@@ -358,6 +476,9 @@ class Module:
             self.done()
 
     async def prepare(self) -> None:
+        """
+        The "prepare" phase occurs before the "start" phase.
+        """
         pass
 
     async def _start(self) -> None:
@@ -381,6 +502,11 @@ class Module:
             self.done()
 
     async def start(self) -> None:
+        """
+        The "start" phase occurs after the "prepare" phase. This is usually where
+        services are started and published as values, and other services are requested
+        and borrowed as values.
+        """
         pass
 
     async def _stop(self) -> None:
@@ -408,6 +534,9 @@ class Module:
             self.done()
 
     async def stop(self) -> None:
+        """
+        The "stop" phase occurs when the application is torn down.
+        """
         pass
 
     async def _main(self) -> None:  # pragma: no cover
@@ -415,6 +544,12 @@ class Module:
             await self._exit.wait()
 
     def run(self, backend: str = "asyncio") -> None:  # pragma: no cover
+        """
+        Run the root module.
+
+        Args:
+            backend: The backend used to run ("asyncio" or "trio").
+        """
         try:
             anyio.run(self._main, backend=backend)
         except BaseException as exc:
@@ -429,6 +564,15 @@ class Module:
 
 
 def initialize(root_module: Module) -> dict[str, Any] | None:
+    """
+    Initialize the root module and all its submodules recursively.
+
+    Args:
+        root_module: The root module to initialize.
+
+    Returns:
+        The configuration of the application.
+    """
     if root_module._initialized:
         return None
 
@@ -487,6 +631,15 @@ def _initialize(
 
 
 def get_kwargs_with_default(function: Callable[..., Any]) -> dict[str, Any]:
+    """
+    Get the keyword arguments which have a default value from a function.
+
+    Args:
+        function: The function from which to get the keyword arguments.
+
+    Returns:
+        The keyword arguments of the function, with their default values.
+    """
     if function is Module.__init__:
         return {}
 
