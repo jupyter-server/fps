@@ -2,6 +2,26 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.4.0
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.3.0...8d8b4c7d9c189bd0f60c7094323369bd478f58e1))
+
+### Merged PRs
+
+- Split optional dependencies [#132](https://github.com/jupyter-server/fps/pull/132) ([@davidbrochart](https://github.com/davidbrochart))
+- Make CLI optional [#131](https://github.com/jupyter-server/fps/pull/131) ([@davidbrochart](https://github.com/davidbrochart))
+- Extract out server from `FastAPIModule` to `ServerModule` [#130](https://github.com/jupyter-server/fps/pull/130) ([@davidbrochart](https://github.com/davidbrochart))
+- Add `Module` API documentation [#129](https://github.com/jupyter-server/fps/pull/129) ([@davidbrochart](https://github.com/davidbrochart))
+- Use dependency groups for `test` and `docs` [#128](https://github.com/jupyter-server/fps/pull/128) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-04-21&to=2025-05-22&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-04-21..2025-05-22&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.3.0
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.2.2...b587c686df102b7e85a4eedaefe6e5b467cbe5f0))
@@ -23,8 +43,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-04-01&to=2025-04-21&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-04-01..2025-04-21&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.2.2
 
