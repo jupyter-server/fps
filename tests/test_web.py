@@ -5,6 +5,7 @@ from fastapi import FastAPI
 
 from fps import Module
 from fps.web.fastapi import FastAPIModule
+from fps.web.server import ServerModule
 
 pytestmark = pytest.mark.anyio
 
@@ -21,7 +22,8 @@ async def test_web(unused_tcp_port):
     class Module0(Module):
         def __init__(self, name):
             super().__init__(name)
-            self.add_module(FastAPIModule, "fastapi_module", port=unused_tcp_port)
+            self.add_module(FastAPIModule, "fastapi_module")
+            self.add_module(ServerModule, "server_module", port=unused_tcp_port)
             self.add_module(Submodule0, "submodule0")
 
     async with Module0("module0"):
