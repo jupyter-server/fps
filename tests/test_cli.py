@@ -2,7 +2,8 @@ import json
 
 import fps
 from click.testing import CliRunner
-from fps import Module, get_config, main
+from fps import Module
+from fps.cli._cli import get_config, main
 from pydantic import BaseModel, Field
 from structlog.testing import capture_logs
 
@@ -81,7 +82,7 @@ def test_wrong_cli_4():
 
 def test_cli():
     runner = CliRunner()
-    fps._cli.TEST = True
+    fps.cli._cli.TEST = True
     result = runner.invoke(
         main,
         [
@@ -100,7 +101,7 @@ def test_cli():
     )
     assert result.exit_code == 0
     config = get_config()
-    fps._cli.TEST = False
+    fps.cli._cli.TEST = False
     assert config == {
         "root_module": {
             "type": Module,
@@ -119,7 +120,7 @@ def test_cli():
 
 def test_cli_show_config():
     runner = CliRunner()
-    fps._cli.TEST = False
+    fps.cli._cli.TEST = False
 
     with capture_logs() as cap_logs:
         result = runner.invoke(
@@ -159,7 +160,7 @@ def test_cli_show_config():
 
 def test_cli_help_all():
     runner = CliRunner()
-    fps._cli.TEST = False
+    fps.cli._cli.TEST = False
 
     result = runner.invoke(
         main,
@@ -221,7 +222,7 @@ def test_cli_with_config_file(tmp_path):
         json.dump(config_dict, f)
 
     runner = CliRunner()
-    fps._cli.TEST = True
+    fps.cli._cli.TEST = True
     result = runner.invoke(
         main,
         [
@@ -235,7 +236,7 @@ def test_cli_with_config_file(tmp_path):
     )
     assert result.exit_code == 0
     config = get_config()
-    fps._cli.TEST = False
+    fps.cli._cli.TEST = False
     assert config == {
         "root_module": {
             "type": "fps_module",
@@ -273,7 +274,7 @@ def test_cli_with_config_file_and_module(tmp_path):
         json.dump(config_dict, f)
 
     runner = CliRunner()
-    fps._cli.TEST = True
+    fps.cli._cli.TEST = True
     result = runner.invoke(
         main,
         [
@@ -288,7 +289,7 @@ def test_cli_with_config_file_and_module(tmp_path):
     )
     assert result.exit_code == 0
     config = get_config()
-    fps._cli.TEST = False
+    fps.cli._cli.TEST = False
     assert config == {
         "root_module": {
             "type": "fps_module",
@@ -307,7 +308,7 @@ def test_cli_with_config_file_and_module(tmp_path):
 
 
 def test_cli_run_module():
-    fps._cli.TEST = False
+    fps.cli._cli.TEST = False
     runner = CliRunner()
     result = runner.invoke(
         main,

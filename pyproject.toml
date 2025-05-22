@@ -28,13 +28,15 @@ requires-python = ">= 3.9"
 dependencies = [
     "anyio",
     "anyioutils >=0.7.0,<0.8.0",
-    "click >=8.1.8,<9",
     "structlog",
     "exceptiongroup; python_version<'3.11'",
     "importlib_metadata >=3.6; python_version<'3.10'",
 ]
 
 [project.optional-dependencies]
+cli = [
+    "click >=8.1.8,<9",
+]
 web = [
     "fastapi",
     "anycorn >=0.18.1,<0.19.0",
@@ -61,7 +63,7 @@ Source = "https://github.com/jupyter-server/fps"
 Issues = "https://github.com/jupyter-server/fps/issues"
 
 [project.scripts]
-fps = "fps._cli:main"
+fps = "fps.cli._cli:main"
 
 [project.entry-points]
 "fps.modules" = {fps_module = "fps:Module"}

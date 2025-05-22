@@ -6,9 +6,9 @@ import click
 import structlog
 from typing import TextIO
 
-from ._config import dump_config, get_config_description, get_root_module
-from ._module import initialize
-from ._importer import import_from_string
+from .._config import dump_config, get_config_description, get_root_module
+from .._module import initialize
+from .._importer import import_from_string
 
 
 sys.path.insert(0, "")
