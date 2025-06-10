@@ -296,16 +296,24 @@ class Module:
             tasks.append(
                 create_task(self.parent._context.get(value_type), self._task_group)
             )
-        with fail_after(timeout):
-            done, pending = await wait(
-                tasks, self._task_group, return_when=FIRST_COMPLETED
-            )
-            for task in pending:
-                task.cancel()
-            for task in done:
-                break
-            value = await task.wait()
-            value = cast(Value, value)
+        value_acquired = False
+        try:
+            with fail_after(timeout):
+                done, pending = await wait(
+                    tasks, self._task_group, return_when=FIRST_COMPLETED
+                )
+                for task in pending:
+                    task.cancel()
+                for task in done:
+                    break
+                value = await task.wait()
+                value = cast(Value, value)
+                value_acquired = True
+        finally:
+            if not value_acquired:
+                log.critical(
+                    "Module could not get value", path=self.path, value_type=value_type
+                )
         value_id = id(value.unwrap())
         self._acquired_values[value_id] = value
         log.debug("Module got value", path=self.path, value_type=value_type)
