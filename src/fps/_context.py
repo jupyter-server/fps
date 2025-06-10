@@ -127,7 +127,7 @@ class SharedValue(Generic[T]):
                 if len(self._borrowers) < self._max_borrowers:
                     self._borrowers.add(value)
                     return value
-                await self.freed()
+                await self._dropped.wait()
 
     async def freed(self, timeout: float = float("inf")) -> None:
         """

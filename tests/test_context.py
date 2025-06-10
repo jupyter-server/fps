@@ -1,6 +1,6 @@
 import pytest
 
-from anyio import fail_after
+from anyio import create_task_group, fail_after, sleep
 from fps import Context, SharedValue
 
 pytestmark = pytest.mark.anyio
@@ -151,3 +151,26 @@ async def test_context_teardown_callback():
         context.add_teardown_callback(cb1)
 
     assert called == ["cb1", "cb0"]
+
+
+async def test_value_max_borrowers():
+    async with (
+        SharedValue("foo", max_borrowers=2) as shared_value,
+        create_task_group() as tg,
+    ):
+        acquired_value0 = await shared_value.get()
+        acquired_value1 = await shared_value.get()
+
+        async def drop_value0():
+            await sleep(0.2)
+            acquired_value0.drop()
+
+        tg.start_soon(drop_value0)
+
+        with pytest.raises(TimeoutError):
+            acquired_value2 = await shared_value.get(timeout=0.1)
+
+        acquired_value2 = await shared_value.get()
+
+        acquired_value1.drop()
+        acquired_value2.drop()
