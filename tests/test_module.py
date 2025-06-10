@@ -1,6 +1,7 @@
 import pytest
 
 from fps import Module, initialize
+from structlog.testing import capture_logs
 
 pytestmark = pytest.mark.anyio
 
@@ -120,3 +121,20 @@ async def test_module_teardown_callback():
         pass
 
     assert called == ["cb1", "cb0"]
+
+
+async def test_value_not_acquired():
+    class Module0(Module):
+        async def start(self):
+            await self.get(int)
+
+    with capture_logs() as cap_logs:
+        async with Module0("module0", start_timeout=0.1):
+            pass
+
+    assert {
+        "event": "Module could not get value",
+        "path": "module0",
+        "value_type": int,
+        "log_level": "critical",
+    } in cap_logs
