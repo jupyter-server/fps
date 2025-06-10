@@ -2,6 +2,23 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.4.1
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.4.0...3bdd5263c63848638112570c115e13948873f370))
+
+### Merged PRs
+
+- Log failure to acquire value [#134](https://github.com/jupyter-server/fps/pull/134) ([@davidbrochart](https://github.com/davidbrochart))
+- Fix `SharedValue.get()` [#133](https://github.com/jupyter-server/fps/pull/133) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-05-22&to=2025-06-10&type=c))
+
+[@adriendelsalle](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Aadriendelsalle+updated%3A2025-05-22..2025-06-10&type=Issues) | [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-05-22..2025-06-10&type=Issues) | [@fcollonval](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Afcollonval+updated%3A2025-05-22..2025-06-10&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.4.0
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.3.0...8d8b4c7d9c189bd0f60c7094323369bd478f58e1))
@@ -19,8 +36,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-04-21&to=2025-05-22&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-04-21..2025-05-22&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.3.0
 
