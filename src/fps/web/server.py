@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import partial
 
-from anyio import Event, connect_tcp, create_task_group
+from anyio import Event, create_task_group
 from anyioutils import start_task
 from anycorn import Config, serve
 from fastapi import FastAPI
@@ -29,7 +29,7 @@ class ServerModule(Module):
         config.bind = [f"{self.host}:{self.port}"]
         config.loglevel = "WARN"
         async with create_task_group() as tg:
-            self.server_task = start_task(
+            server_task = start_task(
                 partial(
                     serve,
                     app,  # type: ignore[arg-type]
@@ -39,15 +39,11 @@ class ServerModule(Module):
                 ),
                 tg,
             )
-            while True:
-                try:
-                    await connect_tcp(self.host, self.port)
-                except OSError:
-                    pass
-                else:
-                    break
-            self.done()
+            await server_task.wait_started()
 
-    async def stop(self) -> None:
-        self.shutdown_event.set()
-        await self.server_task.wait()
+            async def stop():
+                self.shutdown_event.set()
+                await server_task.wait()
+
+            self.add_teardown_callback(stop)
+            self.done()
