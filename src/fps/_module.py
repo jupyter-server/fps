@@ -353,9 +353,9 @@ class Module:
         with move_on_after(self._stop_timeout) as scope:
             self._task_group.start_soon(self._stop, name=f"{self.path} stop")
             await self._all_stopped()
-        self._exit.set()
         if scope.cancelled_caught:
             self._get_all_stop_timeout()
+        self._exit.set()
         self._task_group.cancel_scope.cancel()
         try:
             await self._exit_stack.aclose()
@@ -383,7 +383,7 @@ class Module:
     def _get_all_prepare_timeout(self):
         for module in self._modules.values():
             module._get_all_prepare_timeout()
-        if not self._prepared.is_set():
+        if not self._prepared.is_set() and not self._exit.is_set():
             self._exceptions.append(
                 TimeoutError(f"Module timed out while preparing: {self.path}")
             )
@@ -391,7 +391,7 @@ class Module:
     def _get_all_start_timeout(self):
         for module in self._modules.values():
             module._get_all_start_timeout()
-        if not self._started.is_set():
+        if not self._started.is_set() and not self._exit.is_set():
             self._exceptions.append(
                 TimeoutError(f"Module timed out while starting: {self.path}")
             )
@@ -399,7 +399,7 @@ class Module:
     def _get_all_stop_timeout(self):
         for module in self._modules.values():
             module._get_all_stop_timeout()
-        if not self._stopped.is_set():
+        if not self._stopped.is_set() and not self._exit.is_set():
             self._exceptions.append(
                 TimeoutError(f"Module timed out while stopping: {self.path}")
             )
@@ -474,7 +474,6 @@ class Module:
                 )
         except ExceptionGroup as exc:
             self._exceptions.append(*exc.exceptions)
-            self._prepared.set()
             self._exit.set()
             log.critical("Module failed while preparing", path=self.path)
 
@@ -500,7 +499,6 @@ class Module:
                 tg.start_soon(self._start_and_done, name=f"{self.path} _start_and_done")
         except ExceptionGroup as exc:
             self._exceptions.append(*exc.exceptions)
-            self._started.set()
             self._exit.set()
             log.critical("Module failed while starting", path=self.path)
 
@@ -532,7 +530,6 @@ class Module:
                 tg.start_soon(self._stop_and_done, name=f"{self.path} _stop_and_done")
         except ExceptionGroup as exc:
             self._exceptions.append(*exc.exceptions)
-            self._stopped.set()
             self._exit.set()
             log.critical("Module failed while stoping", path=self.path)
 
