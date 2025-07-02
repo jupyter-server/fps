@@ -9,3 +9,6 @@
       - Module
       - SharedValue
       - Value
+      - current_context
+      - get
+      - put
