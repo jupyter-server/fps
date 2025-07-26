@@ -54,6 +54,10 @@ async def test_nested_contexts():
             acquired_value_0 = await get(str)
             assert published_value_0 is acquired_value_0.unwrap()
             acquired_value_0.drop()
+            async with Context():
+                acquired_value_1 = await get(str)
+                assert published_value_0 is acquired_value_1.unwrap()
+                acquired_value_1.drop()
 
 
 async def test_context_cm():
