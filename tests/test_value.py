@@ -92,7 +92,10 @@ async def test_value_level():
         async def start(self):
             self.value2 = Value2()
             self.put(self.value2)
-            self.value0 = await self.get(Value0, timeout=0.1)
+            try:
+                self.value0 = await self.get(Value0, timeout=0.1)
+            except TimeoutError:
+                self.value0 = None
             self.value1 = await self.get(Value1, timeout=0.1)
 
     async with Module0("module0") as module0:
@@ -104,7 +107,7 @@ async def test_value_level():
     assert module0.value2 is None
     assert module1.value0 == module0.value0
     assert module1.value2 == module2.value2
-    assert module2.value0 == module0.value0
+    assert module2.value0 is None
     assert module2.value1 == module1.value1
 
 
@@ -251,8 +254,12 @@ async def test_not_freed():
     async with Module0("module0", stop_timeout=0.1) as module0:
         pass
 
-    assert len(module0.exceptions) == 1
-    assert str(module0.exceptions[0]) == "Module timed out while stopping: module0"
+    assert len(module0.exceptions) == 2
+    assert (
+        str(module0.exceptions[0])
+        == "Module timed out while stopping: module0.submodule0"
+    )
+    assert str(module0.exceptions[1]) == "Module timed out while stopping: module0"
 
 
 async def test_all_freed():

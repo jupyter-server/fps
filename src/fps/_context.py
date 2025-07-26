@@ -101,6 +101,7 @@ class SharedValue(Generic[T]):
         self._exit_stack: ExitStack | None = None
         self._async_exit_stack: AsyncExitStack | None = None
         self._opened = False
+        self._closing = False
 
     def _drop(self, borrower: Value) -> None:
         if borrower in self._borrowers:
@@ -191,6 +192,11 @@ class SharedValue(Generic[T]):
         Raises:
             TimeoutError: If the shared value could not be closed in time.
         """
+        if self._closing:
+            return
+
+        self._closing = True
+
         if timeout is None:
             timeout = self._close_timeout
         if timeout is None:
@@ -228,7 +234,7 @@ class Context:
     def __init__(self) -> None:
         self._context: dict[int, SharedValue] = {}
         self._value_added = Event()
-        self._closed = Event()
+        self._closed = False
         self._teardown_callbacks: list[
             Callable[..., Any] | Callable[..., Awaitable[Any]]
         ] = []
@@ -246,21 +252,12 @@ class Context:
         return self
 
     async def __aexit__(self, exc_type, exc_value, exc_tb):
-        for context in set(self._children):
-            await context._closed.wait()
-        async with create_task_group() as tg:
-            for shared_value in self._context.values():
-                tg.start_soon(
-                    partial(
-                        shared_value.aclose,
-                        _exc_type=exc_type,
-                        _exc_value=exc_value,
-                        _exc_tb=exc_tb,
-                    )
-                )
-            for callback in self._teardown_callbacks[::-1]:
-                await call(callback, exc_value)
-        self._closed.set()
+        await self.aclose(
+            timeout=None,
+            _exc_type=exc_type,
+            _exc_value=exc_value,
+            _exc_tb=exc_tb,
+        )
         _current_context.reset(self._token)
         if self._parent is not None:
             self._parent._children.remove(self)
@@ -277,7 +274,7 @@ class Context:
         return types
 
     def _check_closed(self):
-        if self._closed.is_set():
+        if self._closed:
             raise RuntimeError("Context is closed")
 
     def add_teardown_callback(
@@ -302,6 +299,7 @@ class Context:
         teardown_callback: Callable[..., Any]
         | Callable[..., Awaitable[Any]]
         | None = None,
+        shared_value: SharedValue[T] | None = None,
     ) -> SharedValue[T]:
         """
         Put a value in the context so that it can be shared.
@@ -319,12 +317,16 @@ class Context:
             The shared value.
         """
         self._check_closed()
-        _shared_value = SharedValue(
-            value,
-            max_borrowers=max_borrowers,
-            manage=manage,
-            teardown_callback=teardown_callback,
-        )
+        if shared_value is not None:
+            _shared_value = shared_value
+            value = _shared_value._value
+        else:
+            _shared_value = SharedValue(
+                value,
+                max_borrowers=max_borrowers,
+                manage=manage,
+                teardown_callback=teardown_callback,
+            )
         _types = self._get_value_types(value, types)
         for value_type in _types:
             value_type_id = id(value_type)
@@ -378,6 +380,41 @@ class Context:
                 shared_value = self._context[value_type_id]
                 return await shared_value.get()
             await self._value_added.wait()
+
+    async def aclose(
+        self,
+        *,
+        timeout: float | None = None,
+        _exc_type=None,
+        _exc_value: BaseException | None = None,
+        _exc_tb=None,
+    ) -> None:
+        """
+        Close the context, after all shared values that were borrowed have been dropped.
+        The shared values will be torn down, if applicable.
+
+        Args:
+            timeout: The time to wait for all shared values to be freed.
+
+        Raises:
+            TimeoutError: If the context could not be closed in time.
+        """
+        if timeout is None:
+            timeout = float("inf")
+        with fail_after(timeout):
+            async with create_task_group() as tg:
+                for shared_value in self._context.values():
+                    tg.start_soon(
+                        partial(
+                            shared_value.aclose,
+                            _exc_type=_exc_type,
+                            _exc_value=_exc_value,
+                            _exc_tb=_exc_tb,
+                        )
+                    )
+                for callback in self._teardown_callbacks[::-1]:
+                    await call(callback, _exc_value)
+        self._closed = True
 
 
 @lru_cache(maxsize=1024)
