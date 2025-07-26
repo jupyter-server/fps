@@ -2,6 +2,22 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.5.0
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.4.2...63d7ad9b68d36a822ae3d066d0650c22d0dd44e5))
+
+### Merged PRs
+
+- Support nested contexts [#136](https://github.com/jupyter-server/fps/pull/136) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-06-13&to=2025-07-26&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-06-13..2025-07-26&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.4.2
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.4.1...1154d342b0543d82e104899d406246e5d09c8a34))
@@ -15,8 +31,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-06-10&to=2025-06-13&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-06-10..2025-06-13&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.4.1
 

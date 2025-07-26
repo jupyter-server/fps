@@ -10,4 +10,4 @@ from ._config import get_root_module as get_root_module
 from ._config import merge_config as merge_config
 from ._signal import Signal as Signal
 
-__version__ = "0.4.2"
+__version__ = "0.5.0"
