@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import sys
 from collections.abc import Callable, Awaitable
 from contextlib import AsyncExitStack, ExitStack
+from contextvars import ContextVar
 from functools import lru_cache, partial
 from inspect import isawaitable, signature
 from typing import (
@@ -15,8 +17,14 @@ from typing import (
 )
 
 from anyio import Event, create_task_group, fail_after, move_on_after
+from anyioutils import create_task, wait, FIRST_COMPLETED
+
+if sys.version_info < (3, 11):
+    from exceptiongroup import ExceptionGroup  # pragma: no cover
+
 
 T = TypeVar("T")
+_current_context: ContextVar[Context] = ContextVar("_current_context")
 
 
 class Value(Generic[T]):
@@ -209,26 +217,53 @@ class Context:
     A context allows to share values. When a shared value is put in a context,
     it can be borrowed by calling `await context.get(value_type)`, where `value_type`
     is the type of the desired value.
+
+    A context must be used with an async context manager. It exits after all shared values
+    that were borrowed have been dropped. The shared values will be torn down, if applicable.
+
+    Contexts can be nested. When a value is shared in a context, it is made available to all its
+    children, but not its parent.
     """
 
-    def __init__(self, *, close_timeout: float | None = None):
-        """
-        Args:
-            close_timeout: The timeout to use when closing the context.
-        """
-        self._close_timeout = close_timeout
+    def __init__(self) -> None:
         self._context: dict[int, SharedValue] = {}
         self._value_added = Event()
-        self._closed = False
+        self._closed = Event()
         self._teardown_callbacks: list[
             Callable[..., Any] | Callable[..., Awaitable[Any]]
         ] = []
+        self._parent: Context | None = None
+        self._children: set[Context] = set()
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> Context:
+        try:
+            self._parent = _current_context.get()
+        except LookupError:
+            pass
+        else:
+            self._parent._children.add(self)
+        self._token = _current_context.set(self)
         return self
 
     async def __aexit__(self, exc_type, exc_value, exc_tb):
-        await self.aclose(_exc_type=exc_type, _exc_value=exc_value, _exc_tb=exc_tb)
+        for context in set(self._children):
+            await context._closed.wait()
+        async with create_task_group() as tg:
+            for shared_value in self._context.values():
+                tg.start_soon(
+                    partial(
+                        shared_value.aclose,
+                        _exc_type=exc_type,
+                        _exc_value=exc_value,
+                        _exc_tb=exc_tb,
+                    )
+                )
+            for callback in self._teardown_callbacks[::-1]:
+                await call(callback, exc_value)
+        self._closed.set()
+        _current_context.reset(self._token)
+        if self._parent is not None:
+            self._parent._children.remove(self)
 
     def _get_value_types(
         self, value: Any, types: Iterable | Any | None = None
@@ -242,7 +277,7 @@ class Context:
         return types
 
     def _check_closed(self):
-        if self._closed:
+        if self._closed.is_set():
             raise RuntimeError("Context is closed")
 
     def add_teardown_callback(
@@ -267,7 +302,6 @@ class Context:
         teardown_callback: Callable[..., Any]
         | Callable[..., Awaitable[Any]]
         | None = None,
-        shared_value: SharedValue[T] | None = None,
     ) -> SharedValue[T]:
         """
         Put a value in the context so that it can be shared.
@@ -285,16 +319,12 @@ class Context:
             The shared value.
         """
         self._check_closed()
-        if shared_value is not None:
-            _shared_value = shared_value
-            value = _shared_value._value
-        else:
-            _shared_value = SharedValue(
-                value,
-                max_borrowers=max_borrowers,
-                manage=manage,
-                teardown_callback=teardown_callback,
-            )
+        _shared_value = SharedValue(
+            value,
+            max_borrowers=max_borrowers,
+            manage=manage,
+            teardown_callback=teardown_callback,
+        )
         _types = self._get_value_types(value, types)
         for value_type in _types:
             value_type_id = id(value_type)
@@ -321,50 +351,33 @@ class Context:
         Raises:
             TimeoutError: If the value could not be borrowed in time.
         """
+        with fail_after(timeout):
+            try:
+                async with create_task_group() as tg:
+                    tasks = []
+                    context: Context | None = self
+                    while context is not None:
+                        tasks.append(create_task(context._get(value_type), tg))
+                        context = context._parent
+                    done, pending = await wait(tasks, tg, return_when=FIRST_COMPLETED)
+                    for task in pending:
+                        task.cancel()
+                    for task in done:
+                        break
+                    value = await task.wait()
+            except ExceptionGroup as exc_group:
+                for exc in exc_group.exceptions:
+                    raise exc
+            return cast(Value[T], value)
+
+    async def _get(self, value_type: type[T]) -> Value[T]:
         self._check_closed()
         value_type_id = id(value_type)
         while True:
             if value_type_id in self._context:
                 shared_value = self._context[value_type_id]
-                return await shared_value.get(timeout)
+                return await shared_value.get()
             await self._value_added.wait()
-
-    async def aclose(
-        self,
-        *,
-        timeout: float | None = None,
-        _exc_type=None,
-        _exc_value: BaseException | None = None,
-        _exc_tb=None,
-    ) -> None:
-        """
-        Close the context, after all shared values that were borrowed have been dropped.
-        The shared values will be torn down, if applicable.
-
-        Args:
-            timeout: The time to wait for all shared values to be freed.
-
-        Raises:
-            TimeoutError: If the context could not be closed in time.
-        """
-        if timeout is None:
-            timeout = self._close_timeout
-        if timeout is None:
-            timeout = float("inf")
-        with fail_after(timeout):
-            async with create_task_group() as tg:
-                for shared_value in self._context.values():
-                    tg.start_soon(
-                        partial(
-                            shared_value.aclose,
-                            _exc_type=_exc_type,
-                            _exc_value=_exc_value,
-                            _exc_tb=_exc_tb,
-                        )
-                    )
-                for callback in self._teardown_callbacks[::-1]:
-                    await call(callback, _exc_value)
-        self._closed = True
 
 
 @lru_cache(maxsize=1024)
@@ -382,3 +395,65 @@ async def call(
     res = callback(*params[:param_nb])
     if isawaitable(res):
         await res
+
+
+def current_context() -> Context:
+    """
+    Returns:
+        The current context, if any.
+
+    Raises:
+        LookupError: If there is no current context.
+    """
+    return _current_context.get()
+
+
+def put(
+    value: T,
+    types: Iterable | Any | None = None,
+    max_borrowers: float = float("inf"),
+    manage: bool = False,
+    teardown_callback: Callable[..., Any] | Callable[..., Awaitable[Any]] | None = None,
+) -> SharedValue[T]:
+    """
+    Put a value in the current context so that it can be shared.
+
+    Args:
+        value: The value to put in the context.
+        types: The type(s) to register the value as. If not
+            provided, the value type will be used.
+        max_borrowers: The number of times the shared value can be borrowed at the same time.
+        manage: Whether to use the (async) context manager of the value
+            for setup/teardown.
+        teardown_callback: An optional callback to call when the context is closed.
+
+    Returns:
+        The shared value.
+
+    Raises:
+        LookupError: If there is no current context.
+    """
+    return current_context().put(value, types, max_borrowers, manage, teardown_callback)
+
+
+async def get(
+    value_type: type[T],
+    timeout: float = float("inf"),
+) -> Value[T]:
+    """
+    Get a value from the current context, with the given type.
+    The value will be returned if/when it is put in the context and when it accepts
+    to be borrowed (borrowing can be limited with a maximum number of borrowers).
+
+    Args:
+        value_type: The type of the value to get.
+        timeout: The time to wait to get the value.
+
+    Returns:
+        The borrowed `Value`.
+
+    Raises:
+        TimeoutError: If the value could not be borrowed in time.
+        LookupError: If there is no current context.
+    """
+    return await current_context().get(value_type, timeout)

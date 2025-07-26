@@ -6,11 +6,11 @@ import sys
 from collections.abc import Callable, Awaitable
 from contextlib import AsyncExitStack
 from inspect import isawaitable, signature, _empty
-from typing import TypeVar, Any, Iterable, cast
+from typing import TypeVar, Any, Iterable
 
 import anyio
 import structlog
-from anyio import Event, create_task_group, fail_after, move_on_after
+from anyio import Event, create_task_group, move_on_after
 from anyioutils import create_task, wait, FIRST_COMPLETED
 
 from ._context import Context, SharedValue, Value
@@ -69,7 +69,6 @@ class Module:
         self._start_timeout = start_timeout
         self._stop_timeout = stop_timeout
         self._parent: Module | None = None
-        self._context = Context()
         self._prepared = Event()
         self._started = Event()
         self._stopped = Event()
@@ -257,24 +256,24 @@ class Module:
             teardown_callback: A callback to call when the value is torn down.
             manage: Whether to use the (async) context manager of the value for its setup/teardown.
         """
-        value_id = id(value)
-        shared_value = self._context.put(
-            value,
-            types,
-            max_borrowers=max_borrowers,
-            manage=manage,
-            teardown_callback=teardown_callback,
-        )
-        self._published_values[value_id] = shared_value
-        if self.parent is not None:
-            self.parent._context.put(
+        if self.parent is None:
+            shared_value = self._context.put(
                 value,
                 types,
                 max_borrowers=max_borrowers,
                 manage=manage,
                 teardown_callback=teardown_callback,
-                shared_value=shared_value,
             )
+        else:
+            shared_value = self.parent._context.put(
+                value,
+                types,
+                max_borrowers=max_borrowers,
+                manage=manage,
+                teardown_callback=teardown_callback,
+            )
+        value_id = id(value)
+        self._published_values[value_id] = shared_value
         log.debug("Module added value", path=self.path, types=types)
 
     async def get(
@@ -291,24 +290,10 @@ class Module:
             The borrowed value.
         """
         log.debug("Module getting value", path=self.path, value_type=value_type)
-        tasks = [create_task(self._context.get(value_type), self._task_group)]
-        if self.parent is not None:
-            tasks.append(
-                create_task(self.parent._context.get(value_type), self._task_group)
-            )
         value_acquired = False
         try:
-            with fail_after(timeout):
-                done, pending = await wait(
-                    tasks, self._task_group, return_when=FIRST_COMPLETED
-                )
-                for task in pending:
-                    task.cancel()
-                for task in done:
-                    break
-                value = await task.wait()
-                value = cast(Value, value)
-                value_acquired = True
+            value = await self._context.get(value_type, timeout=timeout)
+            value_acquired = True
         finally:
             if not value_acquired:
                 log.critical(
@@ -456,26 +441,27 @@ class Module:
 
     async def _drop_and_wait_values(self):
         self.drop_all()
-        await self._context.aclose()
         self._stopped.set()
         log.debug("Module stopped", path=self.path)
 
     async def _prepare(self) -> None:
         log.debug("Preparing module", path=self.path)
-        try:
-            async with create_task_group() as tg:
-                for module in self._modules.values():
-                    module._task_group = tg
-                    module._phase = self._phase
-                    module._exceptions = self._exceptions
-                    tg.start_soon(module._prepare, name=f"{module.path} _prepare")
-                tg.start_soon(
-                    self._prepare_and_done, name=f"{self.path} _prepare_and_done"
-                )
-        except ExceptionGroup as exc:
-            self._exceptions.append(*exc.exceptions)
-            self._exit.set()
-            log.critical("Module failed while preparing", path=self.path)
+        async with Context() as self._context:
+            try:
+                async with create_task_group() as tg:
+                    for module in self._modules.values():
+                        module._task_group = tg
+                        module._phase = self._phase
+                        module._exceptions = self._exceptions
+                        tg.start_soon(module._prepare, name=f"{module.path} _prepare")
+                    tg.start_soon(
+                        self._prepare_and_done, name=f"{self.path} _prepare_and_done"
+                    )
+            except ExceptionGroup as exc:
+                self._exceptions.append(*exc.exceptions)
+                self._exit.set()
+                log.critical("Module failed while preparing", path=self.path)
+            await self._stopped.wait()
 
     async def _prepare_and_done(self) -> None:
         await self.prepare()
