@@ -43,6 +43,19 @@ TEST = False
     default="asyncio",
     help="The name of the event loop to use (asyncio or trio).",
 )
+@click.option(
+    "--timeout",
+    type=float,
+    default=None,
+    help="The timeout for starting the module (in seconds).",
+)
+@click.option(
+    "--stop-timeout",
+    type=float,
+    show_default=True,
+    default=1,
+    help="The timeout for stopping the module (in seconds).",
+)
 @click.argument("module", default="")
 def main(
     module: str,
@@ -51,6 +64,8 @@ def main(
     help_all: bool = False,
     set_: list[str] | None = None,
     backend: str = "asyncio",
+    timeout: float | None = None,
+    stop_timeout: float = 1,
 ):
     global CONFIG
     if config is None:
@@ -87,6 +102,8 @@ def main(
         CONFIG = config_dict
         return
     root_module = get_root_module(config_dict)
+    root_module._global_start_timeout = timeout
+    root_module._stop_timeout = stop_timeout
     actual_config = initialize(root_module)
     if help_all:
         click.echo(get_config_description(root_module))

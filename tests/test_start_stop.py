@@ -108,3 +108,30 @@ async def test_nested_stop():
         str(module0.exceptions[0])
         == "Module timed out while stopping: module0.submodule0"
     )
+
+
+async def test_global_start_timeout_in_prepare():
+    class Module0(Module):
+        async def prepare(self):
+            await sleep(1)
+
+    async with Module0("module0", global_start_timeout=0.1) as module0:
+        pass
+
+    assert len(module0.exceptions) == 1
+    assert str(module0.exceptions[0]) == "Module timed out while preparing: module0"
+
+
+async def test_global_start_timeout_in_start():
+    class Module0(Module):
+        async def prepare(self):
+            await sleep(0.1)
+
+        async def start(self):
+            await sleep(1)
+
+    async with Module0("module0", global_start_timeout=0.2) as module0:
+        pass
+
+    assert len(module0.exceptions) == 1
+    assert str(module0.exceptions[0]) == "Module timed out while starting: module0"
