@@ -6,6 +6,7 @@ import sys
 from collections.abc import Callable, Awaitable
 from contextlib import AsyncExitStack
 from inspect import isawaitable, signature, _empty
+from time import time
 from typing import TypeVar, Any, Iterable, cast
 
 import anyio
@@ -56,6 +57,7 @@ class Module:
         prepare_timeout: float = 1,
         start_timeout: float = 1,
         stop_timeout: float = 1,
+        global_start_timeout: float | None = None,
     ):
         """
         Args:
@@ -63,11 +65,14 @@ class Module:
             prepare_timeout: The time to wait (in seconds) for the "prepare" phase to complete.
             start_timeout: The time to wait (in seconds) for the "start" phase to complete.
             stop_timeout: The time to wait (in seconds) for the "stop" phase to complete.
+            global_start_timeout: The time to wait (in seconds) for the "prepare" and "start"
+                phases to complete.
         """
         self._initialized = False
         self._prepare_timeout = prepare_timeout
         self._start_timeout = start_timeout
         self._stop_timeout = stop_timeout
+        self._global_start_timeout = global_start_timeout
         self._parent: Module | None = None
         self._context = Context()
         self._prepared = Event()
@@ -327,7 +332,12 @@ class Module:
             self._task_group = await exit_stack.enter_async_context(create_task_group())
             self._exceptions = []
             self._phase = "preparing"
-            with move_on_after(self._prepare_timeout) as scope:
+            if self._global_start_timeout is None:
+                prepare_timeout = self._prepare_timeout
+            else:
+                prepare_timeout = self._global_start_timeout
+            t0 = time()
+            with move_on_after(prepare_timeout) as scope:
                 self._task_group.start_soon(self._prepare, name=f"{self.path} _prepare")
                 await self._all_prepared()
             if scope.cancelled_caught:
@@ -336,7 +346,12 @@ class Module:
                 self._exit.set()
             else:
                 self._phase = "starting"
-                with move_on_after(self._start_timeout) as scope:
+                if self._global_start_timeout is None:
+                    start_timeout = self._start_timeout
+                else:
+                    elapsed_time = time() - t0
+                    start_timeout = max(self._global_start_timeout - elapsed_time, 0)
+                with move_on_after(start_timeout) as scope:
                     self._task_group.start_soon(self._start, name=f"{self.path} start")
                     await self._all_started()
                 if scope.cancelled_caught:
