@@ -121,7 +121,7 @@ class SharedValue(Generic[T]):
         Borrow the shared value.
 
         Args:
-            timeout: The time to wait for the value to be dropped.
+            timeout: The time to wait to borrow the shared value.
 
         Returns:
             The borrowed value.
