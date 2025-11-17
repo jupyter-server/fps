@@ -75,7 +75,7 @@ def _get_config_description(description_lines: list[str], module: Module) -> Non
     if path:
         path += "."
     if module.config is not None:
-        for key, value in module.config.model_fields.items():
+        for key, value in type(module.config).model_fields.items():
             title = "" if value.title is None else f" {value.title}"
             description_lines.append(f"{path}{key}:{title}")
             description_lines.append(f"    Default: {value.default}")

@@ -250,7 +250,7 @@ class MyModule(Module):
 
 ## Contexts
 
-FPS offers a `Context` class that allows to share objects independantly of modules. For instance, say you want to share a file object. Here is how you would do:
+FPS offers a `Context` class that allows to share objects independently of modules. For instance, say you want to share a file object. Here is how you would do:
 
 ```py
 from io import TextIOWrapper
@@ -301,7 +301,7 @@ Let's see what happened:
 - The publisher can check that the published file is not used anymore with `await shared_file.freed()`.
 - When the `context` is closed, it waits for every published object to be freed and then it proceeds with their teardown, if any.
 
-Contexts ensure that objects are shared safely by their "owner" and that they are torn down when they are not being used anymore, by keeping references of "borrowers". Borrowers must collaborate by explicitly dropping objects when they are done using them. Owners can explicitly check that their objects are free to be disposed, althoug this is optional.
+Contexts ensure that objects are shared safely by their "owner" and that they are torn down when they are not being used anymore, by keeping references of "borrowers". Borrowers must collaborate by explicitly dropping objects when they are done using them. Owners can explicitly check that their objects are free to be disposed, although this is optional.
 
 ## Signals
 
