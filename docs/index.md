@@ -4,3 +4,4 @@ FPS is a Fast Pluggable System. It was originally designed to create [Jupyverse]
 - **configuration**: each module can be configured with a set of parameters accessible from the CLI, and an application can be created declaratively as a Python dictionary or a JSON file.
 - **pluggability**: modules can share objects, allowing the use of late binding to connect pluggins at runtime.
 - **concurrency**: modules have startup and teardown phases for managing asynchronous resources safely.
+- borrow checker: shared objects are torn down until all borrowers drop their reference, avoiding the use of "dangling" resources.
