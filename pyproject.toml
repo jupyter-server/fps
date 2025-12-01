@@ -46,7 +46,7 @@ anycorn = [
 
 [dependency-groups]
 test = [
-    "pytest >=8,<9",
+    "pytest >=8,<10",
     "trio >=0.32.0,<0.33",
     "mypy",
     "ruff",
