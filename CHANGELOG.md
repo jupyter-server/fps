@@ -2,6 +2,22 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.5.4
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.5.3...fc771fa92490f07b39eaf48d97e910d82ef3bca7))
+
+### Merged PRs
+
+- Fix value types in logging [#140](https://github.com/jupyter-server/fps/pull/140) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-11-17&to=2025-12-01&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-11-17..2025-12-01&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.5.3
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.5.2...189f38082c675ce21e2a0271c6e945a1b25bce80))
@@ -15,8 +31,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-09-11&to=2025-11-17&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-09-11..2025-11-17&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.5.2
 
