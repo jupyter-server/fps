@@ -14,7 +14,7 @@ import structlog
 from anyio import Event, create_task_group, fail_after, move_on_after
 from anyioutils import create_task, wait, FIRST_COMPLETED
 
-from ._context import Context, SharedValue, Value
+from ._context import Context, SharedValue, Value, _get_value_types
 from ._importer import import_from_string
 
 
@@ -280,7 +280,8 @@ class Module:
                 teardown_callback=teardown_callback,
                 shared_value=shared_value,
             )
-        log.debug("Module added value", path=self.path, types=types)
+        _types = list(_get_value_types(value, types))
+        log.debug("Module added value", path=self.path, types=_types)
 
     async def get(
         self, value_type: type[T_Value], timeout: float = float("inf")
