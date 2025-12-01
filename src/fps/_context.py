@@ -262,17 +262,6 @@ class Context:
         if self._parent is not None:
             self._parent._children.remove(self)
 
-    def _get_value_types(
-        self, value: Any, types: Iterable | Any | None = None
-    ) -> Iterable:
-        types = types if types is not None else [type(value)]
-        try:
-            for value_type in types:
-                break
-        except TypeError:
-            types = [types]
-        return types
-
     def _check_closed(self):
         if self._closed:
             raise RuntimeError("Context is closed")
@@ -327,7 +316,7 @@ class Context:
                 manage=manage,
                 teardown_callback=teardown_callback,
             )
-        _types = self._get_value_types(value, types)
+        _types = _get_value_types(value, types)
         for value_type in _types:
             value_type_id = id(value_type)
             if value_type_id in self._context:
@@ -494,3 +483,13 @@ async def get(
         LookupError: If there is no current context.
     """
     return await current_context().get(value_type, timeout)
+
+
+def _get_value_types(value: Any, types: Iterable | Any | None = None) -> Iterable:
+    types = types if types is not None else [type(value)]
+    try:
+        for value_type in types:
+            break
+    except TypeError:
+        types = [types]
+    return types
