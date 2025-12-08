@@ -2,6 +2,26 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.5.5
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.5.4...f39bae00fe02199504dc746fc81cf11036135758))
+
+### Merged PRs
+
+- Simplify waiting for first completed [#145](https://github.com/jupyter-server/fps/pull/145) ([@davidbrochart](https://github.com/davidbrochart))
+- Bump actions/create-github-app-token from 1 to 2 [#144](https://github.com/jupyter-server/fps/pull/144) ([@dependabot](https://github.com/dependabot))
+- Bump actions/setup-python from 5 to 6 [#143](https://github.com/jupyter-server/fps/pull/143) ([@dependabot](https://github.com/dependabot))
+- Bump actions/checkout from 4 to 6 [#142](https://github.com/jupyter-server/fps/pull/142) ([@dependabot](https://github.com/dependabot))
+- Update pytest requirement from \<9,>=8 to >=8,\<10 [#141](https://github.com/jupyter-server/fps/pull/141) ([@dependabot](https://github.com/dependabot))
+
+### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-12-01&to=2025-12-08&type=c))
+
+[@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-12-01..2025-12-08&type=Issues) | [@dependabot](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adependabot+updated%3A2025-12-01..2025-12-08&type=Issues)
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.5.4
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.5.3...fc771fa92490f07b39eaf48d97e910d82ef3bca7))
@@ -15,8 +35,6 @@
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-11-17&to=2025-12-01&type=c))
 
 [@davidbrochart](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-11-17..2025-12-01&type=Issues)
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.5.3
 
