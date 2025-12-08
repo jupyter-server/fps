@@ -7,12 +7,11 @@ from collections.abc import Callable, Awaitable
 from contextlib import AsyncExitStack
 from inspect import isawaitable, signature, _empty
 from time import time
-from typing import TypeVar, Any, Iterable, cast
+from typing import TypeVar, Any, Iterable
 
 import anyio
 import structlog
 from anyio import Event, create_task_group, fail_after, move_on_after
-from anyioutils import create_task, wait, FIRST_COMPLETED
 
 from ._context import Context, SharedValue, Value, _get_value_types
 from ._importer import import_from_string
@@ -297,29 +296,25 @@ class Module:
             The borrowed value.
         """
         log.debug("Module getting value", path=self.path, value_type=value_type)
-        tasks = [create_task(self._context.get(value_type), self._task_group)]
-        if self.parent is not None:
-            tasks.append(
-                create_task(self.parent._context.get(value_type), self._task_group)
-            )
-        value_acquired = False
+
+        values = []
+
+        async def get_in_context(context):
+            values.append(await context.get(value_type))
+            tg.cancel_scope.cancel()
+
         try:
             with fail_after(timeout):
-                done, pending = await wait(
-                    tasks, self._task_group, return_when=FIRST_COMPLETED
-                )
-                for task in pending:
-                    task.cancel()
-                for task in done:
-                    break
-                value = await task.wait()
-                value = cast(Value, value)
-                value_acquired = True
+                async with create_task_group() as tg:
+                    tg.start_soon(get_in_context, self._context)
+                    if self.parent is not None:
+                        tg.start_soon(get_in_context, self.parent._context)
         finally:
-            if not value_acquired:
+            if not values:
                 log.critical(
                     "Module could not get value", path=self.path, value_type=value_type
                 )
+        value = values[0]
         value_id = id(value.unwrap())
         self._acquired_values[value_id] = value
         log.debug("Module got value", path=self.path, value_type=value_type)
@@ -462,13 +457,13 @@ class Module:
             self._task_group.start_soon(self._finish)
 
     async def _finish(self):
-        tasks = (
-            create_task(self._drop_and_wait_values(), self._task_group),
-            create_task(self._exit.wait(), self._task_group),
-        )
-        done, pending = await wait(tasks, self._task_group, return_when=FIRST_COMPLETED)
-        for task in pending:
-            task.cancel()
+        async def wait_and_cancel(aw: Callable[[], Awaitable[None]]):
+            await aw()
+            tg.cancel_scope.cancel()
+
+        async with create_task_group() as tg:
+            tg.start_soon(wait_and_cancel, self._drop_and_wait_values)
+            tg.start_soon(wait_and_cancel, self._exit.wait)
 
     async def _drop_and_wait_values(self):
         self.drop_all()

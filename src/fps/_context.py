@@ -17,7 +17,6 @@ from typing import (
 )
 
 from anyio import Event, create_task_group, fail_after, move_on_after
-from anyioutils import create_task, wait, FIRST_COMPLETED
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup  # pragma: no cover
@@ -342,24 +341,23 @@ class Context:
         Raises:
             TimeoutError: If the value could not be borrowed in time.
         """
+        values = []
+
+        async def get_in_context(context):
+            values.append(await context._get(value_type))
+            tg.cancel_scope.cancel()
+
         with fail_after(timeout):
             try:
                 async with create_task_group() as tg:
-                    tasks = []
                     context: Context | None = self
                     while context is not None:
-                        tasks.append(create_task(context._get(value_type), tg))
+                        tg.start_soon(get_in_context, context)
                         context = context._parent
-                    done, pending = await wait(tasks, tg, return_when=FIRST_COMPLETED)
-                    for task in pending:
-                        task.cancel()
-                    for task in done:
-                        break
-                    value = await task.wait()
             except ExceptionGroup as exc_group:
                 for exc in exc_group.exceptions:
                     raise exc
-            return cast(Value[T], value)
+            return values[0]
 
     async def _get(self, value_type: type[T]) -> Value[T]:
         self._check_closed()
