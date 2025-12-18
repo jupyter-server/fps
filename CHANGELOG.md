@@ -2,6 +2,25 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.5.7
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.5.6...c4c05c7e4a95c76d128c45e47bb2160c50c8ec38))
+
+### Merged PRs
+
+- Add `get_nowait()` [#147](https://github.com/jupyter-server/fps/pull/147) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-12-18&to=2025-12-18&type=c))
+
+@davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-12-18..2025-12-18&type=Issues))
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.5.6
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.5.5...98c2287f238e8bfbf17faededd683b9956e07fdd))
@@ -18,8 +37,6 @@ See [our definition of contributors](https://github-activity.readthedocs.io/en/l
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-12-08&to=2025-12-18&type=c))
 
 @davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-12-08..2025-12-18&type=Issues))
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.5.5
 
