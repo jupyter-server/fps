@@ -154,6 +154,22 @@ class SharedValue(Generic[T]):
                     return value
                 await self._dropped.wait()
 
+    def get_nowait(self) -> Value:
+        """
+        Borrow the shared value.
+
+        Returns:
+            The borrowed value.
+
+        Raises:
+            RuntimeError: If the shared value cannot be borrowed.
+        """
+        if len(self._borrowers) < self._max_borrowers:
+            value = Value(self)
+            self._borrowers.add(value)
+            return value
+        raise RuntimeError("Cannot borrow shared value")
+
     async def freed(self, timeout: float = float("inf")) -> None:
         """
         Wait for all borrowers to drop their value.
@@ -381,6 +397,33 @@ class Context:
                     raise exc
             return values[0]
 
+    def get_nowait(self, value_type: type[T]) -> Value[T]:
+        """
+        Get a value from the context, with the given type.
+        The value will be returned immediately if it is in the context.
+
+        Args:
+            value_type: The type of the value to get.
+
+        Returns:
+            The borrowed `Value`.
+
+        Raises:
+            RuntimeError: If the shared value is not found or cannot be borrowed.
+        """
+        context: Context | None = self
+        while context is not None:
+            try:
+                value = context._get_nowait(value_type)
+            except RuntimeError:
+                pass
+            else:
+                break
+            context = context._parent
+        else:
+            raise RuntimeError("Shared value not found or cannot be borrowed")
+        return value
+
     async def _get(self, value_type: type[T]) -> Value[T]:
         self._check_closed()
         value_type_id = id(value_type)
@@ -389,6 +432,14 @@ class Context:
                 shared_value = self._context[value_type_id]
                 return await shared_value.get()
             await self._value_added.wait()
+
+    def _get_nowait(self, value_type: type[T]) -> Value[T]:
+        self._check_closed()
+        value_type_id = id(value_type)
+        if value_type_id in self._context:
+            shared_value = self._context[value_type_id]
+            return shared_value.get_nowait()
+        raise RuntimeError("Shared value not found")
 
     async def aclose(
         self,
@@ -503,6 +554,24 @@ async def get(
         LookupError: If there is no current context.
     """
     return await current_context().get(value_type, timeout)
+
+
+def get_nowait(value_type: type[T]) -> Value[T]:
+    """
+    Get a value from the current context, with the given type.
+    The value will be returned immediately if it is in the context.
+
+    Args:
+        value_type: The type of the value to get.
+
+    Returns:
+        The borrowed `Value`.
+
+    Raises:
+        LookupError: If there is no current context.
+        RuntimeError: If the shared value is not found or cannot be borrowed.
+    """
+    return current_context().get_nowait(value_type)
 
 
 def _get_value_types(value: Any, types: Iterable | Any | None = None) -> Iterable:
