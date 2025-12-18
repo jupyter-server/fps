@@ -1,7 +1,7 @@
 import pytest
 
 from anyio import create_task_group, fail_after, sleep
-from fps import Context, SharedValue, get, put
+from fps import Context, SharedValue, get, get_nowait, put
 
 pytestmark = pytest.mark.anyio
 
@@ -55,6 +55,28 @@ async def test_nested_contexts():
                 assert published_value_0 is acquired_value_0
             async with Context():
                 with await get(str) as acquired_value_1:
+                    assert published_value_0 is acquired_value_1
+
+
+async def test_get_nowait_error():
+    async with Context():
+        put("foo", max_borrowers=0)
+        with pytest.raises(
+            RuntimeError, match="Shared value not found or cannot be borrowed"
+        ):
+            with get_nowait(str):
+                pass  # pragma: nocover
+
+
+async def test_nested_contexts_get_nowait():
+    async with Context():
+        published_value_0 = "foo"
+        put(published_value_0)
+        async with Context():
+            with get_nowait(str) as acquired_value_0:
+                assert published_value_0 is acquired_value_0
+            async with Context():
+                with get_nowait(str) as acquired_value_1:
                     assert published_value_0 is acquired_value_1
 
 
