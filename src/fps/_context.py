@@ -6,6 +6,7 @@ from contextlib import AsyncExitStack, ExitStack
 from contextvars import ContextVar
 from functools import lru_cache, partial
 from inspect import isawaitable, signature
+from types import TracebackType
 from typing import (
     Any,
     AsyncContextManager,
@@ -39,6 +40,17 @@ class Value(Generic[T]):
             shared_value: The shared value this `Value` refers to.
         """
         self._shared_value = shared_value
+
+    def __enter__(self) -> T:
+        return self.unwrap()
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        self.drop()
 
     def unwrap(self) -> T:
         """
@@ -112,7 +124,12 @@ class SharedValue(Generic[T]):
         await self._maybe_open()
         return self
 
-    async def __aexit__(self, exc_type, exc_value, exc_tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         await self.aclose(_exc_type=exc_type, _exc_value=exc_value, _exc_tb=exc_tb)
 
     async def get(self, timeout: float = float("inf")) -> Value:
@@ -250,7 +267,12 @@ class Context:
         self._token = _current_context.set(self)
         return self
 
-    async def __aexit__(self, exc_type, exc_value, exc_tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         await self.aclose(
             timeout=None,
             _exc_type=exc_type,
