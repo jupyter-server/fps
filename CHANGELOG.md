@@ -2,6 +2,25 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.5.9
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.5.8...f7fb84dead5443279a5b97f727f3bee5bc92482f))
+
+### Merged PRs
+
+- Fix FastAPIModule's `routes_url` [#149](https://github.com/jupyter-server/fps/pull/149) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2026-01-07&to=2026-01-07&type=c))
+
+@davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2026-01-07..2026-01-07&type=Issues))
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.5.8
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.5.7...676b9248a5a7810475005b37d510dc2fed45639b))
@@ -18,8 +37,6 @@ See [our definition of contributors](https://github-activity.readthedocs.io/en/l
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2025-12-18&to=2026-01-07&type=c))
 
 @davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2025-12-18..2026-01-07&type=Issues))
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.5.7
 
