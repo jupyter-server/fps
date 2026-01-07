@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
-from fastapi.routing import APIRoute, APIWebSocketRoute
+from fastapi.routing import APIWebSocketRoute
 from starlette import routing
 
 from fps import Module
@@ -40,10 +40,10 @@ class FastAPIModule(Module):
                     path = route.path
                     name = route.name
                     methods = ["MOUNT"]
-                elif isinstance(route, APIRoute):
+                elif isinstance(route, routing.Route):
                     path = route.path
                     name = route.name
-                    methods = list(route.methods)
+                    methods = [] if route.methods is None else list(route.methods)
                 routes.append({"path": path, "name": name, "methods": methods})
 
             @self.app.get(self.routes_url)
