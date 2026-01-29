@@ -2,19 +2,15 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Callable, Awaitable
-from contextlib import AsyncExitStack, ExitStack
 from contextvars import ContextVar
 from functools import lru_cache, partial
 from inspect import isawaitable, signature
 from types import TracebackType
 from typing import (
     Any,
-    AsyncContextManager,
-    ContextManager,
     Generic,
     Iterable,
     TypeVar,
-    cast,
 )
 
 from anyio import Event, create_task_group, fail_after, move_on_after
@@ -87,7 +83,6 @@ class SharedValue(Generic[T]):
         self,
         value: T,
         max_borrowers: float = float("inf"),
-        manage: bool = False,
         teardown_callback: Callable[..., Any]
         | Callable[..., Awaitable[Any]]
         | None = None,
@@ -97,20 +92,15 @@ class SharedValue(Generic[T]):
         Args:
             value: The inner value that is shared.
             max_borrowers: The number of times the shared value can be borrowed at the same time.
-            manage: Whether to use the (async) context manager of the inner value
-                for setup/teardown.
             teardown_callback: The callback to call when closing the shared value.
             close_timeout: The timeout to use when closing the shared value.
         """
         self._value = value
         self._max_borrowers = max_borrowers
-        self._manage = manage
         self._teardown_callback = teardown_callback
         self._close_timeout = close_timeout
         self._borrowers: set[Value] = set()
         self._dropped = Event()
-        self._exit_stack: ExitStack | None = None
-        self._async_exit_stack: AsyncExitStack | None = None
         self._opened = False
         self._closing = False
 
@@ -121,7 +111,6 @@ class SharedValue(Generic[T]):
             self._dropped = Event()
 
     async def __aenter__(self) -> SharedValue:
-        await self._maybe_open()
         return self
 
     async def __aexit__(
@@ -145,7 +134,6 @@ class SharedValue(Generic[T]):
         Raises:
             TimeoutError: If the value could not be borrowed in time.
         """
-        await self._maybe_open()
         value = Value(self)
         with fail_after(timeout):
             while True:
@@ -186,27 +174,6 @@ class SharedValue(Generic[T]):
                     return
                 await self._dropped.wait()
 
-    async def _maybe_open(self) -> None:
-        if not self._manage or self._opened:
-            return
-
-        self._opened = True
-
-        if hasattr(self._value, "__aenter__"):
-            async with AsyncExitStack() as async_exit_stack:
-                self._value = await async_exit_stack.enter_async_context(
-                    cast(AsyncContextManager, self._value)
-                )
-                self._async_exit_stack = async_exit_stack.pop_all()
-                return
-        elif hasattr(self._value, "__enter__"):
-            with ExitStack() as exit_stack:
-                self._value = exit_stack.enter_context(
-                    cast(ContextManager, self._value)
-                )
-                self._exit_stack = exit_stack.pop_all()
-                return
-
     async def aclose(
         self,
         *,
@@ -235,13 +202,6 @@ class SharedValue(Generic[T]):
             timeout = float("inf")
         with move_on_after(timeout) as scope:
             await self.freed()
-
-        if self._async_exit_stack is not None:
-            await self._async_exit_stack.__aexit__(_exc_type, _exc_value, _exc_tb)
-            self._async_exit_stack = None
-        if self._exit_stack is not None:
-            self._exit_stack.__exit__(_exc_type, _exc_value, _exc_tb)
-            self._exit_stack = None
 
         if self._teardown_callback is not None:
             await call(self._teardown_callback, _exc_value)
@@ -321,7 +281,6 @@ class Context:
         value: T,
         types: Iterable | Any | None = None,
         max_borrowers: float = float("inf"),
-        manage: bool = False,
         teardown_callback: Callable[..., Any]
         | Callable[..., Awaitable[Any]]
         | None = None,
@@ -335,8 +294,6 @@ class Context:
             types: The type(s) to register the value as. If not
                 provided, the value type will be used.
             max_borrowers: The number of times the shared value can be borrowed at the same time.
-            manage: Whether to use the (async) context manager of the value
-                for setup/teardown.
             teardown_callback: An optional callback to call when the context is closed.
 
         Returns:
@@ -350,7 +307,6 @@ class Context:
             _shared_value = SharedValue(
                 value,
                 max_borrowers=max_borrowers,
-                manage=manage,
                 teardown_callback=teardown_callback,
             )
         _types = _get_value_types(value, types)
@@ -509,7 +465,6 @@ def put(
     value: T,
     types: Iterable | Any | None = None,
     max_borrowers: float = float("inf"),
-    manage: bool = False,
     teardown_callback: Callable[..., Any] | Callable[..., Awaitable[Any]] | None = None,
 ) -> SharedValue[T]:
     """
@@ -520,8 +475,6 @@ def put(
         types: The type(s) to register the value as. If not
             provided, the value type will be used.
         max_borrowers: The number of times the shared value can be borrowed at the same time.
-        manage: Whether to use the (async) context manager of the value
-            for setup/teardown.
         teardown_callback: An optional callback to call when the context is closed.
 
     Returns:
@@ -530,7 +483,7 @@ def put(
     Raises:
         LookupError: If there is no current context.
     """
-    return current_context().put(value, types, max_borrowers, manage, teardown_callback)
+    return current_context().put(value, types, max_borrowers, teardown_callback)
 
 
 async def get(

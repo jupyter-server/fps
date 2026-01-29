@@ -123,12 +123,28 @@ class Module:
         return ".".join(self._path + [self._name])
 
     @property
+    def prepared(self) -> Event:
+        """
+        Returns:
+            An `Event` that is set when the module has prepared.
+        """
+        return self._prepared
+
+    @property
     def started(self) -> Event:
         """
         Returns:
             An `Event` that is set when the module has started.
         """
         return self._started
+
+    @property
+    def stopped(self) -> Event:
+        """
+        Returns:
+            An `Event` that is set when the module has stopped.
+        """
+        return self._stopped
 
     @property
     def exceptions(self) -> list[Exception]:
@@ -248,7 +264,6 @@ class Module:
         teardown_callback: Callable[..., Any]
         | Callable[..., Awaitable[Any]]
         | None = None,
-        manage: bool = False,
     ) -> None:
         """
         Publish a value in the current module context and its parent's (if any).
@@ -259,14 +274,12 @@ class Module:
                 from the value.
             max_borrowers: The maximum number of simultaneous borrowers of the published value.
             teardown_callback: A callback to call when the value is torn down.
-            manage: Whether to use the (async) context manager of the value for its setup/teardown.
         """
         value_id = id(value)
         shared_value = self._context.put(
             value,
             types,
             max_borrowers=max_borrowers,
-            manage=manage,
             teardown_callback=teardown_callback,
         )
         self._published_values[value_id] = shared_value
@@ -275,7 +288,6 @@ class Module:
                 value,
                 types,
                 max_borrowers=max_borrowers,
-                manage=manage,
                 teardown_callback=teardown_callback,
                 shared_value=shared_value,
             )
@@ -394,7 +406,7 @@ class Module:
     def _get_all_prepare_timeout(self):
         for module in self._modules.values():
             module._get_all_prepare_timeout()
-        if not self._prepared.is_set() and not self._exit.is_set():
+        if not self.prepared.is_set() and not self._exit.is_set():
             self._exceptions.append(
                 TimeoutError(f"Module timed out while preparing: {self.path}")
             )
@@ -402,7 +414,7 @@ class Module:
     def _get_all_start_timeout(self):
         for module in self._modules.values():
             module._get_all_start_timeout()
-        if not self._started.is_set() and not self._exit.is_set():
+        if not self.started.is_set() and not self._exit.is_set():
             self._exceptions.append(
                 TimeoutError(f"Module timed out while starting: {self.path}")
             )
@@ -410,7 +422,7 @@ class Module:
     def _get_all_stop_timeout(self):
         for module in self._modules.values():
             module._get_all_stop_timeout()
-        if not self._stopped.is_set() and not self._exit.is_set():
+        if not self.stopped.is_set() and not self._exit.is_set():
             self._exceptions.append(
                 TimeoutError(f"Module timed out while stopping: {self.path}")
             )
@@ -418,17 +430,17 @@ class Module:
     async def _all_prepared(self):
         for module in self._modules.values():
             await module._all_prepared()
-        await self._prepared.wait()
+        await self.prepared.wait()
 
     async def _all_started(self):
         for module in self._modules.values():
             await module._all_started()
-        await self._started.wait()
+        await self.started.wait()
 
     async def _all_stopped(self):
         for module in self._modules.values():
             await module._all_stopped()
-        await self._stopped.wait()
+        await self.stopped.wait()
 
     def done(self) -> None:
         """
@@ -447,10 +459,10 @@ class Module:
         ```
         """
         if self._phase == "preparing":
-            self._prepared.set()
+            self.prepared.set()
             log.debug("Module prepared", path=self.path)
         elif self._phase == "starting":
-            self._started.set()
+            self.started.set()
             log.debug("Module started", path=self.path)
         else:
             self._is_stopping = True
@@ -468,7 +480,7 @@ class Module:
     async def _drop_and_wait_values(self):
         self.drop_all()
         await self._context.aclose()
-        self._stopped.set()
+        self.stopped.set()
         log.debug("Module stopped", path=self.path)
 
     async def _prepare(self) -> None:
@@ -490,7 +502,7 @@ class Module:
 
     async def _prepare_and_done(self) -> None:
         await self.prepare()
-        if not self._prepared.is_set():
+        if not self.prepared.is_set():
             self.done()
 
     async def prepare(self) -> None:
@@ -515,7 +527,7 @@ class Module:
 
     async def _start_and_done(self) -> None:
         await self.start()
-        if not self._started.is_set():
+        if not self.started.is_set():
             self.done()
 
     async def start(self) -> None:
