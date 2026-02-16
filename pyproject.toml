@@ -47,7 +47,7 @@ anycorn = [
 [dependency-groups]
 test = [
     "pytest >=8,<10",
-    "trio >=0.32.0,<0.33",
+    "trio >=0.32.0,<0.34",
     "mypy",
     "ruff",
     "coverage[toml] >=7,<8",
