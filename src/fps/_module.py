@@ -554,7 +554,7 @@ class Module:
         except ExceptionGroup as exc:
             self._exceptions.append(*exc.exceptions)
             self._exit.set()
-            log.critical("Module failed while stoping", path=self.path)
+            log.critical("Module failed while stopping", path=self.path)
 
     async def _stop_and_done(self) -> None:
         await self.stop()
