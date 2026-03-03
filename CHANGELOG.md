@@ -2,6 +2,26 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.6.1
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.6.0...0d5818088855aed2a727f6ff45fe1d833f1f6a82))
+
+### Merged PRs
+
+- Drop `importlib_metadata` [#152](https://github.com/jupyter-server/fps/pull/152) ([@davidbrochart](https://github.com/davidbrochart))
+- Update trio requirement from \<0.33,>=0.32.0 to >=0.32.0,\<0.34 [#151](https://github.com/jupyter-server/fps/pull/151) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/use/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2026-01-29&to=2026-03-03&type=c))
+
+@davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2026-01-29..2026-03-03&type=Issues))
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.6.0
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.5.9...39c7bdece990a808addd2a95e660bddabd82d0d4))
@@ -18,8 +38,6 @@ See [our definition of contributors](https://github-activity.readthedocs.io/en/l
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2026-01-07&to=2026-01-29&type=c))
 
 @davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2026-01-07..2026-01-29&type=Issues))
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.5.9
 
