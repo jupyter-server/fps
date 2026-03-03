@@ -30,7 +30,6 @@ dependencies = [
     "anyioutils >=0.7.0,<0.8.0",
     "structlog",
     "exceptiongroup; python_version<'3.11'",
-    "importlib_metadata >=3.6; python_version<'3.10'",
 ]
 
 [project.optional-dependencies]
