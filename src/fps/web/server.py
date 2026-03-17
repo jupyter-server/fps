@@ -17,16 +17,19 @@ class ServerModule(Module):
         *,
         host: str = "127.0.0.1",
         port: int = 8000,
+        websocket_permessage_deflate: bool = True,
     ) -> None:
         super().__init__(name)
         self.host = host
         self.port = port
+        self.websocket_permessage_deflate = websocket_permessage_deflate
         self.shutdown_event = Event()
 
     async def start(self) -> None:
         app = await self.get(FastAPI)
         config = Config()
         config.bind = [f"{self.host}:{self.port}"]
+        config.websocket_permessage_deflate = self.websocket_permessage_deflate
         config.loglevel = "WARN"
         async with create_task_group() as tg:
             server_task = start_task(
