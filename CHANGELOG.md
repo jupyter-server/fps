@@ -2,6 +2,26 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.6.3
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.6.2...185f592ef839b9c73d6a0dd5fe14b49190c87435))
+
+### Merged PRs
+
+- Add `ServerModule` `websocket_permessage_deflate` parameter [#155](https://github.com/jupyter-server/fps/pull/155) ([@davidbrochart](https://github.com/davidbrochart))
+- Bump actions/create-github-app-token from 2 to 3 [#154](https://github.com/jupyter-server/fps/pull/154) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/use/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2026-03-03&to=2026-03-17&type=c))
+
+@davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2026-03-03..2026-03-17&type=Issues))
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.6.2
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.6.1...ba9399c712b405ab7deef9ff1365e960e5746add))
@@ -18,8 +38,6 @@ See [our definition of contributors](https://github-activity.readthedocs.io/en/l
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2026-03-03&to=2026-03-03&type=c))
 
 @davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2026-03-03..2026-03-03&type=Issues))
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.6.1
 
