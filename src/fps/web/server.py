@@ -34,7 +34,7 @@ class ServerModule(Module):
             server_task = await tg.start(
                 partial(
                     serve,
-                    app,  # type: ignore[arg-type]
+                    app,  # type: ignore
                     config,
                     shutdown_trigger=self.shutdown_event.wait,
                     mode="asgi",
