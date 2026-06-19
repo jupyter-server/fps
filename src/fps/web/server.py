@@ -3,7 +3,6 @@ from __future__ import annotations
 from functools import partial
 
 from anyio import Event, create_task_group
-from anyioutils import start_task
 from anycorn import Config, serve
 from fastapi import FastAPI
 
@@ -32,21 +31,20 @@ class ServerModule(Module):
         config.websocket_permessage_deflate = self.websocket_permessage_deflate
         config.loglevel = "WARN"
         async with create_task_group() as tg:
-            server_task = start_task(
+            server_task = await tg.start(
                 partial(
                     serve,
-                    app,  # type: ignore[arg-type]
+                    app,  # type: ignore
                     config,
                     shutdown_trigger=self.shutdown_event.wait,
                     mode="asgi",
                 ),
-                tg,
+                return_handle=True,
             )
-            await server_task.wait_started()
 
             async def stop():
                 self.shutdown_event.set()
-                await server_task.wait()
+                await server_task
 
             self.add_teardown_callback(stop)
             self.done()
