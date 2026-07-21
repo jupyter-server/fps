@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
-from fastapi.routing import APIWebSocketRoute
+from fastapi.routing import APIWebSocketRoute, iter_route_contexts
 from starlette import routing
 
 from fps import Module
@@ -31,19 +31,22 @@ class FastAPIModule(Module):
         if self.routes_url is not None:
             routes = []
             name: str | None
-            for route in self.app.routes:
-                if isinstance(route, APIWebSocketRoute):
-                    path = route.path
-                    name = route.name
-                    methods = ["WEBSOCKET"]
-                elif isinstance(route, routing.Mount):
-                    path = route.path
-                    name = route.name
-                    methods = ["MOUNT"]
-                elif isinstance(route, routing.Route):
-                    path = route.path
-                    name = route.name
-                    methods = [] if route.methods is None else list(route.methods)
+            for route_context in iter_route_contexts(self.app.routes):
+                match route_context.route:
+                    case route if isinstance(route, APIWebSocketRoute):
+                        path = route.path
+                        name = route.name
+                        methods = ["WEBSOCKET"]
+                    case route if isinstance(route, routing.Mount):
+                        path = route.path
+                        name = route.name
+                        methods = ["MOUNT"]
+                    case route if isinstance(route, routing.Route):
+                        path = route.path
+                        name = route.name
+                        methods = [] if route.methods is None else list(route.methods)
+                    case _:  # pragma: nocover
+                        raise RuntimeError("Unknown route type")
                 routes.append({"path": path, "name": name, "methods": methods})
 
             @self.app.get(self.routes_url)
