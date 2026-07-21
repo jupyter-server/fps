@@ -2,6 +2,27 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.6.5
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.6.4...1042bde418a6589af5cd77cecd22900e131e213b))
+
+### Merged PRs
+
+- Support FastAPI v0.137 [#159](https://github.com/jupyter-server/fps/pull/159) ([@davidbrochart](https://github.com/davidbrochart))
+- Bump actions/setup-python from 6 to 7 [#158](https://github.com/jupyter-server/fps/pull/158) ([@davidbrochart](https://github.com/davidbrochart))
+- Bump actions/checkout from 6 to 7 [#157](https://github.com/jupyter-server/fps/pull/157) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/use/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2026-06-19&to=2026-07-21&type=c))
+
+@davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2026-06-19..2026-07-21&type=Issues))
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.6.4
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.6.3...4b2fd5dc58cb89dd81edd61a858e969200d0611c))
@@ -18,8 +39,6 @@ See [our definition of contributors](https://github-activity.readthedocs.io/en/l
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2026-03-17&to=2026-06-19&type=c))
 
 @davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2026-03-17..2026-06-19&type=Issues))
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.6.3
 
