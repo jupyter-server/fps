@@ -2,6 +2,25 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.6.6
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.6.5...75cb4140f68b43c6ef8c8953ad81bf7292cd658e))
+
+### Merged PRs
+
+- Update anycorn requirement from \<0.19.0,>=0.18.6 to >=0.19.0,\<0.20.0 [#160](https://github.com/jupyter-server/fps/pull/160) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/use/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2026-07-21&to=2026-07-27&type=c))
+
+@davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2026-07-21..2026-07-27&type=Issues))
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.6.5
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.6.4...1042bde418a6589af5cd77cecd22900e131e213b))
@@ -20,8 +39,6 @@ See [our definition of contributors](https://github-activity.readthedocs.io/en/l
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2026-06-19&to=2026-07-21&type=c))
 
 @davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2026-06-19..2026-07-21&type=Issues))
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.6.4
 
