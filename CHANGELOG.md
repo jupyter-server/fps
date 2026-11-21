@@ -2,6 +2,28 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## 0.6.8
+
+([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.6.7...97456b38e530c2fe72f1acf5eb3dd08f5c9c341a))
+
+### Merged PRs
+
+- Support Python 3.11 through 3.15 [#165](https://github.com/jupyter-server/fps/pull/165) ([@davidbrochart](https://github.com/davidbrochart))
+- Make module shutdown cancellation-safe [#164](https://github.com/jupyter-server/fps/pull/164) ([@davidbrochart](https://github.com/davidbrochart))
+- Update trio requirement from \<0.35,>=0.32.0 to >=0.32.0,\<0.36 [#163](https://github.com/jupyter-server/fps/pull/163) ([@davidbrochart](https://github.com/davidbrochart))
+- Update trio requirement from \<0.34,>=0.32.0 to >=0.32.0,\<0.35 [#162](https://github.com/jupyter-server/fps/pull/162) ([@davidbrochart](https://github.com/davidbrochart))
+
+### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/use/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2026-07-30&to=2026-11-21&type=c))
+
+@davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2026-07-30..2026-11-21&type=Issues))
+
+<!-- <END NEW CHANGELOG ENTRY> -->
+
 ## 0.6.7
 
 ([Full Changelog](https://github.com/jupyter-server/fps/compare/v0.6.6...649facfa202c9d58b2cd469e8686b7158cc96b71))
@@ -18,8 +40,6 @@ See [our definition of contributors](https://github-activity.readthedocs.io/en/l
 ([GitHub contributors page for this release](https://github.com/jupyter-server/fps/graphs/contributors?from=2026-07-27&to=2026-07-30&type=c))
 
 @davidbrochart ([activity](https://github.com/search?q=repo%3Ajupyter-server%2Ffps+involves%3Adavidbrochart+updated%3A2026-07-27..2026-07-30&type=Issues))
-
-<!-- <END NEW CHANGELOG ENTRY> -->
 
 ## 0.6.6
 
