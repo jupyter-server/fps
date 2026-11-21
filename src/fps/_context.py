@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 from collections.abc import Callable, Awaitable
 from contextvars import ContextVar
 from functools import lru_cache, partial
@@ -14,9 +13,6 @@ from typing import (
 )
 
 from anyio import Event, create_task_group, fail_after, move_on_after
-
-if sys.version_info < (3, 11):
-    from exceptiongroup import ExceptionGroup  # pragma: no cover
 
 
 T = TypeVar("T")

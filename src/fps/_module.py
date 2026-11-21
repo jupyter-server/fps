@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import sys
 
 from collections.abc import Callable, Awaitable
 from contextlib import AsyncExitStack
@@ -16,9 +15,6 @@ from anyio import Event, create_task_group, fail_after, move_on_after
 from ._context import Context, SharedValue, Value, _get_value_types
 from ._importer import import_from_string
 
-
-if sys.version_info < (3, 11):
-    from exceptiongroup import BaseExceptionGroup, ExceptionGroup  # pragma: no cover
 
 log = structlog.get_logger()
 structlog.stdlib.recreate_defaults(log_level=logging.INFO)
