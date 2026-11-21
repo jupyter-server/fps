@@ -373,17 +373,25 @@ class Module:
 
     async def __aexit__(self, exc_type, exc_value, exc_tb):
         self._phase = "stopping"
-        with move_on_after(self._stop_timeout) as scope:
-            self._task_group.start_soon(self._stop, name=f"{self.path} stop")
-            await self._all_stopped()
-        if scope.cancelled_caught:
-            self._get_all_stop_timeout()
-        self._exit.set()
-        self._task_group.cancel_scope.cancel()
+        running_task_group = self._task_group
         try:
-            await self._exit_stack.aclose()
-        except anyio.get_cancelled_exc_class():  # pragma: nocover
-            pass
+            # The running group may already be cancelled. Stop hooks need a
+            # fresh group under a bounded shield, including tasks from done().
+            with move_on_after(self._stop_timeout, shield=True) as scope:
+                async with create_task_group() as task_group:
+                    self._task_group = task_group
+                    task_group.start_soon(self._stop, name=f"{self.path} stop")
+                    await self._all_stopped()
+            if scope.cancelled_caught:
+                self._get_all_stop_timeout()
+        finally:
+            self._task_group = running_task_group
+            self._exit.set()
+            running_task_group.cancel_scope.cancel()
+            try:
+                await self._exit_stack.aclose()
+            except anyio.get_cancelled_exc_class():  # pragma: nocover
+                pass
         exceptions = []
         for exc in self._exceptions:
             while isinstance(exc, ExceptionGroup):
